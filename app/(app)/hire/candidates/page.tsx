@@ -94,6 +94,7 @@ export default async function CandidatesPage() {
                         </div>
                       </div>
                     </td>
+                    <td className="px-6 py-5">
                       <div className="flex flex-col gap-1">
                         <Badge variant={c.group === "BENCH" ? "secondary" : "outline"} className="w-fit text-[10px] font-bold">
                           {c.group}

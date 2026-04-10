@@ -4,7 +4,6 @@ import { OTPEmail } from "@/components/emails/otp-email"
 import { ReminderEmail } from "@/components/emails/reminder-email"
 import React from "react"
 import { Resend } from "resend"
-import { renderToStaticMarkup } from "react-dom/server"
 import nodemailer from "nodemailer"
 import config from "@/lib/core/config"
 
@@ -51,6 +50,7 @@ async function sendEmail({
 
   try {
     if (config.email.driver === "smtp") {
+      const { renderToStaticMarkup } = await import("react-dom/server")
       const html = renderToStaticMarkup(react)
       const transporter = getSmtpTransporter()
       const result = await transporter.sendMail({

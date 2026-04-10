@@ -2,18 +2,16 @@ import { NextRequest, NextResponse } from "next/server"
 
 export const maxDuration = 60
 
-/**
- * Consolidated daily cron for Vercel Hobby plan (1 cron job limit).
- * Calls all individual cron endpoints sequentially.
- *
- * For Pro plan or K8s, use granular schedules instead:
- *   overdue:           0 * * * *       (hourly)
- *   recurring:         0 0 * * *       (daily)
- *   reconcile:         0 */6 * * *     (every 6h)
- *   publish-posts:     */5 * * * *     (every 5m)
- *   refresh-analytics: 0 */12 * * *    (every 12h)
- *   reminders:         */15 * * * *    (every 15m)
- */
+// Consolidated daily cron for Vercel Hobby plan (1 cron job limit).
+// Calls all individual cron endpoints sequentially.
+//
+// For Pro plan or K8s, use granular schedules instead:
+//   overdue:           every hour
+//   recurring:         daily at midnight
+//   reconcile:         every 6 hours
+//   publish-posts:     every 5 minutes
+//   refresh-analytics: every 12 hours
+//   reminders:         every 15 minutes
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization")
   const cronSecret = process.env.CRON_SECRET
