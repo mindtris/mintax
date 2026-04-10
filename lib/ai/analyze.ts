@@ -26,6 +26,7 @@ export async function analyzeTransaction(
       prompt,
       schema,
       attachments,
+      purpose: "analyze",
     })
 
     if (response.error) {

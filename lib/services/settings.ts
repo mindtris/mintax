@@ -47,8 +47,15 @@ export function getLLMSettings(settings: SettingsMap) {
     return null
   }).filter((provider): provider is NonNullable<typeof provider> => provider !== null)
 
+  // Per-purpose model overrides from settings
+  const purposeModels: Partial<Record<string, string>> = {}
+  if (settings.llm_model_analyze) purposeModels.analyze = settings.llm_model_analyze
+  if (settings.llm_model_generate) purposeModels.generate = settings.llm_model_generate
+  if (settings.llm_model_hire) purposeModels.hire = settings.llm_model_hire
+
   return {
     providers,
+    purposeModels,
   }
 }
 

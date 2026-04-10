@@ -5,6 +5,9 @@ import { BaseMessage, HumanMessage } from "@langchain/core/messages"
 
 export type LLMProvider = "openai" | "google" | "mistral" | "openai_compatible"
 
+// Purpose-based routing — each purpose can use a different model
+export type LLMPurpose = "analyze" | "generate" | "hire"
+
 export interface LLMConfig {
   provider: LLMProvider
   apiKey: string
@@ -14,12 +17,15 @@ export interface LLMConfig {
 
 export interface LLMSettings {
   providers: LLMConfig[]
+  // Per-purpose model overrides (optional)
+  purposeModels?: Partial<Record<LLMPurpose, string>>
 }
 
 export interface LLMRequest {
   prompt: string
   schema?: Record<string, unknown>
   attachments?: any[]
+  purpose?: LLMPurpose
 }
 
 export interface LLMResponse {
@@ -31,31 +37,31 @@ export interface LLMResponse {
 
 async function requestLLMUnified(config: LLMConfig, req: LLMRequest): Promise<LLMResponse> {
   try {
-    const temperature = 0
+    const temperature = req.purpose === "generate" ? 0.7 : 0
     let model: any
     if (config.provider === "openai") {
       model = new ChatOpenAI({
         apiKey: config.apiKey,
         model: config.model,
-        temperature: temperature,
+        temperature,
       })
     } else if (config.provider === "google") {
       model = new ChatGoogleGenerativeAI({
         apiKey: config.apiKey,
         model: config.model,
-        temperature: temperature,
+        temperature,
       })
     } else if (config.provider === "mistral") {
       model = new ChatMistralAI({
         apiKey: config.apiKey,
         model: config.model,
-        temperature: temperature,
+        temperature,
       })
     } else if (config.provider === "openai_compatible") {
       model = new ChatOpenAI({
         apiKey: config.apiKey || "not-needed",
         model: config.model,
-        temperature: temperature,
+        temperature,
         configuration: {
           baseURL: config.baseUrl?.trim(),
         },
@@ -113,9 +119,17 @@ export async function requestLLM(settings: LLMSettings, req: LLMRequest): Promis
       console.info("Skipping provider:", config.provider, "(not configured)")
       continue
     }
-    console.info("Use provider:", config.provider)
 
-    const response = await requestLLMUnified(config, req)
+    // Apply per-purpose model override if configured
+    const effectiveConfig = { ...config }
+    if (req.purpose && settings.purposeModels?.[req.purpose]) {
+      effectiveConfig.model = settings.purposeModels[req.purpose]!
+      console.info(`[LLM] Purpose "${req.purpose}" → model override: ${effectiveConfig.model}`)
+    }
+
+    console.info(`[LLM] Using provider: ${effectiveConfig.provider}, model: ${effectiveConfig.model}, purpose: ${req.purpose || "default"}`)
+
+    const response = await requestLLMUnified(effectiveConfig, req)
 
     if (!response.error) {
       return response

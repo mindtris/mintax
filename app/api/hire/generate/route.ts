@@ -38,16 +38,14 @@ Generate a job posting based on the following brief. Return a JSON object with t
 
 Brief: ${prompt}`
 
-    const result = await requestLLM(
-      { providers: llmSettings.providers },
-      {
-        prompt: fullPrompt,
-        schema: {
-          description: "the job description text",
-          requirements: "the requirements text",
-        },
-      }
-    )
+    const result = await requestLLM(llmSettings, {
+      prompt: fullPrompt,
+      schema: {
+        description: "the job description text",
+        requirements: "the requirements text",
+      },
+      purpose: "hire",
+    })
 
     return NextResponse.json({
       description: result.output?.description || "",

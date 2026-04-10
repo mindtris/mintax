@@ -32,15 +32,13 @@ export async function POST(request: NextRequest) {
 
     const fullPrompt = buildPrompt(systemPrompt, prompt, contentType, platform, tone, maxLength)
 
-    const result = await requestLLM(
-      { providers: llmSettings.providers },
-      {
-        prompt: fullPrompt,
-        schema: {
-          content: "the generated post/article content",
-        },
-      }
-    )
+    const result = await requestLLM(llmSettings, {
+      prompt: fullPrompt,
+      schema: {
+        content: "the generated post/article content",
+      },
+      purpose: "generate",
+    })
 
     const generatedContent = result.output?.content || ""
 
