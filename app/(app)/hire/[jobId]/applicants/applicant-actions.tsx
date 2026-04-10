@@ -1,6 +1,6 @@
 "use client"
 
-import { updateApplicantStatusAction } from "@/app/(app)/hire/actions"
+import { updateTalentStatusAction } from "@/app/(app)/hire/actions"
 import { Button } from "@/components/ui/button"
 import { CheckCircle2, XCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -23,14 +23,14 @@ export function ApplicantActions({ applicantId, currentStatus }: { applicantId: 
     const next = NEXT_STATUS[currentStatus]
     if (!next) return
     setLoading(true)
-    await updateApplicantStatusAction(applicantId, next)
+    await updateTalentStatusAction(applicantId, next)
     router.refresh()
     setLoading(false)
   }
 
   async function reject() {
     setLoading(true)
-    await updateApplicantStatusAction(applicantId, "rejected")
+    await updateTalentStatusAction(applicantId, "rejected")
     router.refresh()
     setLoading(false)
   }
