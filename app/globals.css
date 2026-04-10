@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 43 33% 97%;
+    --foreground: 36 12% 19%;
+    --card: 40 17% 95%;
+    --card-foreground: 60 4% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 46 19% 13%;
+    --primary: 14 53% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 40 18% 89%;
+    --secondary-foreground: 43 5% 30%;
+    --muted: 38 22% 89%;
+    --muted-foreground: 40 2% 42%;
+    --accent: 40 18% 89%;
+    --accent-foreground: 46 19% 13%;
+    --destructive: 60 4% 8%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 40 5% 84%;
+    --input: 42 5% 68%;
+    --ring: 14 53% 53%;
+    --chart-1: 14 53% 43%;
+    --chart-2: 254 85% 74%;
+    --chart-3: 40 22% 82%;
+    --chart-4: 254 50% 83%;
+    --chart-5: 14 62% 44%;
+    --radius: 0.625rem;
+    --sidebar-background: 43 15% 95%;
+    --sidebar-foreground: 0 1% 24%;
+    --sidebar-primary: 14 53% 53%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 40 18% 89%;
+    --sidebar-accent-foreground: 0 0% 20%;
+    --sidebar-border: 0 0% 92%;
+    --sidebar-ring: 0 0% 71%;
+  }
+
+  .dark {
+    --background: 50 2% 15%;
+    --foreground: 0 0% 95%;
+    --card: 40 2% 17%;
+    --card-foreground: 43 33% 97%;
+    --popover: 40 2% 19%;
+    --popover-foreground: 40 4% 90%;
+    --primary: 14 60% 60%;
+    --primary-foreground: 60 4% 8%;
+    --secondary: 43 33% 97%;
+    --secondary-foreground: 40 2% 19%;
+    --muted: 50 4% 10%;
+    --muted-foreground: 42 6% 69%;
+    --accent: 46 9% 9%;
+    --accent-foreground: 43 15% 95%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 43 5% 23%;
+    --input: 44 4% 31%;
+    --ring: 14 60% 60%;
+    --chart-1: 14 53% 43%;
+    --chart-2: 254 85% 74%;
+    --chart-3: 46 9% 9%;
+    --chart-4: 252 25% 23%;
+    --chart-5: 14 62% 44%;
+    --sidebar-background: 40 4% 12%;
+    --sidebar-foreground: 40 5% 74%;
+    --sidebar-primary: 0 0% 20%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 60 4% 5%;
+    --sidebar-accent-foreground: 40 5% 74%;
+    --sidebar-border: 0 0% 92%;
+    --sidebar-ring: 0 0% 71%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  h1, h2, .font-display {
+    font-family: var(--font-playfair), Georgia, serif;
+  }
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}

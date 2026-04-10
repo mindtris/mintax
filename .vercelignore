@@ -1,0 +1,8 @@
+pgdata/
+test-results/
+tests/
+infra/
+.env
+.env.local
+docker-compose*.yml
+Dockerfile

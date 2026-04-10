@@ -1,0 +1,48 @@
+services:
+  app:
+    build:
+      context: ../../
+      dockerfile: infra/dockers/Dockerfile
+    container_name: mintax-app
+    ports:
+      - "7331:7331"
+    environment:
+      - NODE_ENV=production
+      - UPLOAD_PATH=/app/data/uploads
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/mintax
+    env_file:
+      - ../../.env
+    volumes:
+      - ../../data:/app/data
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100M"
+        max-file: "3"
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: mintax-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=mintax
+    volumes:
+      - ../../pgdata:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d mintax"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100M"
+        max-file: "3"

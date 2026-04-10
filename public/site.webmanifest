@@ -1,0 +1,14 @@
+{
+  "name": "Mintax",
+  "short_name": "Mintax",
+  "icons": [
+    {
+      "src": "/logo/logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "theme_color": "#faf9f5",
+  "background_color": "#faf9f5",
+  "display": "standalone"
+}

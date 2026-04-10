@@ -1,0 +1,1117 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────────────────────────
+// Auth & Identity
+// ──────────────────────────────────────────────
+
+model User {
+  id                  String      @id @default(uuid()) @db.Uuid
+  email               String      @unique
+  name                String
+  avatar              String?
+  createdAt           DateTime    @default(now()) @map("created_at")
+  updatedAt           DateTime    @updatedAt @map("updated_at")
+  stripeCustomerId    String?     @map("stripe_customer_id")
+  membershipPlan      String?     @map("membership_plan")
+  membershipExpiresAt DateTime?   @map("membership_expires_at")
+  emailVerified       Boolean     @default(false) @map("is_email_verified")
+  storageUsed         Int         @default(0) @map("storage_used")
+  storageLimit        Int         @default(-1) @map("storage_limit")
+  aiBalance           Int         @default(0) @map("ai_balance")
+
+  firstName           String?     @map("first_name")
+  lastName            String?     @map("last_name")
+  phone               String?
+  country             String?
+  state               String?
+  city                String?
+  postalCode          String?     @map("postal_code")
+  dateOfBirth         DateTime?   @map("date_of_birth")
+  timezone            String?     @default("UTC")
+
+  accounts     Account[]
+  sessions     Session[]
+  memberships  OrgMember[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  token     String
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id") @db.Uuid
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(uuid()) @db.Uuid
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("verification")
+}
+
+// ──────────────────────────────────────────────
+// Multi-Tenant: Organizations
+// ──────────────────────────────────────────────
+
+model Organization {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String
+  slug           String   @unique
+  type           String   @default("business") // "business" | "personal"
+  baseCurrency   String   @default("INR") @map("base_currency")
+  fiscalYearStart Int     @default(1) @map("fiscal_year_start") // 1 = January
+  logo           String?
+  address        String?
+  taxId          String?  @map("tax_id") // GSTIN, EIN, etc.
+  bankDetails    String?  @map("bank_details")
+  
+  businessStructure String? @map("business_structure") // "sole_proprietorship" | "partnership" | "llc" | "corporation" | "other"
+  industry          String?
+  website           String?
+  phone             String?
+  registrationNumber String? @map("registration_number")
+
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  members       OrgMember[]
+  settings      Setting[]
+  categories    Category[]
+  projects      Project[]
+  fields        Field[]
+  files         File[]
+  currencies    Currency[]
+  transactions           Transaction[]
+  recurringTransactions  RecurringTransaction[]
+  bankAccounts           BankAccount[]
+  invoices               Invoice[]
+  reminders              Reminder[]
+  chartAccounts    ChartAccount[]
+  appData          AppData[]
+  progress         Progress[]
+  socialAccounts   SocialAccount[]
+  socialPosts      SocialPost[]
+  contentTemplates ContentTemplate[]
+  contacts         Contact[]
+  bills            Bill[]
+  quicklinks       Quicklink[]
+  items            Item[]
+  taxes            Tax[]
+
+  jobPostings   JobPosting[]
+  candidates    Candidate[]
+  submissions   MarketingSubmission[]
+  leads         Lead[]
+  llmPrompts    LlmPrompt[]
+
+  @@map("organizations")
+}
+
+model OrgMember {
+  id             String       @id @default(uuid()) @db.Uuid
+  userId         String       @map("user_id") @db.Uuid
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String       @map("organization_id") @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role           String       @default("member") // "owner" | "admin" | "accountant" | "viewer"
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@map("org_members")
+}
+
+// ──────────────────────────────────────────────
+// Bookkeeping: Chart of Accounts
+// ──────────────────────────────────────────────
+
+model ChartAccount {
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String        @map("organization_id") @db.Uuid
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String        // "1000", "2000", etc.
+  name           String        // "Cash", "Accounts Receivable"
+  type           String        // "asset" | "liability" | "equity" | "revenue" | "expense"
+  parentId       String?       @map("parent_id") @db.Uuid
+  parent         ChartAccount? @relation("AccountTree", fields: [parentId], references: [id])
+  children       ChartAccount[] @relation("AccountTree")
+  isSystem       Boolean       @default(false) @map("is_system")
+  description    String?
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  transactions   Transaction[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@index([type])
+  @@map("chart_accounts")
+}
+
+// ──────────────────────────────────────────────
+// Bookkeeping: Bank Accounts & Statements
+// ──────────────────────────────────────────────
+
+model BankAccount {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String       // "HDFC Savings", "ICICI Current"
+  accountNumber  String?      @map("account_number")
+  bankName       String?      @map("bank_name")
+  ifscCode       String?      @map("ifsc_code")
+  accountType    String       @default("checking") @map("account_type") // "checking" | "savings" | "credit_card" | "cash" | "wallet"
+  currency       String       @default("INR")
+  currentBalance Int          @default(0) @map("current_balance") // in cents/paise
+  isActive       Boolean      @default(true) @map("is_active")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  statements   BankStatement[]
+  transactions Transaction[]
+
+  @@index([organizationId])
+  @@map("bank_accounts")
+}
+
+model BankStatement {
+  id            String      @id @default(uuid()) @db.Uuid
+  bankAccountId String      @map("bank_account_id") @db.Uuid
+  bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  fileId        String?     @map("file_id") @db.Uuid
+  periodStart   DateTime    @map("period_start")
+  periodEnd     DateTime    @map("period_end")
+  importedAt    DateTime    @default(now()) @map("imported_at")
+
+  entries BankEntry[]
+
+  @@index([bankAccountId])
+  @@map("bank_statements")
+}
+
+model BankEntry {
+  id            String        @id @default(uuid()) @db.Uuid
+  statementId   String        @map("statement_id") @db.Uuid
+  statement     BankStatement @relation(fields: [statementId], references: [id], onDelete: Cascade)
+  date          DateTime
+  description   String
+  amount        Int           // Positive = credit, negative = debit (in cents/paise)
+  balance       Int?          // Running balance if available
+  reference     String?
+  transactionId String?       @map("transaction_id") @db.Uuid
+  status        String        @default("unmatched") // "unmatched" | "matched" | "reconciled" | "excluded"
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  @@index([statementId])
+  @@index([status])
+  @@index([transactionId])
+  @@map("bank_entries")
+}
+
+// ──────────────────────────────────────────────
+// Bookkeeping: Invoices
+// ──────────────────────────────────────────────
+
+model Invoice {
+  id              String       @id @default(uuid()) @db.Uuid
+  organizationId  String       @map("organization_id") @db.Uuid
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  // Optional link to Contact record (nullable for backward compat with plain-string invoices)
+  contactId       String?      @map("contact_id") @db.Uuid
+  contact         Contact?     @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  invoiceNumber   String       @map("invoice_number")
+  type            String       @default("sales") // "sales" | "purchase"
+  status          String       @default("draft") // "draft" | "sent" | "paid" | "overdue" | "cancelled"
+  clientName      String       @map("client_name")
+  clientEmail     String?      @map("client_email")
+  clientAddress   String?      @map("client_address")
+  clientTaxId     String?      @map("client_tax_id") // GSTIN, VAT, etc.
+  
+  // Replaced arbitrary JSON with structured InvoiceItem
+  // items           Json         @default("[]")
+  invoiceItems    InvoiceItem[]
+  
+  subtotal        Int          @default(0)
+  taxTotal        Int          @default(0) @map("tax_total")
+  total           Int          @default(0)
+  currency        String       @default("INR")
+  issuedAt        DateTime?    @map("issued_at")
+  dueAt           DateTime?    @map("due_at")
+  paidAt          DateTime?    @map("paid_at")
+  notes           String?
+  transactionId   String?      @map("transaction_id") @db.Uuid
+  files           Json         @default("[]")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  @@unique([organizationId, invoiceNumber])
+  @@index([organizationId])
+  @@index([status])
+  @@index([type])
+  @@index([contactId])
+  @@map("invoices")
+}
+
+// ──────────────────────────────────────────────
+// Bookkeeping: Reminders
+// ──────────────────────────────────────────────
+
+model Reminder {
+  id                        String    @id @default(uuid()) @db.Uuid
+  organizationId            String    @map("organization_id") @db.Uuid
+  organization              Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdById               String    @map("created_by_id") @db.Uuid
+  title                     String
+  description               String?
+  dueAt                     DateTime  @map("due_at")
+  category                  String    @default("custom") // "tax_deadline" | "invoice_due" | "bookkeeping_task" | "custom"
+  priority                  String    @default("medium") // "low" | "medium" | "high" | "urgent"
+  status                    String    @default("pending") // "pending" | "completed" | "snoozed" | "cancelled"
+  recurrence                String    @default("one_time") // "one_time" | "daily" | "weekly" | "monthly" | "yearly"
+  recurrenceEndAt           DateTime? @map("recurrence_end_at")
+  parentId                  String?   @map("parent_id") @db.Uuid
+  emailNotify               Boolean   @default(false) @map("email_notify")
+  emailNotifyMinutesBefore  Int       @default(60) @map("email_notify_minutes_before")
+  emailSentAt               DateTime? @map("email_sent_at")
+  completedAt               DateTime? @map("completed_at")
+  createdAt                 DateTime  @default(now()) @map("created_at")
+  updatedAt                 DateTime  @updatedAt @map("updated_at")
+
+  assignees ReminderAssignee[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([dueAt])
+  @@index([category])
+  @@index([emailNotify, emailSentAt, dueAt])
+  @@map("reminders")
+}
+
+model ReminderAssignee {
+  id         String   @id @default(uuid()) @db.Uuid
+  reminderId String   @map("reminder_id") @db.Uuid
+  reminder   Reminder @relation(fields: [reminderId], references: [id], onDelete: Cascade)
+  userId     String   @map("user_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([reminderId, userId])
+  @@index([userId])
+  @@map("reminder_assignees")
+}
+
+// ──────────────────────────────────────────────
+// Core: Transactions (enhanced for bookkeeping)
+// ──────────────────────────────────────────────
+
+model Transaction {
+  id                    String        @id @default(uuid()) @db.Uuid
+  organizationId        String        @map("organization_id") @db.Uuid
+  organization          Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId                String        @map("user_id") @db.Uuid // who created/modified
+  // Optional link to Contact (vendor you paid, client who paid you)
+  contactId             String?       @map("contact_id") @db.Uuid
+  contact               Contact?      @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  name                  String?
+  description           String?
+  merchant              String?
+  total                 Int?
+  currencyCode          String?       @map("currency_code")
+  convertedTotal        Int?          @map("converted_total")
+  convertedCurrencyCode String?       @map("converted_currency_code")
+  type                  String?       @default("expense") // "expense" | "income" | "transfer"
+  items                 Json          @default("[]")
+  note                  String?
+  files                 Json          @default("[]")
+  extra                 Json?
+  category              Category?     @relation(fields: [categoryCode, organizationId], references: [code, organizationId])
+  categoryCode          String?       @map("category_code")
+  project               Project?      @relation(fields: [projectCode, organizationId], references: [code, organizationId])
+  projectCode           String?       @map("project_code")
+  chartAccount          ChartAccount? @relation(fields: [chartAccountId], references: [id])
+  chartAccountId        String?       @map("chart_account_id") @db.Uuid
+  bankAccount           BankAccount?  @relation(fields: [bankAccountId], references: [id])
+  bankAccountId         String?       @map("bank_account_id") @db.Uuid
+  paymentMethod         String?       @map("payment_method") // "cash" | "bank_transfer" | "upi" | "card" | "cheque"
+  taxAmount             Int?          @map("tax_amount")
+  taxRate               String?       @map("tax_rate") // "GST_18", "GST_5", "VAT_20", etc.
+  reconciled            Boolean       @default(false)
+  invoiceId             String?       @map("invoice_id") @db.Uuid
+  issuedAt              DateTime?     @map("issued_at")
+  createdAt             DateTime      @default(now()) @map("created_at")
+  updatedAt             DateTime      @updatedAt @map("updated_at")
+  text                  String?
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([contactId])
+  @@index([projectCode])
+  @@index([categoryCode])
+  @@index([issuedAt])
+  @@index([name])
+  @@index([merchant])
+  @@index([total])
+  @@index([reconciled])
+  @@index([bankAccountId])
+  @@map("transactions")
+}
+
+model RecurringTransaction {
+  id                String    @id @default(uuid()) @db.Uuid
+  organizationId    String    @map("organization_id") @db.Uuid
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId            String    @map("user_id") @db.Uuid
+  name              String
+  description       String?
+  merchant          String?
+  total             Int?
+  currencyCode      String?   @map("currency_code")
+  type              String    @default("expense")
+  categoryCode      String?   @map("category_code")
+  projectCode       String?   @map("project_code")
+  bankAccountId     String?   @map("bank_account_id") @db.Uuid
+  chartAccountId    String?   @map("chart_account_id") @db.Uuid
+  note              String?
+  recurrence        String    @default("monthly") // "daily" | "weekly" | "monthly" | "yearly"
+  nextRunAt         DateTime  @map("next_run_at")
+  endAt             DateTime? @map("end_at")
+  lastRunAt         DateTime? @map("last_run_at")
+  isActive          Boolean   @default(true) @map("is_active")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@index([organizationId])
+  @@index([isActive, nextRunAt])
+  @@map("recurring_transactions")
+}
+
+// ──────────────────────────────────────────────
+// Core: Categories, Projects, Fields
+// ──────────────────────────────────────────────
+
+model Category {
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String        @map("organization_id") @db.Uuid
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  type           String        @default("transaction") // "transaction" | "item" | "quicklink" | "post"
+  code           String?
+  name           String
+  color          String        @default("#c96442")
+  llm_prompt     String?
+  enabled        Boolean       @default(true)
+  
+  parentId       String?       @map("parent_id") @db.Uuid
+  parent         Category?     @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children       Category[]    @relation("CategoryHierarchy")
+
+  transactions   Transaction[]
+  items          Item[]
+  quicklinks     Quicklink[]
+  jobPostings    JobPosting[]
+
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@index([type])
+  @@map("categories")
+}
+
+model Project {
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String        @map("organization_id") @db.Uuid
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String
+  name           String
+  color          String        @default("#000000")
+  llm_prompt     String?
+  transactions   Transaction[]
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  @@unique([organizationId, code])
+  @@map("projects")
+}
+
+model Field {
+  id                  String       @id @default(uuid()) @db.Uuid
+  organizationId      String       @map("organization_id") @db.Uuid
+  organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code                String
+  name                String
+  type                String       @default("string")
+  llm_prompt          String?
+  options             Json?
+  createdAt           DateTime     @default(now()) @map("created_at")
+  isVisibleInList     Boolean      @default(false) @map("is_visible_in_list")
+  isVisibleInAnalysis Boolean      @default(false) @map("is_visible_in_analysis")
+  isRequired          Boolean      @default(false) @map("is_required")
+  isExtra             Boolean      @default(true) @map("is_extra")
+
+  @@unique([organizationId, code])
+  @@map("fields")
+}
+
+// ──────────────────────────────────────────────
+// Core: Files, Currency, Settings
+// ──────────────────────────────────────────────
+
+model File {
+  id                String       @id @default(uuid()) @db.Uuid
+  organizationId    String       @map("organization_id") @db.Uuid
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId            String       @map("user_id") @db.Uuid // who uploaded
+  filename          String
+  path              String
+  mimetype          String
+  metadata          Json?
+  isReviewed        Boolean      @default(false) @map("is_reviewed")
+  isSplitted        Boolean      @default(false) @map("is_splitted")
+  cachedParseResult Json?        @map("cached_parse_result")
+  createdAt         DateTime     @default(now()) @map("created_at")
+
+  @@index([organizationId])
+  @@map("files")
+}
+
+model Currency {
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String?       @map("organization_id") @db.Uuid
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String
+  name           String
+
+  @@unique([organizationId, code])
+  @@map("currencies")
+}
+
+model Setting {
+  id             String        @id @default(uuid()) @db.Uuid
+  organizationId String        @map("organization_id") @db.Uuid
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String
+  name           String
+  description    String?
+  value          String?
+
+  @@unique([organizationId, code])
+  @@map("settings")
+}
+
+model AppData {
+  id             String       @id @default(uuid()) @db.Uuid
+  app            String
+  organizationId String       @map("organization_id") @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  data           Json
+
+  @@unique([organizationId, app])
+  @@map("app_data")
+}
+
+model Progress {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String       @map("user_id") @db.Uuid // who triggered
+  type           String
+  data           Json?
+  current        Int          @default(0)
+  total          Int          @default(0)
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@index([organizationId])
+  @@index([userId])
+  @@map("progress")
+}
+
+// ──────────────────────────────────────────────
+// Engage: Social Media Management
+// ──────────────────────────────────────────────
+
+model SocialAccount {
+  id                String       @id @default(uuid()) @db.Uuid
+  organizationId    String       @map("organization_id") @db.Uuid
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  provider          String       // social: "twitter" | "linkedin" | "instagram" | "facebook" | blog: "wordpress" | "medium" | "devto" | "hashnode" | custom: "website" | "newsletter"
+  providerAccountId String       @map("provider_account_id")
+  name              String
+  username          String?
+  picture           String?
+  accessToken       String       @map("access_token")
+  refreshToken      String?      @map("refresh_token")
+  tokenExpiresAt    DateTime?    @map("token_expires_at")
+  scopes            String?
+  disabled          Boolean      @default(false)
+  refreshNeeded     Boolean      @default(false) @map("refresh_needed")
+  metadata          Json?
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  posts SocialPost[]
+
+  @@unique([organizationId, provider, providerAccountId])
+  @@index([organizationId])
+  @@index([provider])
+  @@map("social_accounts")
+}
+
+model SocialPost {
+  id              String        @id @default(uuid()) @db.Uuid
+  organizationId  String        @map("organization_id") @db.Uuid
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  socialAccountId String        @map("social_account_id") @db.Uuid
+  socialAccount   SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  createdById     String        @map("created_by_id") @db.Uuid
+  group           String        @default(uuid())
+  contentType     String        @default("post") @map("content_type") // "post" | "article" | "newsletter" | "page" | "thread"
+  content         String
+  title           String?
+  excerpt         String?       // summary/subtitle for articles
+  slug            String?       // URL slug for blog posts
+  tags            String[]      @default([]) // hashtags, categories, keywords
+  settings        Json?         // provider-specific settings (poll options, blog category, featured image, etc.)
+  status          String        @default("draft") // "draft" | "queued" | "publishing" | "published" | "error"
+  scheduledAt     DateTime?     @map("scheduled_at")
+  publishedAt     DateTime?     @map("published_at")
+  externalPostId  String?       @map("external_post_id")
+  externalUrl     String?       @map("external_url")
+  error           String?
+  templateId      String?       @map("template_id") @db.Uuid
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  media     SocialPostMedia[]
+  analytics SocialPostAnalytics[]
+
+  @@index([organizationId])
+  @@index([socialAccountId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([group])
+  @@index([createdAt])
+  @@map("social_posts")
+}
+
+model SocialPostMedia {
+  id        String     @id @default(uuid()) @db.Uuid
+  postId    String     @map("post_id") @db.Uuid
+  post      SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  fileId    String?    @map("file_id") @db.Uuid
+  url       String?
+  type      String     @default("image") // "image" | "video" | "gif"
+  alt       String?
+  sortOrder Int        @default(0) @map("sort_order")
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  @@index([postId])
+  @@map("social_post_media")
+}
+
+model SocialPostAnalytics {
+  id          String     @id @default(uuid()) @db.Uuid
+  postId      String     @map("post_id") @db.Uuid
+  post        SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  date        DateTime   @db.Date
+  impressions Int        @default(0)
+  engagements Int        @default(0)
+  likes       Int        @default(0)
+  shares      Int        @default(0)
+  comments    Int        @default(0)
+  clicks      Int        @default(0)
+  reach       Int        @default(0)
+  extra       Json?
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  @@unique([postId, date])
+  @@index([postId])
+  @@index([date])
+  @@map("social_post_analytics")
+}
+
+model ContentTemplate {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  content        String
+  category       String?
+  platforms      String[]     @default([])
+  createdById    String       @map("created_by_id") @db.Uuid
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@index([organizationId])
+  @@map("content_templates")
+}
+
+// ──────────────────────────────────────────────
+// CRM: Contacts (external — clients, vendors, contractors, providers, partners)
+// ──────────────────────────────────────────────
+
+model Contact {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Type discriminator — drives which tab/section shows this contact
+  // "client" | "vendor" | "contractor" | "provider" | "partner"
+  type           String       @default("client")
+
+  // Core identity
+  name           String
+  email          String?
+  phone          String?
+  website        String?
+
+  // Financial / tax
+  taxId          String?      @map("tax_id")   // GSTIN, PAN, EIN, VAT, ABN
+  currency       String       @default("INR")
+  reference      String?      // Internal code / account ref
+
+  // Address block
+  address        String?
+  city           String?
+  state          String?
+  zipCode        String?      @map("zip_code")
+  country        String?
+
+  // Media & notes
+  avatar         String?      // URL — stored via existing File model
+  notes          String?
+
+  // Lifecycle
+  isActive       Boolean      @default(true)  @map("is_active")
+  deletedAt      DateTime?    @map("deleted_at")  // soft delete
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt      @map("updated_at")
+
+  persons        ContactPerson[]
+  invoices       Invoice[]
+  bills          Bill[]
+  transactions   Transaction[]
+  marketingSubmissions MarketingSubmission[]
+  leads          Lead[]
+
+  @@index([organizationId])
+  @@index([type])
+  @@index([isActive])
+  @@index([name])
+  @@index([deletedAt])
+  @@map("contacts")
+}
+
+model ContactPerson {
+  id        String   @id @default(uuid()) @db.Uuid
+  contactId String   @map("contact_id") @db.Uuid
+  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  name      String
+  email     String?
+  phone     String?
+  // e.g. "accounts", "procurement", "legal", "cfo", "hr", "other"
+  role      String?
+  isPrimary Boolean  @default(false) @map("is_primary")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([contactId])
+  @@map("contact_persons")
+}
+
+// ──────────────────────────────────────────────
+// People: Quicklinks
+// ──────────────────────────────────────────────
+
+model Quicklink {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title          String
+  url            String
+  
+  categoryId     String?      @map("category_id") @db.Uuid
+  category       Category?    @relation(fields: [categoryId], references: [id])
+  
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@index([organizationId])
+  @@map("quicklinks")
+}
+
+// ──────────────────────────────────────────────
+// Centralized Items & Taxes (Products/Services)
+// ──────────────────────────────────────────────
+
+model Item {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  categoryId     String?      @map("category_id") @db.Uuid
+  category       Category?    @relation(fields: [categoryId], references: [id])
+  
+  taxId          String?      @map("tax_id") @db.Uuid
+  tax            Tax?         @relation(fields: [taxId], references: [id])
+  
+  name           String
+  sku            String?
+  description    String?
+  salePrice      Int          @default(0) @map("sale_price") // Stored in cents/paise
+  purchasePrice  Int          @default(0) @map("purchase_price")
+  type           String       @default("service") // "product" | "service"
+  enabled        Boolean      @default(true)
+  
+  invoiceItems   InvoiceItem[]
+  billItems      BillItem[]
+
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@index([organizationId])
+  @@map("items")
+}
+
+model Tax {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  name           String       // e.g. "GST 18%"
+  rate           Float        // e.g. 18.0
+  type           String       @default("normal") // "normal" | "inclusive" | "compound"
+  enabled        Boolean      @default(true)
+
+  items          Item[]
+  invoiceItems   InvoiceItem[]
+  billItems      BillItem[]
+
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("taxes")
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  invoiceId   String   @map("invoice_id") @db.Uuid
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  itemId      String?  @map("item_id") @db.Uuid
+  item        Item?    @relation(fields: [itemId], references: [id])
+  
+  name        String   // Snapshot of Item name at time of invoice
+  description String?
+  quantity    Int      @default(1)
+  price       Int      @default(0) // In cents/paise
+  
+  taxId       String?  @map("tax_id") @db.Uuid
+  tax         Tax?     @relation(fields: [taxId], references: [id])
+  taxAmount   Int      @default(0) @map("tax_amount")
+  
+  total       Int      @default(0)
+
+  @@index([invoiceId])
+  @@index([itemId])
+  @@map("invoice_items")
+}
+
+// ──────────────────────────────────────────────
+// Bookkeeping: Bills (Payables)
+// ──────────────────────────────────────────────
+
+model Bill {
+  id              String       @id @default(uuid()) @db.Uuid
+  organizationId  String       @map("organization_id") @db.Uuid
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  // Link to Contact record (vendor)
+  contactId       String?      @map("contact_id") @db.Uuid
+  contact         Contact?     @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  
+  billNumber      String       @map("bill_number")
+  status          String       @default("draft") // "draft" | "pending" | "paid" | "overdue" | "cancelled"
+  
+  vendorName      String       @map("vendor_name")
+  vendorEmail     String?      @map("vendor_email")
+  vendorAddress   String?      @map("vendor_address")
+  vendorTaxId     String?      @map("vendor_tax_id")
+  
+  billItems       BillItem[]
+  
+  subtotal        Int          @default(0)
+  taxTotal        Int          @default(0) @map("tax_total")
+  total           Int          @default(0)
+  currency        String       @default("INR")
+  
+  issuedAt        DateTime?    @map("issued_at")
+  dueAt           DateTime?    @map("due_at")
+  paidAt          DateTime?    @map("paid_at")
+  
+  notes           String?
+  transactionId   String?      @map("transaction_id") @db.Uuid
+  files           Json         @default("[]")
+  
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  @@unique([organizationId, billNumber])
+  @@index([organizationId])
+  @@index([status])
+  @@index([contactId])
+  @@map("bills")
+}
+
+model BillItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  billId      String   @map("bill_id") @db.Uuid
+  bill        Bill     @relation(fields: [billId], references: [id], onDelete: Cascade)
+  
+  itemId      String?  @map("item_id") @db.Uuid
+  item        Item?    @relation(fields: [itemId], references: [id])
+  
+  name        String   // Snapshot of Item name
+  description String?
+  quantity    Int      @default(1)
+  price       Int      @default(0) // In cents/paise
+  
+  taxId       String?  @map("tax_id") @db.Uuid
+  tax         Tax?     @relation(fields: [taxId], references: [id])
+  taxAmount   Int      @default(0) @map("tax_amount")
+  
+  total       Int      @default(0)
+
+  @@index([billId])
+  @@index([itemId])
+  @@map("bill_items")
+}
+
+// ──────────────────────────────────────────────
+// Recruitment: Jobs, Candidates, Applicants
+// ──────────────────────────────────────────────
+
+model JobPosting {
+  id              String       @id @default(uuid()) @db.Uuid
+  organizationId  String       @map("organization_id") @db.Uuid
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdById     String       @map("created_by_id") @db.Uuid
+  
+  title           String
+  description     String?      @db.Text
+  requirements    String?      @db.Text
+  
+  // Ceipal Aligned Metadata
+  status          String       @default("draft") // "draft" | "open" | "closed" | "on_hold"
+  type            String       @default("permanent") // "permanent" | "contract" | "c2h" | "freelance"
+  experienceMin   Int?         @map("experience_min")
+  experienceMax   Int?         @map("experience_max")
+  salaryMin       Int?         @map("salary_min")
+  salaryMax       Int?         @map("salary_max")
+  currency        String       @default("INR")
+  
+  // Tagging & Grouping
+  jobCategoryCode String?      @map("job_category_code")
+  categoryId      String?      @map("category_id") @db.Uuid
+  category        Category?    @relation(fields: [categoryId], references: [id])
+  
+  // Migration Key
+  externalProviderId String?   @map("external_provider_id") // ID from Ceipal/LinkedIn
+  
+  candidates      Candidate[]
+  
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  @@index([organizationId])
+  @@index([status])
+  @@map("job_postings")
+}
+
+model Candidate {
+  id              String       @id @default(uuid()) @db.Uuid
+  organizationId  String       @map("organization_id") @db.Uuid
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  // Link to Job (for ATS group)
+  jobId           String?      @map("job_id") @db.Uuid
+  job             JobPosting?  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  // Identity
+  firstName       String       @map("first_name")
+  lastName        String       @map("last_name")
+  email           String
+  phone           String?
+  
+  // Recruitment Status
+  group           String       @default("ATS") // "ATS" | "BENCH"
+  status          String       @default("new") // "new" | "screening" | "interview" | "offered" | "hired" | "rejected"
+  benchStatus     String?      @default("available") // "available" | "marketing" | "interviewing" | "deployed"
+  
+  // Metadata & Sourcing
+  resumePath      String?      @map("resume_path")
+  linkedinUrl     String?      @map("linkedin_url")
+  portfolioUrl    String?      @map("portfolio_url")
+  sourcedFrom     String?      @map("sourced_from")
+  workAuthorization String?    @map("work_authorization")
+  
+  // Bench / Marketing Specifics
+  hourlyRate      Int?         @map("hourly_rate")
+  marketingBio    String?      @db.Text @map("marketing_bio")
+  availabilityDate DateTime?   @map("availability_date")
+  
+  notes           String?      @db.Text
+  
+  // Migration Key
+  externalCandidateId String?  @map("external_candidate_id")
+  
+  submissions     MarketingSubmission[]
+  
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  @@index([organizationId])
+  @@index([jobId])
+  @@index([status])
+  @@index([group])
+  @@map("candidates")
+}
+
+model MarketingSubmission {
+  id              String       @id @default(uuid()) @db.Uuid
+  organizationId  String       @map("organization_id") @db.Uuid
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  candidateId     String       @map("candidate_id") @db.Uuid
+  candidate       Candidate    @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  
+  contactId       String       @map("contact_id") @db.Uuid
+  contact         Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  
+  status          String       @default("sent") // "sent" | "feedback_received" | "interview_scheduled" | "declined"
+  sentAt          DateTime     @default(now()) @map("sent_at")
+  notes           String?      @db.Text
+  
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  @@index([organizationId])
+  @@index([candidateId])
+  @@index([contactId])
+  @@map("marketing_submissions")
+}
+
+// ──────────────────────────────────────────────
+// CRM — Leads
+// ──────────────────────────────────────────────
+
+model Lead {
+  id              String       @id @default(uuid()) @db.Uuid
+  organizationId  String       @map("organization_id") @db.Uuid
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Core
+  title           String                        // "Website redesign project"
+  contactName     String       @map("contact_name")
+  email           String?
+  phone           String?
+  company         String?
+
+  // Pipeline
+  stage           String       @default("new")  // "new" | "contacted" | "qualified" | "proposal" | "negotiation" | "won" | "lost"
+  source          String?                       // "website" | "referral" | "linkedin" | "cold_call" | "advertisement" | "other"
+  value           Int          @default(0)      // in cents
+  currency        String       @default("INR")
+  probability     Int          @default(0)      // 0-100%
+
+  // Assignment
+  assignedToId    String?      @map("assigned_to_id") @db.Uuid
+
+  // Conversion
+  contactId       String?      @map("contact_id") @db.Uuid
+  contact         Contact?     @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  convertedAt     DateTime?    @map("converted_at")
+
+  // Details
+  description     String?      @db.Text
+  expectedCloseAt DateTime?    @map("expected_close_at")
+  lostReason      String?      @map("lost_reason")
+
+  // Lifecycle
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  @@index([organizationId])
+  @@index([stage])
+  @@index([source])
+  @@index([assignedToId])
+  @@index([contactId])
+  @@map("leads")
+}
+
+// ──────────────────────────────────────────────
+// AI: LLM Prompts Registry
+// ──────────────────────────────────────────────
+
+model LlmPrompt {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name           String                              // "Transaction analysis", "Blog generator"
+  module         String                              // "unsorted", "engage", "hire", "sales"
+  prompt         String       @db.Text               // The system prompt text
+  provider       String?                             // Provider key override (null = use default)
+  model          String?                             // Model override (null = use provider default)
+  enabled        Boolean      @default(true)
+
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@index([organizationId])
+  @@index([organizationId, module])
+  @@map("llm_prompts")
+}
