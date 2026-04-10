@@ -21,7 +21,6 @@ import {
   verticalListSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -211,7 +210,7 @@ function SortableCandidateCard({ candidate }: any) {
   } = useSortable({ id: candidate.id });
 
   const style = {
-    transform: CSS.Translate.toString(transform),
+    transform: transform ? `translate3d(${Math.round(transform.x)}px, ${Math.round(transform.y)}px, 0)` : undefined,
     transition,
     opacity: isDragging ? 0 : 1,
   };
