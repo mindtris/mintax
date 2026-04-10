@@ -62,7 +62,7 @@ export function UnsortedFileTable({
       key: "size",
       label: "Size",
       render: (file: File) => {
-        const sizeInMb = (file.size || 0) / (1024 * 1024)
+        const sizeInMb = ((file as any).size || 0) / (1024 * 1024)
         return <span className="text-xs text-muted-foreground font-mono">{sizeInMb.toFixed(2)} MB</span>
       },
     },
@@ -71,7 +71,7 @@ export function UnsortedFileTable({
       label: "Type",
       render: (file: File) => (
         <Badge variant="outline" className="text-[10px] font-bold border-black/[0.08] bg-black/[0.02] uppercase tracking-wider">
-          {file.contentType?.split("/")[1] || "File"}
+          {file.mimetype?.split("/")[1] || "File"}
         </Badge>
       ),
     },

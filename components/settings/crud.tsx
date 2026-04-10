@@ -223,7 +223,7 @@ export function CrudTable<T extends { [key: string]: any }>({
   }))
 
   // Add actions column with ellipsis dropdown
-  if (onEdit || onDelete) {
+  {
     gridColumns.push({
       key: "__actions",
       label: "",
@@ -242,7 +242,7 @@ export function CrudTable<T extends { [key: string]: any }>({
                 Edit
               </DropdownMenuItem>
             )}
-            {onDelete && !!row.isDeletable && (
+            {row.isDeletable && (
               <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleDelete(row)}>
                 <Trash2 className="h-4 w-4" />
                 Delete

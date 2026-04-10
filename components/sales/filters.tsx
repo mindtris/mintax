@@ -53,7 +53,7 @@ export function SalesSearchAndFilters({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by number or client..."
-            defaultValue={filters.q}
+            defaultValue={(filters as any).q}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 handleFilterChange("q", (e.target as HTMLInputElement).value)

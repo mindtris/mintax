@@ -51,15 +51,15 @@ export function NewLeadSheet({
           <form action={formAction} className="flex flex-col gap-4">
             {isEdit && <input type="hidden" name="leadId" value={lead.id} />}
 
-            <FormInput label="Lead title" name="title" required defaultValue={lead?.title} placeholder="e.g. Website redesign project" />
-            <FormInput label="Contact name" name="contactName" required defaultValue={lead?.contactName} placeholder="Full name" />
+            <FormInput title="Lead title" name="title" required defaultValue={lead?.title} placeholder="e.g. Website redesign project" />
+            <FormInput title="Contact name" name="contactName" required defaultValue={lead?.contactName} placeholder="Full name" />
 
             <div className="grid grid-cols-2 gap-4">
-              <FormInput label="Email" name="email" type="email" defaultValue={lead?.email} placeholder="email@example.com" />
-              <FormInput label="Phone" name="phone" defaultValue={lead?.phone} placeholder="+91..." />
+              <FormInput title="Email" name="email" type="email" defaultValue={lead?.email} placeholder="email@example.com" />
+              <FormInput title="Phone" name="phone" defaultValue={lead?.phone} placeholder="+91..." />
             </div>
 
-            <FormInput label="Company" name="company" defaultValue={lead?.company} placeholder="Company name" />
+            <FormInput title="Company" name="company" defaultValue={lead?.company} placeholder="Company name" />
 
             <div className="grid grid-cols-2 gap-4">
               <FormSelect
@@ -80,14 +80,14 @@ export function NewLeadSheet({
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-              <FormInput label="Value" name="value" type="number" step="0.01" defaultValue={lead ? (lead.value / 100).toFixed(2) : ""} placeholder="0.00" />
-              <FormInput label="Currency" name="currency" defaultValue={lead?.currency || currency} />
-              <FormInput label="Probability %" name="probability" type="number" min="0" max="100" defaultValue={lead?.probability || 0} />
+              <FormInput title="Value" name="value" type="number" step="0.01" defaultValue={lead ? (lead.value / 100).toFixed(2) : ""} placeholder="0.00" />
+              <FormInput title="Currency" name="currency" defaultValue={lead?.currency || currency} />
+              <FormInput title="Probability %" name="probability" type="number" min="0" max="100" defaultValue={lead?.probability || 0} />
             </div>
 
-            <FormInput label="Expected close date" name="expectedCloseAt" type="date" defaultValue={lead?.expectedCloseAt ? new Date(lead.expectedCloseAt).toISOString().split("T")[0] : ""} />
+            <FormInput title="Expected close date" name="expectedCloseAt" type="date" defaultValue={lead?.expectedCloseAt ? new Date(lead.expectedCloseAt).toISOString().split("T")[0] : ""} />
 
-            <FormTextarea label="Description" name="description" defaultValue={lead?.description} placeholder="Notes about this lead..." />
+            <FormTextarea title="Description" name="description" defaultValue={lead?.description} placeholder="Notes about this lead..." />
 
             {state?.error && (
               <p className="text-sm text-destructive">{state.error}</p>

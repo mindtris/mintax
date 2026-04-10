@@ -20,9 +20,9 @@ export async function PipelineView() {
   for (const job of jobs) {
     const pipeline = await getCandidatePipeline(job.id)
     for (const stage of Object.keys(aggregated)) {
-      if (pipeline[stage]) {
-        aggregated[stage].push(
-          ...pipeline[stage].map((c: any) => ({ ...c, jobTitle: job.title }))
+      if ((pipeline as any)[stage]) {
+        (aggregated as any)[stage].push(
+          ...(pipeline as any)[stage].map((c: any) => ({ ...c, jobTitle: job.title }))
         )
       }
     }

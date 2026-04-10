@@ -1,6 +1,6 @@
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { getBenchResources } from "@/lib/services/candidates"
-import { getContacts } from "@/lib/services/contacts"
+import { listContacts } from "@/lib/services/contacts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -25,7 +25,7 @@ export default async function BenchPage() {
 
   const [resources, clients, templates] = await Promise.all([
     getBenchResources(org.id),
-    getContacts(org.id, { type: "client" }),
+    listContacts(org.id, { type: "client" }),
     getContentTemplates(org.id)
   ])
 

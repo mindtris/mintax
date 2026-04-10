@@ -1,6 +1,6 @@
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { getJobPostings } from "@/lib/services/jobs"
-import { getApplicationPipeline } from "@/lib/services/candidates"
+import { getCandidatePipeline } from "@/lib/services/candidates"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Clock, CheckCircle2, Users, Briefcase, TrendingUp, XCircle } from "lucide-react"
@@ -20,7 +20,7 @@ export default async function PipelineOverviewPage() {
 
   const jobPipelines = await Promise.all(
     jobs.filter((j: any) => j.status === "open").map(async (job: any) => {
-      const pipeline = await getApplicationPipeline(job.id)
+      const pipeline = await getCandidatePipeline(job.id)
       totalNew += pipeline.new.length
       totalScreening += pipeline.screening.length
       totalInterview += pipeline.interview.length

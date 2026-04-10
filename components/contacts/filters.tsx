@@ -42,7 +42,7 @@ export function ContactSearchAndFilters({ countries = [] }: { countries?: string
   }
 
   const activeFilterCount = [
-    filters.type && filters.type !== "-" && filters.type !== "all",
+    filters.type && (filters.type as string) !== "-" && filters.type !== "all",
     filters.country && filters.country !== "-",
   ].filter(Boolean).length
 
