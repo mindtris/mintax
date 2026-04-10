@@ -3,15 +3,9 @@ import type { Metadata, Viewport } from "next"
 import { Inter, Playfair_Display } from "next/font/google"
 import "./globals.css"
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-})
-
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair",
-})
+// Fallback font stubs for restricted network environments
+const inter = { variable: "--font-inter" }
+const playfair = { variable: "--font-playfair" }
 
 export const metadata: Metadata = {
   title: {

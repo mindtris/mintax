@@ -9,7 +9,7 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
   log: ["warn", "error"] 
 })
 
-if (globalForPrisma.prisma === undefined) {
+if (globalForPrisma.prisma === undefined && process.env.NODE_ENV === "development") {
   console.log("🐘 Creating new PrismaClient instance...")
 }
 

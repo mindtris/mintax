@@ -47,25 +47,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <MicrosoftGraphProvider>
-      <NotificationProvider>
-        <ScreenDropArea>
-          <div className="min-h-svh flex flex-col">
-            <TopNav
-              profile={userProfile}
-              unsortedFilesCount={unsortedFilesCount}
-              activeOrg={activeOrg}
-              organizations={organizations}
-            />
-            <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-              {isSubscriptionExpired(user) && <SubscriptionExpired />}
-              {children}
-            </main>
-          </div>
-          <Toaster />
-        </ScreenDropArea>
-      </NotificationProvider>
-    </MicrosoftGraphProvider>
+    <NotificationProvider>
+      <ScreenDropArea>
+        <div className="min-h-svh flex flex-col">
+          <TopNav
+            profile={userProfile}
+            unsortedFilesCount={unsortedFilesCount}
+            activeOrg={activeOrg}
+            organizations={organizations}
+          />
+          <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            {isSubscriptionExpired(user) && <SubscriptionExpired />}
+            {children}
+          </main>
+        </div>
+        <Toaster />
+      </ScreenDropArea>
+    </NotificationProvider>
   )
 }
 
