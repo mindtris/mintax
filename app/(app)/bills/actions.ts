@@ -8,6 +8,9 @@ import {
   markBillPaid,
   getNextBillNumber,
 } from "@/lib/services/bills"
+import { sendPaymentMadeEmail } from "@/lib/integrations/email"
+import { getSettings } from "@/lib/services/settings"
+import { format } from "date-fns"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
@@ -120,6 +123,25 @@ export async function markBillPaidAction(billId: string) {
   })
 
   await markBillPaid(billId, org.id, transaction.id)
+
+  // Send payment made email to vendor
+  if (bill.vendorEmail) {
+    try {
+      const emailSettings = await getSettings(org.id)
+      await sendPaymentMadeEmail({
+        email: bill.vendorEmail,
+        referenceNumber: bill.billNumber,
+        vendorName: bill.vendorName,
+        total: (bill.total / 100).toFixed(2),
+        currency: bill.currency,
+        paidDate: format(new Date(), "MMMM d, yyyy"),
+        orgName: org.name,
+        emailSettings,
+      })
+    } catch (emailError) {
+      console.error("Failed to send payment made email:", emailError)
+    }
+  }
 
   revalidatePath("/accounts")
 }

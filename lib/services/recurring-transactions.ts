@@ -2,6 +2,8 @@
 
 import { prisma } from "@/lib/core/db"
 import { autoAssignCOA } from "./automation"
+import { sendBillRecurringEmail } from "@/lib/integrations/email"
+import { getSettings } from "@/lib/services/settings"
 import { addDays, addMonths, addWeeks, addYears } from "date-fns"
 import { cache } from "react"
 
@@ -84,9 +86,9 @@ export async function toggleRecurringTransaction(id: string, orgId: string) {
 
 /**
  * Process all due recurring transactions across all orgs.
- * Called by the cron job.
+ * Called by the cron job. Sends notification emails to admins.
  */
-export async function processDueRecurringTransactions(): Promise<number> {
+export async function processDueRecurringTransactions(): Promise<{ created: number; emailsSent: number }> {
   const now = new Date()
 
   const dueTransactions = await prisma.recurringTransaction.findMany({
@@ -101,6 +103,7 @@ export async function processDueRecurringTransactions(): Promise<number> {
   })
 
   let created = 0
+  let emailsSent = 0
 
   for (const rt of dueTransactions) {
     try {
@@ -138,12 +141,49 @@ export async function processDueRecurringTransactions(): Promise<number> {
       })
 
       created++
+
+      // Send bill recurring notification to org admins
+      try {
+        const org = await prisma.organization.findUnique({
+          where: { id: rt.organizationId },
+          include: {
+            members: {
+              where: { role: { in: ["owner", "admin"] } },
+              include: { user: { select: { email: true } } },
+            },
+          },
+        })
+
+        if (org) {
+          const emailSettings = await getSettings(org.id)
+          const adminEmails = org.members.map((m) => m.user.email)
+
+          for (const adminEmail of adminEmails) {
+            try {
+              await sendBillRecurringEmail({
+                email: adminEmail,
+                billName: rt.name,
+                total: rt.total ? (rt.total / 100).toFixed(2) : "0.00",
+                currency: rt.currencyCode || org.baseCurrency,
+                recurrence: rt.recurrence,
+                orgName: org.name,
+                emailSettings,
+              })
+              emailsSent++
+            } catch (emailError) {
+              console.error(`Failed to send recurring email to ${adminEmail}:`, emailError)
+            }
+          }
+        }
+      } catch (emailError) {
+        console.error(`Failed to send recurring notification for ${rt.id}:`, emailError)
+      }
     } catch (error) {
       console.error(`Failed to process recurring transaction ${rt.id}:`, error)
     }
   }
 
-  return created
+  return { created, emailsSent }
 }
 
 function calculateNextDate(current: Date, recurrence: string): Date {

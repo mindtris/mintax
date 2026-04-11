@@ -1,7 +1,7 @@
 "use server"
 
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
-import { sendInvoiceEmail } from "@/lib/integrations/email"
+import { sendInvoiceEmail, sendInvoicePaymentReceiptEmail, sendInvoicePaymentReceivedEmail } from "@/lib/integrations/email"
 import { getSettings } from "@/lib/services/settings"
 import {
   createInvoice,
@@ -130,6 +130,46 @@ export async function markInvoicePaidAction(invoiceId: string) {
   })
 
   await markInvoicePaid(invoiceId, org.id, transaction.id)
+
+  // Send payment emails
+  try {
+    const emailSettings = await getSettings(org.id)
+    const paidDate = format(new Date(), "MMMM d, yyyy")
+    const total = (invoice.total / 100).toFixed(2)
+
+    // Payment receipt to customer
+    if (invoice.clientEmail) {
+      await sendInvoicePaymentReceiptEmail({
+        email: invoice.clientEmail,
+        invoiceNumber: invoice.invoiceNumber,
+        clientName: invoice.clientName,
+        total,
+        currency: invoice.currency,
+        paidDate,
+        orgName: org.name,
+        emailSettings,
+      })
+    }
+
+    // Payment received notification to admin
+    const { getOrgMembers } = await import("@/lib/services/organizations")
+    const members = await getOrgMembers(org.id)
+    const admins = members.filter((m) => m.role === "owner" || m.role === "admin")
+    for (const admin of admins) {
+      await sendInvoicePaymentReceivedEmail({
+        email: admin.user.email,
+        invoiceNumber: invoice.invoiceNumber,
+        clientName: invoice.clientName,
+        total,
+        currency: invoice.currency,
+        paidDate,
+        orgName: org.name,
+        emailSettings,
+      })
+    }
+  } catch (emailError) {
+    console.error("Failed to send payment emails:", emailError)
+  }
 
   revalidatePath("/invoices")
   revalidatePath("/accounts")

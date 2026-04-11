@@ -43,12 +43,40 @@ export const categoryFormSchema = z.object({
 })
 
 export const emailTemplateSettingsSchema = z.object({
+  // Global
   email_sender_name: z.string().max(128).optional(),
   email_reply_to: z.string().max(256).optional(),
   email_footer_text: z.string().max(512).optional(),
+  // Bills
+  email_bill_reminder_subject: z.string().max(256).optional(),
+  email_bill_reminder_footer: z.string().max(512).optional(),
+  email_bill_recurring_subject: z.string().max(256).optional(),
+  email_bill_recurring_footer: z.string().max(512).optional(),
+  // Invoices — new invoice
   email_invoice_subject: z.string().max(256).optional(),
   email_invoice_greeting: z.string().max(512).optional(),
   email_invoice_footer_note: z.string().max(512).optional(),
+  // Invoices — reminder (customer + admin)
+  email_invoice_reminder_customer_subject: z.string().max(256).optional(),
+  email_invoice_reminder_customer_footer: z.string().max(512).optional(),
+  email_invoice_reminder_admin_subject: z.string().max(256).optional(),
+  email_invoice_reminder_admin_footer: z.string().max(512).optional(),
+  // Invoices — recurring (customer + admin)
+  email_invoice_recurring_customer_subject: z.string().max(256).optional(),
+  email_invoice_recurring_customer_footer: z.string().max(512).optional(),
+  email_invoice_recurring_admin_subject: z.string().max(256).optional(),
+  email_invoice_recurring_admin_footer: z.string().max(512).optional(),
+  // Invoices — payment
+  email_invoice_payment_receipt_subject: z.string().max(256).optional(),
+  email_invoice_payment_receipt_footer: z.string().max(512).optional(),
+  email_invoice_payment_received_subject: z.string().max(256).optional(),
+  email_invoice_payment_received_footer: z.string().max(512).optional(),
+  // Payments
+  email_payment_receipt_subject: z.string().max(256).optional(),
+  email_payment_receipt_footer: z.string().max(512).optional(),
+  email_payment_made_subject: z.string().max(256).optional(),
+  email_payment_made_footer: z.string().max(512).optional(),
+  // Reminders & Others
   email_reminder_subject: z.string().max(256).optional(),
   email_reminder_footer_note: z.string().max(512).optional(),
   email_otp_subject: z.string().max(256).optional(),

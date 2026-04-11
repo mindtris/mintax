@@ -12,10 +12,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const created = await processDueRecurringTransactions()
+    const { created, emailsSent } = await processDueRecurringTransactions()
 
     return NextResponse.json({
       transactionsCreated: created,
+      emailsSent,
       timestamp: new Date().toISOString(),
     })
   } catch (error) {

@@ -22,8 +22,9 @@ import { toast } from "sonner"
 interface EmailTemplate {
   id: string
   name: string
+  category: string
   module: string
-  description: string
+  sentTo: string
   subjectKey: string
   subjectDefault: string
   subjectVars: string
@@ -37,52 +38,173 @@ interface EmailTemplate {
 }
 
 const EMAIL_TEMPLATES: EmailTemplate[] = [
+  // ── Bills ──
   {
-    id: "invoice",
-    name: "Invoice",
+    id: "bill_reminder",
+    name: "Bill reminder",
+    category: "Bills",
     module: "Accounting",
-    description: "Sent when you email an invoice to a client.",
+    sentTo: "Admin",
+    subjectKey: "email_bill_reminder_subject",
+    subjectDefault: "Bill {billNumber} from {vendorName} is {status}",
+    subjectVars: "{billNumber}, {vendorName}, {orgName}, {status}",
+    fields: [
+      { key: "email_bill_reminder_footer", label: "Footer note", type: "textarea", placeholder: "This is an automated reminder from {orgName}." },
+    ],
+  },
+  {
+    id: "bill_recurring",
+    name: "Bill recurring",
+    category: "Bills",
+    module: "Accounting",
+    sentTo: "Admin",
+    subjectKey: "email_bill_recurring_subject",
+    subjectDefault: "Recurring expense processed: {billName}",
+    subjectVars: "{billName}, {orgName}, {recurrence}",
+    fields: [
+      { key: "email_bill_recurring_footer", label: "Footer note", type: "textarea", placeholder: "This is an automated notification from {orgName}." },
+    ],
+  },
+  // ── Invoices ──
+  {
+    id: "invoice_new",
+    name: "New invoice",
+    category: "Invoices",
+    module: "Accounting",
+    sentTo: "Customer",
     subjectKey: "email_invoice_subject",
     subjectDefault: "Invoice {invoiceNumber} from {orgName}",
     subjectVars: "{invoiceNumber}, {orgName}, {clientName}",
     fields: [
-      {
-        key: "email_invoice_greeting",
-        label: "Greeting message",
-        type: "textarea",
-        placeholder: "A new invoice has been generated for your recent project with {orgName}.",
-        vars: "{clientName}, {orgName}, {invoiceNumber}",
-      },
-      {
-        key: "email_invoice_footer_note",
-        label: "Footer note",
-        type: "textarea",
-        placeholder: "Thank you for your business. If you have any questions, feel free to contact us by replying to this email.",
-      },
+      { key: "email_invoice_greeting", label: "Greeting message", type: "textarea", placeholder: "A new invoice has been generated for your recent project with {orgName}.", vars: "{clientName}, {orgName}, {invoiceNumber}" },
+      { key: "email_invoice_footer_note", label: "Footer note", type: "textarea", placeholder: "Thank you for your business." },
     ],
   },
   {
+    id: "invoice_reminder_customer",
+    name: "Invoice reminder",
+    category: "Invoices",
+    module: "Accounting",
+    sentTo: "Customer",
+    subjectKey: "email_invoice_reminder_customer_subject",
+    subjectDefault: "Invoice {invoiceNumber} is {status}",
+    subjectVars: "{invoiceNumber}, {orgName}, {clientName}, {status}",
+    fields: [
+      { key: "email_invoice_reminder_customer_footer", label: "Footer note", type: "textarea", placeholder: "If you have already sent the payment, please disregard this reminder." },
+    ],
+  },
+  {
+    id: "invoice_reminder_admin",
+    name: "Invoice reminder",
+    category: "Invoices",
+    module: "Accounting",
+    sentTo: "Admin",
+    subjectKey: "email_invoice_reminder_admin_subject",
+    subjectDefault: "Invoice {invoiceNumber} is {status}",
+    subjectVars: "{invoiceNumber}, {orgName}, {clientName}, {status}",
+    fields: [
+      { key: "email_invoice_reminder_admin_footer", label: "Footer note", type: "textarea", placeholder: "This is an automated reminder from {orgName}." },
+    ],
+  },
+  {
+    id: "invoice_recurring_customer",
+    name: "Invoice recurring",
+    category: "Invoices",
+    module: "Accounting",
+    sentTo: "Customer",
+    subjectKey: "email_invoice_recurring_customer_subject",
+    subjectDefault: "Recurring invoice {invoiceNumber} generated",
+    subjectVars: "{invoiceNumber}, {orgName}, {clientName}, {recurrence}",
+    fields: [
+      { key: "email_invoice_recurring_customer_footer", label: "Footer note", type: "textarea", placeholder: "Thank you for your continued business." },
+    ],
+  },
+  {
+    id: "invoice_recurring_admin",
+    name: "Invoice recurring",
+    category: "Invoices",
+    module: "Accounting",
+    sentTo: "Admin",
+    subjectKey: "email_invoice_recurring_admin_subject",
+    subjectDefault: "Recurring invoice {invoiceNumber} generated",
+    subjectVars: "{invoiceNumber}, {orgName}, {clientName}, {recurrence}",
+    fields: [
+      { key: "email_invoice_recurring_admin_footer", label: "Footer note", type: "textarea", placeholder: "This is an automated notification from {orgName}." },
+    ],
+  },
+  {
+    id: "invoice_payment_receipt",
+    name: "Invoice payment receipt",
+    category: "Invoices",
+    module: "Accounting",
+    sentTo: "Customer",
+    subjectKey: "email_invoice_payment_receipt_subject",
+    subjectDefault: "Payment receipt for invoice {invoiceNumber}",
+    subjectVars: "{invoiceNumber}, {orgName}, {clientName}",
+    fields: [
+      { key: "email_invoice_payment_receipt_footer", label: "Footer note", type: "textarea", placeholder: "This email serves as your payment receipt." },
+    ],
+  },
+  {
+    id: "invoice_payment_received",
+    name: "Invoice payment received",
+    category: "Invoices",
+    module: "Accounting",
+    sentTo: "Admin",
+    subjectKey: "email_invoice_payment_received_subject",
+    subjectDefault: "Payment received for invoice {invoiceNumber}",
+    subjectVars: "{invoiceNumber}, {orgName}, {clientName}",
+    fields: [
+      { key: "email_invoice_payment_received_footer", label: "Footer note", type: "textarea", placeholder: "This is an automated notification from {orgName}." },
+    ],
+  },
+  // ── Payments ──
+  {
+    id: "payment_receipt",
+    name: "Payment receipt",
+    category: "Payments",
+    module: "Accounting",
+    sentTo: "Customer",
+    subjectKey: "email_payment_receipt_subject",
+    subjectDefault: "Payment receipt from {orgName}",
+    subjectVars: "{referenceNumber}, {recipientName}, {orgName}",
+    fields: [
+      { key: "email_payment_receipt_footer", label: "Footer note", type: "textarea", placeholder: "This email serves as your payment confirmation." },
+    ],
+  },
+  {
+    id: "payment_made",
+    name: "Payment made",
+    category: "Payments",
+    module: "Accounting",
+    sentTo: "Vendor",
+    subjectKey: "email_payment_made_subject",
+    subjectDefault: "Payment sent to {vendorName}",
+    subjectVars: "{referenceNumber}, {vendorName}, {orgName}",
+    fields: [
+      { key: "email_payment_made_footer", label: "Footer note", type: "textarea", placeholder: "This email serves as your payment confirmation." },
+    ],
+  },
+  // ── Others ──
+  {
     id: "reminder",
-    name: "Reminder",
+    name: "Reminder notification",
+    category: "Others",
     module: "Pipeline",
-    description: "Sent automatically for due reminders (tax deadlines, invoice due dates, tasks).",
+    sentTo: "Assignee",
     subjectKey: "email_reminder_subject",
     subjectDefault: "Reminder: {reminderTitle}",
     subjectVars: "{reminderTitle}, {orgName}, {category}",
     fields: [
-      {
-        key: "email_reminder_footer_note",
-        label: "Footer note",
-        type: "textarea",
-        placeholder: "Custom message shown below the reminder details.",
-      },
+      { key: "email_reminder_footer_note", label: "Footer note", type: "textarea", placeholder: "Custom message shown below the reminder details." },
     ],
   },
   {
     id: "otp",
     name: "Verification code",
+    category: "Others",
     module: "Authentication",
-    description: "Sent when a user signs in with email OTP.",
+    sentTo: "User",
     subjectKey: "email_otp_subject",
     subjectDefault: "Your Mintax verification code",
     subjectVars: "",
@@ -91,18 +213,14 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
   {
     id: "newsletter",
     name: "Newsletter welcome",
+    category: "Others",
     module: "Engage",
-    description: "Sent when someone subscribes to your newsletter.",
+    sentTo: "Subscriber",
     subjectKey: "email_newsletter_subject",
     subjectDefault: "Welcome to Mintax Newsletter!",
     subjectVars: "",
     fields: [
-      {
-        key: "email_newsletter_greeting",
-        label: "Greeting message",
-        type: "textarea",
-        placeholder: "Thank you for subscribing to our updates.",
-      },
+      { key: "email_newsletter_greeting", label: "Greeting message", type: "textarea", placeholder: "Thank you for subscribing to our updates." },
     ],
   },
 ]
@@ -112,9 +230,10 @@ const EMAIL_TEMPLATES: EmailTemplate[] = [
 interface TemplateRow {
   id: string
   name: string
+  category: string
   module: string
+  sentTo: string
   subject: string
-  description: string
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -124,11 +243,20 @@ interface Props {
   orgName: string
 }
 
-const MODULE_COLORS: Record<string, string> = {
-  Accounting: "bg-blue-100 text-blue-700",
-  Pipeline: "bg-orange-100 text-orange-700",
-  Authentication: "bg-purple-100 text-purple-700",
-  Engage: "bg-green-100 text-green-700",
+const CATEGORY_COLORS: Record<string, string> = {
+  Bills: "bg-amber-100 text-amber-700",
+  Invoices: "bg-blue-100 text-blue-700",
+  Payments: "bg-green-100 text-green-700",
+  Others: "bg-purple-100 text-purple-700",
+}
+
+const SENT_TO_COLORS: Record<string, string> = {
+  Admin: "bg-slate-100 text-slate-600",
+  Customer: "bg-sky-100 text-sky-700",
+  Vendor: "bg-orange-100 text-orange-700",
+  Assignee: "bg-violet-100 text-violet-700",
+  User: "bg-gray-100 text-gray-600",
+  Subscriber: "bg-emerald-100 text-emerald-700",
 }
 
 export default function EmailTemplateSettingsForm({ settings, orgName }: Props) {
@@ -156,9 +284,10 @@ export default function EmailTemplateSettingsForm({ settings, orgName }: Props) 
       EMAIL_TEMPLATES.map((t) => ({
         id: t.id,
         name: t.name,
+        category: t.category,
         module: t.module,
+        sentTo: t.sentTo,
         subject: settings[t.subjectKey] || t.subjectDefault,
-        description: t.description,
       })),
     [settings]
   )
@@ -186,19 +315,29 @@ export default function EmailTemplateSettingsForm({ settings, orgName }: Props) 
       className: "font-semibold",
     },
     {
-      key: "module",
-      label: "Module",
+      key: "category",
+      label: "Category",
       sortable: true,
       render: (row) => (
-        <Badge variant="secondary" className={MODULE_COLORS[row.module] || ""}>
-          {row.module}
+        <Badge variant="secondary" className={CATEGORY_COLORS[row.category] || ""}>
+          {row.category}
+        </Badge>
+      ),
+    },
+    {
+      key: "sentTo",
+      label: "Sent to",
+      sortable: true,
+      render: (row) => (
+        <Badge variant="outline" className={SENT_TO_COLORS[row.sentTo] || ""}>
+          {row.sentTo}
         </Badge>
       ),
     },
     {
       key: "subject",
       label: "Subject line",
-      className: "text-muted-foreground",
+      className: "text-muted-foreground max-w-[300px] truncate",
     },
   ]
 
@@ -236,8 +375,15 @@ export default function EmailTemplateSettingsForm({ settings, orgName }: Props) 
       <Sheet open={!!selectedTemplate} onOpenChange={(open) => !open && setSelectedTemplate(null)}>
         <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-auto max-h-[96vh] rounded-lg w-[95vw] sm:max-w-md flex flex-col gap-0 p-0">
           <SheetHeader className="px-6 pt-6 pb-4 shrink-0 border-b">
-            <SheetTitle>{selectedTemplate?.name} email</SheetTitle>
-            <p className="text-sm text-muted-foreground">{selectedTemplate?.description}</p>
+            <SheetTitle>{selectedTemplate?.name}</SheetTitle>
+            <div className="flex gap-2 mt-1">
+              {selectedTemplate && (
+                <>
+                  <Badge variant="secondary" className={CATEGORY_COLORS[selectedTemplate.category] || ""}>{selectedTemplate.category}</Badge>
+                  <Badge variant="outline" className={SENT_TO_COLORS[selectedTemplate.sentTo] || ""}>Sent to {selectedTemplate.sentTo.toLowerCase()}</Badge>
+                </>
+              )}
+            </div>
           </SheetHeader>
           <form action={saveAction} className="flex-1 flex flex-col overflow-hidden">
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
@@ -287,6 +433,10 @@ export default function EmailTemplateSettingsForm({ settings, orgName }: Props) 
                   )}
                 </div>
               ))}
+
+              {selectedTemplate?.fields.length === 0 && (
+                <p className="text-sm text-muted-foreground">Only the subject line is customizable for this template.</p>
+              )}
             </div>
             <SheetFooter className="px-6 py-4 shrink-0 border-t">
               <div className="flex gap-2 w-full">

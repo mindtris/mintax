@@ -1,4 +1,7 @@
 import { prisma } from "@/lib/core/db"
+import { sendBillReminderEmail, sendInvoiceReminderEmail } from "@/lib/integrations/email"
+import { getSettings } from "@/lib/services/settings"
+import { format } from "date-fns"
 import { NextRequest, NextResponse } from "next/server"
 
 export const maxDuration = 60
@@ -32,9 +35,101 @@ export async function GET(request: NextRequest) {
       data: { status: "overdue" },
     })
 
+    // ── Send overdue invoice reminders to admins ────────────────────────
+    let invoiceEmailsSent = 0
+    if (overdueInvoices.count > 0) {
+      const invoices = await prisma.invoice.findMany({
+        where: { status: "overdue" },
+        include: { organization: { include: { members: { where: { role: { in: ["owner", "admin"] } }, include: { user: { select: { email: true } } } } } } },
+      })
+
+      for (const invoice of invoices) {
+        const orgId = invoice.organizationId
+        const emailSettings = await getSettings(orgId)
+        const adminEmails = invoice.organization.members.map((m) => m.user.email)
+
+        for (const adminEmail of adminEmails) {
+          try {
+            await sendInvoiceReminderEmail({
+              email: adminEmail,
+              invoiceNumber: invoice.invoiceNumber,
+              clientName: invoice.clientName,
+              total: (invoice.total / 100).toFixed(2),
+              currency: invoice.currency,
+              dueDate: invoice.dueAt ? format(invoice.dueAt, "MMMM d, yyyy") : "Not specified",
+              orgName: invoice.organization.name,
+              status: "overdue",
+              recipient: "admin",
+              emailSettings,
+            })
+            invoiceEmailsSent++
+          } catch (error) {
+            console.error(`Failed to send overdue invoice email for ${invoice.invoiceNumber}:`, error)
+          }
+        }
+
+        // Also send to customer if they have an email
+        if (invoice.clientEmail) {
+          try {
+            await sendInvoiceReminderEmail({
+              email: invoice.clientEmail,
+              invoiceNumber: invoice.invoiceNumber,
+              clientName: invoice.clientName,
+              total: (invoice.total / 100).toFixed(2),
+              currency: invoice.currency,
+              dueDate: invoice.dueAt ? format(invoice.dueAt, "MMMM d, yyyy") : "Not specified",
+              orgName: invoice.organization.name,
+              status: "overdue",
+              recipient: "customer",
+              emailSettings,
+            })
+            invoiceEmailsSent++
+          } catch (error) {
+            console.error(`Failed to send overdue invoice email to customer for ${invoice.invoiceNumber}:`, error)
+          }
+        }
+      }
+    }
+
+    // ── Send overdue bill reminders to admins ───────────────────────────
+    let billEmailsSent = 0
+    if (overdueBills.count > 0) {
+      const bills = await prisma.bill.findMany({
+        where: { status: "overdue" },
+        include: { organization: { include: { members: { where: { role: { in: ["owner", "admin"] } }, include: { user: { select: { email: true } } } } } } },
+      })
+
+      for (const bill of bills) {
+        const orgId = bill.organizationId
+        const emailSettings = await getSettings(orgId)
+        const adminEmails = bill.organization.members.map((m) => m.user.email)
+
+        for (const adminEmail of adminEmails) {
+          try {
+            await sendBillReminderEmail({
+              email: adminEmail,
+              billNumber: bill.billNumber,
+              vendorName: bill.vendorName,
+              total: (bill.total / 100).toFixed(2),
+              currency: bill.currency,
+              dueDate: bill.dueAt ? format(bill.dueAt, "MMMM d, yyyy") : "Not specified",
+              orgName: bill.organization.name,
+              status: "overdue",
+              emailSettings,
+            })
+            billEmailsSent++
+          } catch (error) {
+            console.error(`Failed to send overdue bill email for ${bill.billNumber}:`, error)
+          }
+        }
+      }
+    }
+
     return NextResponse.json({
       invoicesUpdated: overdueInvoices.count,
       billsUpdated: overdueBills.count,
+      invoiceEmailsSent,
+      billEmailsSent,
       timestamp: now.toISOString(),
     })
   } catch (error) {
