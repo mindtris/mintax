@@ -51,7 +51,7 @@ export function DemoForm() {
             title="Work email"
             name="email"
             type="email"
-            placeholder="john@company.com"
+            placeholder="akshitha@mindtris.com"
             required
           />
         </div>
