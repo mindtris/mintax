@@ -1,3 +1,5 @@
+import config from "@/lib/core/config"
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen relative font-sans">
@@ -21,7 +23,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         {/* Footer */}
         <div className="p-6 text-center">
           <p className="text-white/40 text-xs">
-            &copy; 2026 Mintax by Mindtris&trade; Inc. All rights reserved.
+            &copy; 2026 {config.app.title} by <a href="https://www.mindtris.com/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors underline-offset-4 hover:underline">Mindtris&trade; Inc</a>. All rights reserved.
           </p>
         </div>
       </div>

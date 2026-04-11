@@ -37,6 +37,8 @@ const envSchema = z.object({
   CRON_SECRET: z.string().optional(),
   // Microsoft Graph
   NEXT_PUBLIC_MICROSOFT_CLIENT_ID: z.string().default(""),
+  GITHUB_TOKEN: z.string().optional(),
+  GITHUB_REPO: z.string().default("mindtris/mintax"),
 })
 
 const env = envSchema.parse(process.env)
@@ -111,6 +113,10 @@ const config = {
   },
   microsoft: {
     clientId: env.NEXT_PUBLIC_MICROSOFT_CLIENT_ID,
+  },
+  github: {
+    token: env.GITHUB_TOKEN,
+    repo: env.GITHUB_REPO,
   },
 } as const
 

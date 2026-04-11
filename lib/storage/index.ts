@@ -1,6 +1,7 @@
 import path from "path"
 import { LocalStorageProvider } from "./local"
 import { S3StorageProvider } from "./s3"
+import { VercelBlobStorageProvider } from "./vercel-blob"
 import type { StorageProvider } from "./types"
 
 export type { StorageProvider, FileStats, ListEntry } from "./types"
@@ -26,6 +27,11 @@ export function getStorage(): StorageProvider {
         prefix: process.env.S3_PREFIX || "",
         forcePathStyle: process.env.S3_FORCE_PATH_STYLE !== "false",
       })
+      break
+    }
+
+    case "vercel-blob": {
+      _storage = new VercelBlobStorageProvider(process.env.BLOB_PREFIX || "")
       break
     }
     case "local":
