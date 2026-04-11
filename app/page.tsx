@@ -24,9 +24,9 @@ export default async function Home() {
       {/* Content */}
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Top nav */}
-        <header className="flex items-center justify-between px-8 md:px-12 py-8">
+        <header className="flex items-center justify-between px-8 md:px-12 py-8 text-white">
           <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-70">
-            <Image src="/logo/logo.svg" alt={config.app.title} width={32} height={32} className="w-8 h-8 brightness-0 invert" />
+            <Image src="/logo/logo.svg" alt="Mindtris" width={32} height={32} className="w-8 h-8 brightness-0 invert" />
           </Link>
           <nav className="flex items-center gap-4">
             <Link href="/signin" className="text-sm text-white/70 hover:text-white transition-colors">
@@ -44,8 +44,9 @@ export default async function Home() {
         {/* Hero */}
         <main className="flex-1 flex flex-col items-center justify-center px-6 text-center">
           <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-1000">
-            <div className="flex justify-center mb-10">
-              <Image src="/logo/logo.svg" alt={config.app.title} width={64} height={64} className="brightness-0 invert opacity-80" />
+            <div className="flex justify-center items-center gap-3 mb-10">
+              <Image src="/logo/logo.svg" alt="Mindtris" width={64} height={64} className="brightness-0 invert opacity-80" />
+              <span className="text-3xl font-bold tracking-tight text-white/90">Mindtris&trade;</span>
             </div>
             <h1 className="text-3xl md:text-5xl font-bold tracking-tighter text-white leading-tight">
               Automate the mundane so your team can focus on <span className="text-primary">what actually matters</span>
