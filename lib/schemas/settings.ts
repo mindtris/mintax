@@ -39,6 +39,21 @@ export const categoryFormSchema = z.object({
   type: z.string().default("transaction"),
   llm_prompt: z.string().max(512).nullable().optional(),
   color: z.string().max(7).default(randomHexColor()).nullable().optional(),
+  parentId: z.string().nullable().optional(),
+})
+
+export const emailTemplateSettingsSchema = z.object({
+  email_sender_name: z.string().max(128).optional(),
+  email_reply_to: z.string().max(256).optional(),
+  email_footer_text: z.string().max(512).optional(),
+  email_invoice_subject: z.string().max(256).optional(),
+  email_invoice_greeting: z.string().max(512).optional(),
+  email_invoice_footer_note: z.string().max(512).optional(),
+  email_reminder_subject: z.string().max(256).optional(),
+  email_reminder_footer_note: z.string().max(512).optional(),
+  email_otp_subject: z.string().max(256).optional(),
+  email_newsletter_subject: z.string().max(256).optional(),
+  email_newsletter_greeting: z.string().max(512).optional(),
 })
 
 export const fieldFormSchema = z.object({

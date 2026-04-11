@@ -32,8 +32,9 @@ const settingsGroups: NavGroup[] = [
     ],
   },
   {
-    label: "Integrations",
+    label: "Communications",
     items: [
+      { title: "Email templates", href: "/settings/email-templates", icon: "mail" },
       { title: "Social accounts", href: "/settings/social", icon: "share-2" },
     ],
   },

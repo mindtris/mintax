@@ -2,6 +2,7 @@
 
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { sendInvoiceEmail } from "@/lib/integrations/email"
+import { getSettings } from "@/lib/services/settings"
 import {
   createInvoice,
   updateInvoice,
@@ -176,6 +177,7 @@ export async function sendInvoiceAction(invoiceId: string) {
   if (!invoice.clientEmail) return { error: "Client email is required to send" }
 
   try {
+    const emailSettings = await getSettings(org.id)
     await sendInvoiceEmail({
       email: invoice.clientEmail,
       invoiceNumber: invoice.invoiceNumber,
@@ -185,6 +187,7 @@ export async function sendInvoiceAction(invoiceId: string) {
       dueDate: invoice.dueAt ? format(invoice.dueAt, "MMMM d, yyyy") : "Not specified",
       orgName: org.name,
       notes: invoice.notes,
+      emailSettings,
     })
 
     await updateInvoice(invoiceId, org.id, { status: "sent" })

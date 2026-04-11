@@ -3,6 +3,7 @@
 import {
   categoryFormSchema,
   currencyFormSchema,
+  emailTemplateSettingsSchema,
   fieldFormSchema,
   projectFormSchema,
   settingsFormSchema,
@@ -43,6 +44,11 @@ export async function saveSettingsAction(
     const value = validatedForm.data[key as keyof typeof validatedForm.data]
     if (value !== undefined) {
       await updateSettings(org.id, key, value)
+      
+      // Sync default_currency back to Organization.baseCurrency
+      if (key === "default_currency") {
+        await updateOrganization(org.id, { baseCurrency: value })
+      }
     }
   }
 
@@ -130,6 +136,11 @@ export async function saveBusinessAction(
     registrationNumber: validatedForm.data.registrationNumber,
     logo: logoUrl,
   })
+
+  // Sync Organization.baseCurrency to Setting table
+  if (validatedForm.data.baseCurrency) {
+    await updateSettings(org.id, "default_currency", validatedForm.data.baseCurrency)
+  }
 
   revalidatePath("/settings/business")
   return { success: true }
@@ -230,8 +241,10 @@ export async function addCategoryAction(orgId: string, data: Prisma.CategoryCrea
     const category = await createCategory(orgId, {
       code,
       name: validatedForm.data.name,
+      type: validatedForm.data.type,
       llm_prompt: validatedForm.data.llm_prompt,
       color: validatedForm.data.color || "",
+      parentId: validatedForm.data.parentId === "none" ? null : (validatedForm.data.parentId || null),
     })
     revalidatePath("/settings/categories")
 
@@ -256,8 +269,10 @@ export async function editCategoryAction(orgId: string, code: string, data: Pris
 
   const category = await updateCategory(orgId, code, {
     name: validatedForm.data.name,
+    type: validatedForm.data.type,
     llm_prompt: validatedForm.data.llm_prompt,
     color: validatedForm.data.color || "",
+    parentId: validatedForm.data.parentId === "none" ? null : (validatedForm.data.parentId || null),
   })
   revalidatePath("/settings/categories")
 
@@ -423,6 +438,31 @@ export async function deleteLlmPromptAction(orgId: string, id: string) {
   } catch (error) {
     return { success: false, error: "Failed to delete prompt" }
   }
+}
+
+// --- Email Template Settings Actions ---
+
+export async function saveEmailTemplateSettingsAction(
+  _prevState: ActionState<SettingsMap> | null,
+  formData: FormData
+): Promise<ActionState<SettingsMap>> {
+  const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
+  const validatedForm = emailTemplateSettingsSchema.safeParse(Object.fromEntries(formData))
+
+  if (!validatedForm.success) {
+    return { success: false, error: validatedForm.error.message }
+  }
+
+  for (const key in validatedForm.data) {
+    const value = validatedForm.data[key as keyof typeof validatedForm.data]
+    if (value !== undefined) {
+      await updateSettings(org.id, key, value)
+    }
+  }
+
+  revalidatePath("/settings/email-templates")
+  return { success: true }
 }
 
 // --- Migration Actions ---

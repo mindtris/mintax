@@ -1,13 +1,5 @@
 import React from "react"
-import { EmailLayout } from "./email-layout"
-
-const BRAND = {
-  primary: "#c96442",
-  foreground: "#362f28",
-  muted: "#6b6460",
-  card: "#f2ede7",
-  border: "#d9d4ce",
-}
+import { EmailLayout, BRAND } from "./email-layout"
 
 interface ReminderEmailProps {
   reminderTitle: string
@@ -17,6 +9,7 @@ interface ReminderEmailProps {
   priority: string
   orgName: string
   appUrl: string
+  customFooterNote?: string | null
 }
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -48,6 +41,7 @@ export const ReminderEmail: React.FC<ReminderEmailProps> = ({
   priority,
   orgName,
   appUrl,
+  customFooterNote,
 }) => (
   <EmailLayout preview={`Reminder: ${reminderTitle}`}>
     <p style={{
@@ -73,44 +67,53 @@ export const ReminderEmail: React.FC<ReminderEmailProps> = ({
 
     <div style={{
       backgroundColor: BRAND.card,
-      borderRadius: "8px",
-      padding: "16px",
-      marginBottom: "20px",
+      borderRadius: "12px",
+      padding: "24px",
+      marginBottom: "24px",
+      border: `1px solid ${BRAND.border}`,
     }}>
       <table cellPadding={0} cellSpacing={0} width="100%">
         <tbody>
           <tr>
-            <td style={{ fontSize: "13px", color: BRAND.muted, paddingBottom: "8px", width: "100px" }}>Due</td>
-            <td style={{ fontSize: "13px", color: BRAND.foreground, paddingBottom: "8px", fontWeight: 500 }}>{dueAt}</td>
+            <td style={{ fontSize: "12px", color: BRAND.muted, paddingBottom: "12px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Due</td>
+            <td align="right" style={{ fontSize: "13px", color: BRAND.foreground, paddingBottom: "12px", fontWeight: 500 }}>{dueAt}</td>
           </tr>
           <tr>
-            <td style={{ fontSize: "13px", color: BRAND.muted, paddingBottom: "8px" }}>Priority</td>
-            <td style={{ fontSize: "13px", color: PRIORITY_COLORS[priority] || BRAND.foreground, fontWeight: 600, paddingBottom: "8px" }}>
+            <td style={{ fontSize: "12px", color: BRAND.muted, paddingBottom: "12px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Priority</td>
+            <td align="right" style={{ fontSize: "13px", color: PRIORITY_COLORS[priority] || BRAND.foreground, fontWeight: 700, paddingBottom: "12px" }}>
               {PRIORITY_LABELS[priority] || priority}
             </td>
           </tr>
           <tr>
-            <td style={{ fontSize: "13px", color: BRAND.muted }}>Organization</td>
-            <td style={{ fontSize: "13px", color: BRAND.foreground }}>{orgName}</td>
+            <td style={{ paddingTop: "12px", borderTop: `1px solid ${BRAND.border}`, fontSize: "12px", color: BRAND.muted, textTransform: "uppercase", letterSpacing: "0.05em" }}>Organization</td>
+            <td align="right" style={{ paddingTop: "12px", borderTop: `1px solid ${BRAND.border}`, fontSize: "13px", color: BRAND.foreground, fontWeight: 500 }}>{orgName}</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <a
-      href={`${appUrl}/apps/reminders`}
-      style={{
-        display: "inline-block",
-        padding: "10px 24px",
-        backgroundColor: BRAND.primary,
-        color: "#ffffff",
-        textDecoration: "none",
-        borderRadius: "8px",
-        fontSize: "13px",
-        fontWeight: 600,
-      }}
-    >
-      View reminders
-    </a>
+    {customFooterNote && (
+      <p style={{ fontSize: "13px", color: BRAND.muted, margin: "0 0 8px", lineHeight: "1.6" }}>
+        {customFooterNote}
+      </p>
+    )}
+
+    <div style={{ textAlign: "center", marginTop: "32px", marginBottom: "8px" }}>
+      <a
+        href={`${appUrl}/hire/pipeline`}
+        style={{
+          display: "inline-block",
+          padding: "12px 32px",
+          backgroundColor: BRAND.primary,
+          color: "#ffffff",
+          textDecoration: "none",
+          borderRadius: "8px",
+          fontSize: "14px",
+          fontWeight: 600,
+        }}
+      >
+        View Pipeline
+      </a>
+    </div>
   </EmailLayout>
 )

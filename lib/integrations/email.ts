@@ -6,6 +6,7 @@ import React from "react"
 import { Resend } from "resend"
 import nodemailer from "nodemailer"
 import config from "@/lib/core/config"
+import { SettingsMap } from "@/lib/services/settings"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Transport layer — supports Resend API or SMTP
@@ -41,10 +42,12 @@ async function sendEmail({
   to,
   subject,
   react,
+  replyTo,
 }: {
   to: string
   subject: string
   react: React.ReactElement
+  replyTo?: string
 }) {
   console.log(`[EMAIL] Sending "${subject}" to ${to} via ${config.email.driver}`)
 
@@ -58,6 +61,7 @@ async function sendEmail({
         to,
         subject,
         html,
+        ...(replyTo ? { replyTo } : {}),
       })
       console.log(`[EMAIL] SMTP result: ${result.messageId}`)
       return { data: { id: result.messageId }, error: null }
@@ -68,6 +72,7 @@ async function sendEmail({
         to,
         subject,
         react,
+        ...(replyTo ? { reply_to: replyTo } : {}),
       })
       console.log(`[EMAIL] Resend result:`, JSON.stringify(result))
       return result
@@ -79,14 +84,36 @@ async function sendEmail({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Email functions
+// Template variable interpolation helper
 // ─────────────────────────────────────────────────────────────────────────────
 
-export async function sendOTPCodeEmail({ email, otp }: { email: string; otp: string }) {
+function interpolate(template: string, vars: Record<string, string>): string {
+  return Object.entries(vars).reduce(
+    (result, [key, value]) => result.replace(new RegExp(`\\{${key}\\}`, "g"), value),
+    template
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Email functions — accept optional settings for template customization
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function sendOTPCodeEmail({
+  email,
+  otp,
+  emailSettings,
+}: {
+  email: string
+  otp: string
+  emailSettings?: SettingsMap
+}) {
+  const subject = emailSettings?.email_otp_subject || "Your Mintax verification code"
+
   return sendEmail({
     to: email,
-    subject: "Your Mintax verification code",
+    subject,
     react: React.createElement(OTPEmail, { otp }),
+    replyTo: emailSettings?.email_reply_to || undefined,
   })
 }
 
@@ -98,6 +125,7 @@ export async function sendReminderNotificationEmail({
   category,
   priority,
   orgName,
+  emailSettings,
 }: {
   email: string
   reminderTitle: string
@@ -106,10 +134,16 @@ export async function sendReminderNotificationEmail({
   category: string
   priority: string
   orgName: string
+  emailSettings?: SettingsMap
 }) {
+  const vars = { reminderTitle, orgName, category }
+  const subject = emailSettings?.email_reminder_subject
+    ? interpolate(emailSettings.email_reminder_subject, vars)
+    : `Reminder: ${reminderTitle}`
+
   return sendEmail({
     to: email,
-    subject: `Reminder: ${reminderTitle}`,
+    subject,
     react: React.createElement(ReminderEmail, {
       reminderTitle,
       description,
@@ -118,7 +152,9 @@ export async function sendReminderNotificationEmail({
       priority,
       orgName,
       appUrl: config.app.baseURL,
+      customFooterNote: emailSettings?.email_reminder_footer_note || null,
     }),
+    replyTo: emailSettings?.email_reply_to || undefined,
   })
 }
 
@@ -131,6 +167,7 @@ export async function sendInvoiceEmail({
   dueDate,
   orgName,
   notes,
+  emailSettings,
 }: {
   email: string
   invoiceNumber: string
@@ -140,10 +177,16 @@ export async function sendInvoiceEmail({
   dueDate: string
   orgName: string
   notes?: string | null
+  emailSettings?: SettingsMap
 }) {
+  const vars = { invoiceNumber, orgName, clientName }
+  const subject = emailSettings?.email_invoice_subject
+    ? interpolate(emailSettings.email_invoice_subject, vars)
+    : `Invoice ${invoiceNumber} from ${orgName}`
+
   return sendEmail({
     to: email,
-    subject: `Invoice ${invoiceNumber} from ${orgName}`,
+    subject,
     react: React.createElement(InvoiceEmail, {
       invoiceNumber,
       clientName,
@@ -153,15 +196,27 @@ export async function sendInvoiceEmail({
       orgName,
       notes,
       appUrl: config.app.baseURL,
+      customGreeting: emailSettings?.email_invoice_greeting || null,
+      customFooterNote: emailSettings?.email_invoice_footer_note || null,
+      customFooterText: emailSettings?.email_footer_text || null,
     }),
+    replyTo: emailSettings?.email_reply_to || undefined,
   })
 }
 
-export async function sendNewsletterWelcomeEmail(email: string) {
+export async function sendNewsletterWelcomeEmail(
+  email: string,
+  emailSettings?: SettingsMap,
+) {
+  const subject = emailSettings?.email_newsletter_subject || "Welcome to Mintax Newsletter!"
+
   return sendEmail({
     to: email,
-    subject: "Welcome to Mintax Newsletter!",
-    react: React.createElement(NewsletterWelcomeEmail),
+    subject,
+    react: React.createElement(NewsletterWelcomeEmail, {
+      customGreeting: emailSettings?.email_newsletter_greeting || null,
+    }),
+    replyTo: emailSettings?.email_reply_to || undefined,
   })
 }
 

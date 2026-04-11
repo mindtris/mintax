@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/core/db"
 import { sendReminderNotificationEmail } from "@/lib/integrations/email"
 import { getDueRemindersForNotification, markEmailSent } from "@/lib/services/reminders"
+import { getSettings } from "@/lib/services/settings"
 import { format } from "date-fns"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -41,7 +42,9 @@ export async function GET(request: NextRequest) {
         select: { email: true },
       })
 
+      const orgId = (reminder as any).organizationId
       const orgName = (reminder as any).organization?.name || "Your Organization"
+      const emailSettings = orgId ? await getSettings(orgId) : undefined
 
       // Send email to each assignee
       for (const user of users) {
@@ -54,6 +57,7 @@ export async function GET(request: NextRequest) {
             category: reminder.category,
             priority: reminder.priority,
             orgName,
+            emailSettings,
           })
           sent++
         } catch (error) {

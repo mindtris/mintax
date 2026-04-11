@@ -1,12 +1,5 @@
 import React from "react"
-import { EmailLayout } from "./email-layout"
-
-const BRAND = {
-  primary: "#c96442",
-  foreground: "#362f28",
-  muted: "#6b6460",
-  card: "#f2ede7",
-}
+import { EmailLayout, BRAND } from "./email-layout"
 
 interface InvoiceEmailProps {
   invoiceNumber: string
@@ -17,6 +10,9 @@ interface InvoiceEmailProps {
   orgName: string
   notes?: string | null
   appUrl: string
+  customGreeting?: string | null
+  customFooterNote?: string | null
+  customFooterText?: string | null
 }
 
 export const InvoiceEmail: React.FC<InvoiceEmailProps> = ({
@@ -28,52 +24,82 @@ export const InvoiceEmail: React.FC<InvoiceEmailProps> = ({
   orgName,
   notes,
   appUrl,
+  customGreeting,
+  customFooterNote,
+  customFooterText,
 }) => (
   <EmailLayout preview={`Invoice ${invoiceNumber} from ${orgName}`}>
-    <p style={{ fontSize: "11px", color: BRAND.primary, margin: "0 0 12px", textTransform: "uppercase" as const, letterSpacing: "0.08em", fontWeight: 600 }}>
-      Invoice
-    </p>
-
-    <p style={{ fontSize: "15px", color: BRAND.foreground, margin: "0 0 20px", lineHeight: "1.6" }}>
-      Hi {clientName},
-    </p>
-
-    <p style={{ fontSize: "15px", color: BRAND.foreground, margin: "0 0 20px", lineHeight: "1.6" }}>
-      Please find below the details of your invoice from <strong>{orgName}</strong>.
+    <h1 style={{ fontSize: "20px", fontWeight: 700, color: BRAND.foreground, margin: "0 0 16px", lineHeight: "1.4" }}>
+      Invoice from {orgName}
+    </h1>
+    
+    <p style={{ fontSize: "14px", color: BRAND.foreground, margin: "0 0 24px", lineHeight: "1.6" }}>
+      Hi {clientName},<br />
+      {customGreeting
+        ? customGreeting.replace(/\{clientName\}/g, clientName).replace(/\{orgName\}/g, orgName).replace(/\{invoiceNumber\}/g, invoiceNumber)
+        : <>A new invoice has been generated for your recent project with <strong>{orgName}</strong>.</>}
     </p>
 
     <div style={{
       backgroundColor: BRAND.card,
-      borderRadius: "8px",
-      padding: "16px",
-      marginBottom: "20px",
+      borderRadius: "12px",
+      padding: "24px",
+      marginBottom: "24px",
+      border: `1px solid ${BRAND.border}`,
     }}>
       <table cellPadding={0} cellSpacing={0} width="100%">
         <tbody>
           <tr>
-            <td style={{ fontSize: "13px", color: BRAND.muted, paddingBottom: "8px", width: "120px" }}>Invoice #</td>
-            <td style={{ fontSize: "13px", color: BRAND.foreground, paddingBottom: "8px", fontWeight: 600 }}>{invoiceNumber}</td>
+            <td style={{ fontSize: "12px", color: BRAND.muted, paddingBottom: "12px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Invoice Number</td>
+            <td align="right" style={{ fontSize: "13px", color: BRAND.foreground, paddingBottom: "12px", fontWeight: 700 }}>{invoiceNumber}</td>
           </tr>
           <tr>
-            <td style={{ fontSize: "13px", color: BRAND.muted, paddingBottom: "8px" }}>Amount due</td>
-            <td style={{ fontSize: "18px", color: BRAND.primary, paddingBottom: "8px", fontWeight: 700 }}>{currency} {total}</td>
+            <td style={{ fontSize: "12px", color: BRAND.muted, paddingBottom: "12px", textTransform: "uppercase", letterSpacing: "0.05em" }}>Due Date</td>
+            <td align="right" style={{ fontSize: "13px", color: BRAND.foreground, paddingBottom: "12px", fontWeight: 500 }}>{dueDate}</td>
           </tr>
           <tr>
-            <td style={{ fontSize: "13px", color: BRAND.muted }}>Due date</td>
-            <td style={{ fontSize: "13px", color: BRAND.foreground, fontWeight: 500 }}>{dueDate}</td>
+            <td style={{ paddingTop: "12px", borderTop: `1px solid ${BRAND.border}` }}>
+              <span style={{ fontSize: "12px", color: BRAND.muted, textTransform: "uppercase", letterSpacing: "0.05em" }}>Amount Due</span>
+            </td>
+            <td align="right" style={{ paddingTop: "12px", borderTop: `1px solid ${BRAND.border}` }}>
+              <span style={{ fontSize: "20px", color: BRAND.primary, fontWeight: 700 }}>{currency} {total}</span>
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
 
     {notes && (
-      <p style={{ fontSize: "13px", color: BRAND.muted, margin: "0 0 20px", lineHeight: "1.5", fontStyle: "italic" }}>
-        {notes}
-      </p>
+      <div style={{ 
+        padding: "16px", 
+        borderLeft: `4px solid ${BRAND.border}`, 
+        backgroundColor: BRAND.background, 
+        marginBottom: "24px",
+        borderRadius: "4px"
+      }}>
+        <p style={{ fontSize: "13px", color: BRAND.muted, margin: "0", lineHeight: "1.6", fontStyle: "italic" }}>
+          {notes}
+        </p>
+      </div>
     )}
 
-    <p style={{ fontSize: "13px", color: BRAND.muted, margin: "0", lineHeight: "1.5" }}>
-      If you have any questions, please reply to this email.
+    <div style={{ textAlign: "center", marginBottom: "32px", marginTop: "32px" }}>
+      <a href={appUrl} style={{
+        backgroundColor: BRAND.primary,
+        color: "#ffffff",
+        padding: "12px 32px",
+        borderRadius: "8px",
+        fontSize: "14px",
+        fontWeight: 600,
+        textDecoration: "none",
+        display: "inline-block",
+      }}>
+        View & Pay Invoice
+      </a>
+    </div>
+
+    <p style={{ fontSize: "13px", color: BRAND.muted, margin: "0", lineHeight: "1.6" }}>
+      {customFooterNote || "Thank you for your business. If you have any questions, feel free to contact us by replying to this email."}
     </p>
   </EmailLayout>
 )
