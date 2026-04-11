@@ -49,7 +49,7 @@ const config = {
     description: "Multi-tenant bookkeeping & accounting platform",
     version: process.env.npm_package_version || "0.0.1",
     baseURL: env.BASE_URL || `http://localhost:${env.PORT || "7331"}`,
-    supportEmail: "support@mintax.app",
+    supportEmail: "support@mindtris.com",
   },
   upload: {
     acceptedMimeTypes: "image/*,.pdf,.doc,.docx,.xls,.xlsx",

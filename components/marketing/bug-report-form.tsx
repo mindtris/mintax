@@ -3,10 +3,8 @@
 import { useActionState, useEffect, useState } from "react"
 import { submitBugReportAction } from "@/app/api/bug/actions"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Bug, CheckCircle2, ExternalLink, Loader2, Upload } from "lucide-react"
+import { FormInput, FormTextarea } from "@/components/forms/simple"
+import { CheckCircle2, ExternalLink, Loader2, Upload } from "lucide-react"
 
 export function BugReportForm() {
   const [state, formAction, isPending] = useActionState(submitBugReportAction, null)
@@ -24,7 +22,7 @@ export function BugReportForm() {
         <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
           <CheckCircle2 className="h-10 w-10 text-primary" />
         </div>
-        <h2 className="text-xl font-bold text-white mb-2">Issue Reported!</h2>
+        <h2 className="text-xl font-bold text-white mb-2">Issue reported</h2>
         <p className="text-white/60 text-sm max-w-sm mb-6">
           Your bug report has been successfully created in our GitHub repository.
         </p>
@@ -42,7 +40,7 @@ export function BugReportForm() {
             className="text-white/40 hover:text-white"
             onClick={() => window.location.href = "/"}
           >
-            Back to Home
+            Back to home
           </Button>
         </div>
       </div>
@@ -50,74 +48,56 @@ export function BugReportForm() {
   }
 
   return (
-    <form action={formAction} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="title" className="text-xs font-semibold uppercase tracking-wider text-white/40">Title</Label>
-        <Input
-          id="title"
+    <form action={formAction} className="flex flex-col gap-6 w-full">
+      <div className="space-y-4 max-h-[420px] overflow-y-auto pr-2 custom-scrollbar">
+        <FormInput
+          title="Title"
           name="title"
           placeholder="e.g., Invoices not exporting to PDF"
           required
-          className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-primary h-10"
         />
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="description" className="text-xs font-semibold uppercase tracking-wider text-white/40">Description</Label>
-        <Textarea
-          id="description"
+        <FormTextarea
+          title="Description"
           name="description"
           placeholder="What exactly is happening?"
           required
-          className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-primary min-h-[80px]"
         />
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="steps" className="text-xs font-semibold uppercase tracking-wider text-white/40">Steps to Reproduce</Label>
-        <Textarea
-          id="steps"
+        <FormTextarea
+          title="Steps to reproduce"
           name="steps"
           placeholder="1. Go to...&#10;2. Click on..."
           required
-          className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-primary min-h-[80px]"
         />
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="expected" className="text-xs font-semibold uppercase tracking-wider text-white/40">Expected Behavior</Label>
-        <Input
-          id="expected"
+        <FormInput
+          title="Expected behavior"
           name="expected"
           placeholder="What should have happened?"
           required
-          className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-primary h-10"
         />
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-white/40">Your Email (Optional)</Label>
-          <Input
-            id="email"
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormInput
+            title="Email (optional)"
             name="email"
             type="email"
             placeholder="For updates"
-            className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-primary h-10"
           />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="screenshot" className="text-xs font-semibold uppercase tracking-wider text-white/40">Screenshot (Optional)</Label>
-          <label className="flex items-center justify-center w-full h-10 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 cursor-pointer transition-colors">
-            <Upload className="h-4 w-4 mr-2 text-white/40" />
-            <span className="text-xs text-white/60">Upload Image</span>
-            <input id="screenshot" name="screenshot" type="file" accept="image/*" className="hidden" />
-          </label>
+          <div className="space-y-1">
+            <span className="text-sm font-medium">Screenshot (optional)</span>
+            <label className="flex items-center justify-center w-full h-11 rounded-md border border-input bg-background hover:bg-muted cursor-pointer transition-colors shadow-sm">
+              <Upload className="h-4 w-4 mr-2 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Upload image</span>
+              <input id="screenshot" name="screenshot" type="file" accept="image/*" className="hidden" />
+            </label>
+          </div>
         </div>
       </div>
 
       {state?.error && (
-        <p className="text-sm font-medium text-red-400">
+        <p className="text-sm font-medium text-destructive text-center">
           {state.error}
         </p>
       )}
@@ -125,15 +105,15 @@ export function BugReportForm() {
       <Button
         type="submit"
         disabled={isPending}
-        className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-11 transition-all mt-4"
+        className="w-full h-11 text-sm font-semibold shadow-sm transition-all active:scale-[0.98] mt-2"
       >
         {isPending ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Submitting Issue...
-          </>
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Processing...
+          </div>
         ) : (
-          "Report Bug"
+          "Report a bug"
         )}
       </Button>
     </form>

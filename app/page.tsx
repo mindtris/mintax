@@ -47,7 +47,7 @@ export default async function Home() {
             <div className="flex justify-center mb-10">
               <Image src="/logo/logo.svg" alt={config.app.title} width={64} height={64} className="brightness-0 invert opacity-80" />
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter text-white leading-tight">
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tighter text-white leading-tight">
               Automate the mundane so your team can focus on <span className="text-primary">what actually matters</span>
             </h1>
             <p className="mt-4 text-base md:text-lg text-white/60 max-w-2xl mx-auto leading-relaxed">
