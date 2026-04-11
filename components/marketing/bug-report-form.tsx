@@ -49,7 +49,7 @@ export function BugReportForm() {
 
   return (
     <form action={formAction} className="flex flex-col gap-6 w-full">
-      <div className="space-y-4 max-h-[420px] overflow-y-auto pr-2 custom-scrollbar">
+      <div className="space-y-4 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
         <FormInput
           title="Title"
           name="title"

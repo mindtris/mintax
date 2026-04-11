@@ -98,3 +98,14 @@
     -moz-appearance: textfield;
   }
 }
+
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 0px;
+    background: transparent; /* make scrollbar invisible */
+  }
+  .custom-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+}
