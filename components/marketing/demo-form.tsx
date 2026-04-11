@@ -3,9 +3,7 @@
 import { useActionState, useEffect, useState } from "react"
 import { submitDemoRequestAction } from "@/app/book-a-demo/actions"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { FormInput, FormTextarea } from "@/components/forms/simple"
 import { CheckCircle2, Loader2 } from "lucide-react"
 
 export function DemoForm() {
@@ -24,7 +22,7 @@ export function DemoForm() {
         <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
           <CheckCircle2 className="h-10 w-10 text-primary" />
         </div>
-        <h2 className="text-2xl font-bold text-white mb-2">Request Received!</h2>
+        <h2 className="text-2xl font-bold text-white mb-2">Request received</h2>
         <p className="text-white/60 max-w-sm">
           Thank you for your interest. A member of our team will contact you shortly to schedule your personalized demo.
         </p>
@@ -33,73 +31,55 @@ export function DemoForm() {
           className="mt-8 border-white/20 text-white hover:bg-white/10"
           onClick={() => window.location.href = "/"}
         >
-          Back to Home
+          Back to home
         </Button>
       </div>
     )
   }
 
   return (
-    <form action={formAction} className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
-        <div className="space-y-2">
-          <Label htmlFor="name" className="text-white/70">Full Name</Label>
-          <Input 
-            id="name" 
-            name="name" 
-            placeholder="John Doe" 
-            required 
-            className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-primary"
+    <form action={formAction} className="flex flex-col gap-6 w-full">
+      <div className="space-y-4 max-h-[420px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormInput
+            title="Full name"
+            name="name"
+            placeholder="Akshitha Kandikanti"
+            required
+          />
+          <FormInput
+            title="Work email"
+            name="email"
+            type="email"
+            placeholder="john@company.com"
+            required
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-white/70">Work Email</Label>
-          <Input 
-            id="email" 
-            name="email" 
-            type="email" 
-            placeholder="john@company.com" 
-            required 
-            className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-primary"
-          />
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
-        <div className="space-y-2">
-          <Label htmlFor="company" className="text-white/70">Company</Label>
-          <Input 
-            id="company" 
-            name="company" 
-            placeholder="Acme Inc" 
-            required 
-            className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-primary"
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormInput
+            title="Company"
+            name="company"
+            placeholder="Acme Inc"
+            required
+          />
+          <FormInput
+            title="Phone number (optional)"
+            name="phone"
+            type="tel"
+            placeholder="+1 (555) 000-0000"
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="phone" className="text-white/70">Phone Number (Optional)</Label>
-          <Input 
-            id="phone" 
-            name="phone" 
-            type="tel" 
-            placeholder="+1 (555) 000-0000" 
-            className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-primary"
-          />
-        </div>
-      </div>
 
-      <div className="space-y-2 text-left">
-        <Label htmlFor="message" className="text-white/70">How can we help? (Optional)</Label>
-        <Textarea 
-          id="message" 
-          name="message" 
-          placeholder="Tell us a bit about your business needs..." 
-          className="bg-white/5 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-primary min-h-[100px]"
+        <FormTextarea
+          title="How can we help? (optional)"
+          name="message"
+          placeholder="Tell us a bit about your business needs..."
         />
       </div>
 
       {state?.error && (
-        <p className="text-sm font-medium text-red-400 animate-in fade-in slide-in-from-top-1">
+        <p className="text-sm font-medium text-destructive text-center">
           {state.error}
         </p>
       )}
@@ -107,20 +87,20 @@ export function DemoForm() {
       <Button 
         type="submit" 
         disabled={isPending}
-        className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 transition-all mt-4"
+        className="w-full h-11 text-sm font-semibold shadow-sm transition-all active:scale-[0.98] mt-2"
       >
         {isPending ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Scheduling...
-          </>
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Processing...
+          </div>
         ) : (
-          "Book My Demo"
+          "Book my demo"
         )}
       </Button>
       
-      <p className="text-[10px] text-white/30 text-center mt-4">
-        By clicking "Book My Demo", you agree to our Terms of Service and Privacy Policy.
+      <p className="text-[10px] text-muted-foreground text-center">
+        By clicking "Book my demo", you agree to our Terms of Service and Privacy Policy.
       </p>
     </form>
   )

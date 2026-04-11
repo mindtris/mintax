@@ -1,4 +1,6 @@
 import config from "@/lib/core/config"
+import Image from "next/image"
+import Link from "next/link"
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,6 +15,13 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
       {/* Content overlay */}
       <div className="relative z-10 min-h-screen flex flex-col">
+        {/* Top-left logo for navigation */}
+        <header className="p-8 pb-0">
+          <Link href="/" className="inline-block transition-opacity hover:opacity-70">
+            <Image src="/logo/logo.svg" alt={config.app.title} width={32} height={32} className="w-8 h-8 brightness-0 invert" />
+          </Link>
+        </header>
+
         {/* Centered auth card */}
         <div className="flex-grow flex flex-col justify-center items-center md:items-end px-6 md:px-24 py-12">
           <div className="w-full max-w-[420px] animate-in fade-in slide-in-from-right-4 duration-1000">

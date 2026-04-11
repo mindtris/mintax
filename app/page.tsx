@@ -24,9 +24,9 @@ export default async function Home() {
       {/* Content */}
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Top nav */}
-        <header className="flex items-center justify-between px-6 md:px-12 py-5">
-          <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo/logo.svg" alt={config.app.title} width={28} height={28} className="brightness-0 invert" />
+        <header className="flex items-center justify-between px-8 md:px-12 py-8">
+          <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-70">
+            <Image src="/logo/logo.svg" alt={config.app.title} width={32} height={32} className="w-8 h-8 brightness-0 invert" />
           </Link>
           <nav className="flex items-center gap-4">
             <Link href="/signin" className="text-sm text-white/70 hover:text-white transition-colors">
