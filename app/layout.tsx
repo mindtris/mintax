@@ -1,11 +1,6 @@
 import config from "@/lib/core/config"
 import type { Metadata, Viewport } from "next"
-import { Inter, Playfair_Display } from "next/font/google"
 import "./globals.css"
-
-// Fallback font stubs for restricted network environments
-const inter = { variable: "--font-inter" }
-const playfair = { variable: "--font-playfair" }
 
 export const metadata: Metadata = {
   title: {
@@ -49,7 +44,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet" />
+      </head>
       <body className="min-h-screen bg-background antialiased font-sans">{children}</body>
     </html>
   )
