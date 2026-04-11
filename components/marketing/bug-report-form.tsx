@@ -48,8 +48,8 @@ export function BugReportForm() {
   }
 
   return (
-    <form action={formAction} className="flex flex-col gap-6 w-full">
-      <div className="space-y-4 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
+    <form action={formAction} className="flex flex-col gap-2 w-full">
+      <div className="flex flex-col gap-3 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
         <FormInput
           title="Title"
           name="title"
@@ -105,7 +105,7 @@ export function BugReportForm() {
       <Button
         type="submit"
         disabled={isPending}
-        className="w-full h-11 text-sm font-semibold shadow-sm transition-all active:scale-[0.98] mt-2"
+        className="w-full h-11 text-sm font-semibold shadow-sm transition-all active:scale-[0.98]"
       >
         {isPending ? (
           <div className="flex items-center gap-2">
