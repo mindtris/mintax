@@ -5,7 +5,7 @@
 <h1 align="center">mintax</h1>
 
 <p align="center">
-  <strong>Multi-tenant bookkeeping and business management platform for modern enterprises</strong>
+  <strong>Multi-tenant Bookkeeping and Business Operating System for Modern Enterprises</strong>
 </p>
 
 <p align="center">
@@ -16,10 +16,8 @@
   <a href="#tech-stack"><img src="https://img.shields.io/badge/PostgreSQL-c96442?style=flat-square" alt="PostgreSQL" /></a>
 </p>
 
-<br />
-
 <p align="center">
-  A comprehensive platform to manage expenses, invoicing, hiring, client relationships, and social media presence across multiple businesses — powered by configurable AI that runs on your infrastructure.
+  A comprehensive platform designed to manage financial operations, sales, recruitment, and digital engagement across multiple businesses and entities with enterprise grade security, scalability, and AI capabilities that run on your own infrastructure.
 </p>
 
 ---
@@ -27,40 +25,40 @@
 ## Features
 
 **Accounts**  
-Comprehensive financial management including transactions, bank reconciliation, bills, financial reports, and support for 170+ currencies.
+Complete financial management with transaction processing, intelligent bank reconciliation, accounts payable, financial reporting, and native support for 170+ currencies.
 
 **Sales**  
-Invoice creation, estimates, contact management, product catalog, and service management.
+Full sales cycle management including invoicing, estimates, customer relationship management, product and service catalogs.
 
 **Hire**  
-End-to-end recruitment module with job postings, candidate pipeline tracking, screening tools, and AI-generated job descriptions.
+End-to-end talent acquisition module featuring job posting management, candidate pipeline tracking, screening workflows, and AI assisted job description generation.
 
 **Engage**  
-Social media management with content scheduling and AI-powered post generation across multiple platforms.
+Social media management suite with content planning, multi-channel scheduling, and AI powered content creation.
 
-**AI Assistant**  
-Flexible AI capabilities with per-module prompt configuration, support for multiple LLM providers, and local model integration via Ollama.
+**AI Engine**  
+Highly configurable AI assistance layer supporting multiple LLM providers and local models through Ollama, with module specific prompt engineering.
 
-**Settings & Administration**  
-Unified management of taxes, categories, projects, custom fields, and currencies through an advanced DataGrid interface.
+**Administration**  
+Centralized system configuration with advanced management of taxes, categories, projects, custom fields, and multi-currency settings through a powerful unified interface.
 
 ## Tech Stack
 
-| Layer          | Technology                                      |
-|----------------|-------------------------------------------------|
-| Framework      | Next.js 15, React 19, TypeScript               |
-| Styling        | Tailwind CSS, Radix UI                          |
-| Database       | PostgreSQL with Prisma ORM                      |
-| AI Integration | LangChain, OpenAI, Gemini, Mistral, Ollama     |
-| Authentication | better-auth (Email OTP)                         |
-| Payments       | Stripe                                          |
-| Email          | Resend                                          |
-| Storage        | Local filesystem or S3-compatible (R2, MinIO)  |
+| Layer              | Technology                                      |
+|--------------------|-------------------------------------------------|
+| Framework          | Next.js 15, React 19, TypeScript               |
+| Styling            | Tailwind CSS, Radix UI                          |
+| Database           | PostgreSQL with Prisma ORM                      |
+| AI Framework       | LangChain                                       |
+| Authentication     | better-auth                                     |
+| Payments           | Stripe                                          |
+| Email              | Resend                                          |
+| Storage            | Local or S3-compatible (R2, MinIO)             |
 
 ## Quick Start
 
 ```bash
-git clone git@github.com:mindtris/mintax.git
+git clone <repository-url>
 cd mintax
 
 cp .env.example .env
