@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/logo/logo.svg" width="240" alt="mintax" />
+  <img src="public/logo/logo.svg" width="480" alt="mintax" />
 </p>
 
 <h1 align="center" style="border: none;">mintax</h1>
