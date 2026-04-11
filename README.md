@@ -2,10 +2,10 @@
   <img src="public/logo/logo.svg" width="480" alt="mintax" />
 </p>
 
-<h1 align="center" style="border: none;">mintax</h1>
+<h1 align="center">mintax</h1>
 
 <p align="center">
-  <strong>Multi-tenant bookkeeping platform for modern businesses</strong>
+  <strong>Multi-tenant bookkeeping and business management platform for modern enterprises</strong>
 </p>
 
 <p align="center">
@@ -19,77 +19,51 @@
 <br />
 
 <p align="center">
-  Manage expenses, invoices, contacts, hiring, and social media across multiple businesses — with AI that runs on your terms.
+  A comprehensive platform to manage expenses, invoicing, hiring, client relationships, and social media presence across multiple businesses — powered by configurable AI that runs on your infrastructure.
 </p>
 
 ---
 
 ## Features
 
-**Accounts** — Transactions, bank reconciliation, bills, reports, multi-currency (170+ currencies)
+**Accounts**  
+Comprehensive financial management including transactions, bank reconciliation, bills, financial reports, and support for 170+ currencies.
 
-**Sales** — Invoices, estimates, contacts, products & services
+**Sales**  
+Invoice creation, estimates, contact management, product catalog, and service management.
 
-**Hire** — Job postings, candidate pipeline, screening, AI-generated job descriptions
+**Hire**  
+End-to-end recruitment module with job postings, candidate pipeline tracking, screening tools, and AI-generated job descriptions.
 
-**Engage** — Social media management, content scheduling, AI-powered post generation
+**Engage**  
+Social media management with content scheduling and AI-powered post generation across multiple platforms.
 
-**AI** — Configurable prompts per module, multiple LLM providers, local model support via Ollama
+**AI Assistant**  
+Flexible AI capabilities with per-module prompt configuration, support for multiple LLM providers, and local model integration via Ollama.
 
-**Settings** — Taxes, categories, projects, custom fields, currencies — all managed through a unified DataGrid interface
+**Settings & Administration**  
+Unified management of taxes, categories, projects, custom fields, and currencies through an advanced DataGrid interface.
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 15, React 19, TypeScript |
-| Styling | Tailwind CSS, Radix UI |
-| Database | PostgreSQL, Prisma ORM |
-| AI | LangChain — OpenAI, Gemini, Mistral, Ollama |
-| Auth | better-auth (email OTP) |
-| Payments | Stripe |
-| Email | Resend |
-| Storage | Local filesystem or S3-compatible (R2, MinIO) |
+| Layer          | Technology                                      |
+|----------------|-------------------------------------------------|
+| Framework      | Next.js 15, React 19, TypeScript               |
+| Styling        | Tailwind CSS, Radix UI                          |
+| Database       | PostgreSQL with Prisma ORM                      |
+| AI Integration | LangChain, OpenAI, Gemini, Mistral, Ollama     |
+| Authentication | better-auth (Email OTP)                         |
+| Payments       | Stripe                                          |
+| Email          | Resend                                          |
+| Storage        | Local filesystem or S3-compatible (R2, MinIO)  |
 
 ## Quick Start
 
 ```bash
 git clone git@github.com:mindtris/mintax.git
 cd mintax
+
 cp .env.example .env
 
-# Install & run
 pnpm install
 pnpm dev
-```
-
-Open [localhost:7331](http://localhost:7331)
-
-## Deploy
-
-**Vercel** — connect the repo, set environment variables, deploy.
-
-**Docker** — `docker compose up -d`
-
-**Kubernetes** — use Ollama as a sidecar for local LLM inference.
-
-## Configuration
-
-All configuration via environment variables. See [.env.example](.env.example).
-
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `DATABASE_URL` | Yes | PostgreSQL connection |
-| `BETTER_AUTH_SECRET` | Yes | Auth secret (min 16 chars) |
-| `STORAGE_PROVIDER` | Yes | `local` or `s3` |
-| `OPENAI_API_KEY` | One AI key required | OpenAI |
-| `GOOGLE_API_KEY` | | Google Gemini |
-| `MISTRAL_API_KEY` | | Mistral |
-
-For local LLM (Ollama), no API key needed — configure the base URL at `/settings/llm`.
-
----
-
-<p align="center">
-  <sub>Built by <a href="https://github.com/mindtris">mindtris</a></sub>
-</p>
