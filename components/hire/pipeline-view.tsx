@@ -2,23 +2,28 @@ import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { getCandidatePipeline } from "@/lib/services/candidates"
 import { getJobPostings } from "@/lib/services/jobs"
 import { PipelineViewClient } from "./pipeline-view-client"
+import { prisma } from "@/lib/core/db"
+import { Briefcase } from "lucide-react"
 
 export async function PipelineView() {
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
   const jobs = await getJobPostings(org.id, { status: "open" })
 
+  const categories = await prisma.category.findMany({
+    where: { organizationId: org.id, type: "applicant_status" },
+    orderBy: { name: "asc" }
+  })
+
   // Aggregate pipeline across all open jobs
-  const aggregated: Record<string, any[]> = {
-    new: [],
-    screening: [],
-    interview: [],
-    offered: [],
-    hired: [],
-  }
+  const aggregated: Record<string, any[]> = {}
+  categories.forEach(c => {
+    const code = (c.code as string) || "unprocessed"
+    aggregated[code] = []
+  })
 
   for (const job of jobs) {
-    const pipeline = await getCandidatePipeline(job.id)
+    const pipeline = await getCandidatePipeline(org.id, job.id)
     for (const stage of Object.keys(aggregated)) {
       if ((pipeline as any)[stage]) {
         (aggregated as any)[stage].push(
@@ -28,13 +33,11 @@ export async function PipelineView() {
     }
   }
 
-  const stages = [
-    { id: "new", name: "New", color: "text-blue-500 bg-blue-500/10" },
-    { id: "screening", name: "Screening", color: "text-purple-500 bg-purple-500/10" },
-    { id: "interview", name: "Interview", color: "text-pink-500 bg-pink-500/10" },
-    { id: "offered", name: "Offered", color: "text-orange-500 bg-orange-500/10" },
-    { id: "hired", name: "Hired", color: "text-green-500 bg-green-500/10" },
-  ]
+  const stages = categories.map(cat => ({
+    id: (cat.code as string) || "unprocessed",
+    name: cat.name,
+    color: cat.color || "#c96442"
+  }))
 
   return <PipelineViewClient initialData={aggregated} stages={stages} />
 }

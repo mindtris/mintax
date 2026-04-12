@@ -97,7 +97,7 @@ export class LemmyProvider implements SocialProvider {
     return { providerAccountId: username, name: username, username: `${username}@${new URL(instanceUrl).hostname}`, accessToken: data.jwt, scopes: `instance:${instanceUrl}` }
   }
 
-  async refreshToken() { throw new Error("Lemmy tokens — re-login required") }
+  async refreshToken(_refreshToken: string): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: number }> { throw new Error("Lemmy tokens — re-login required") }
 
   async publishPost(params: PublishParams): Promise<SocialProviderPostResult> {
     const instanceUrl = params.settings?.instanceUrl || ""
@@ -137,7 +137,7 @@ export class VKProvider implements SocialProvider {
     return { providerAccountId: String(user.id || ""), name: `${user.first_name || ""} ${user.last_name || ""}`.trim(), username: user.screen_name || String(user.id || ""), picture: user.photo_100, accessToken: token }
   }
 
-  async refreshToken() { throw new Error("VK tokens — regenerate from app settings") }
+  async refreshToken(_refreshToken: string): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: number }> { throw new Error("VK tokens — regenerate from app settings") }
 
   async publishPost(params: PublishParams): Promise<SocialProviderPostResult> {
     const ownerId = params.settings?.ownerId || ""
@@ -168,7 +168,7 @@ export class FarcasterProvider implements SocialProvider {
     return { providerAccountId: signerUuid.slice(0, 16), name: params.codeVerifier || "Farcaster User", username: params.codeVerifier || "farcaster", accessToken: signerUuid }
   }
 
-  async refreshToken() { throw new Error("Farcaster signers don't expire") }
+  async refreshToken(_refreshToken: string): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: number }> { throw new Error("Farcaster signers don't expire") }
 
   async publishPost(params: PublishParams): Promise<SocialProviderPostResult> {
     // Uses Neynar API
@@ -201,7 +201,7 @@ export class KickProvider implements SocialProvider {
     return { providerAccountId: params.codeVerifier || "kick-user", name: params.codeVerifier || "Kick User", username: params.codeVerifier || "", accessToken: params.code }
   }
 
-  async refreshToken() { throw new Error("Kick tokens don't expire") }
+  async refreshToken(_refreshToken: string): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: number }> { throw new Error("Kick tokens don't expire") }
 
   async publishPost(_params: PublishParams): Promise<SocialProviderPostResult> {
     throw new Error("Kick chatbot posting requires WebSocket connection")
@@ -226,7 +226,7 @@ export class MeWeProvider implements SocialProvider {
     return { providerAccountId: params.codeVerifier || "mewe-user", name: params.codeVerifier || "MeWe User", username: params.codeVerifier || "", accessToken: params.code }
   }
 
-  async refreshToken() { throw new Error("MeWe tokens — regenerate from app settings") }
+  async refreshToken(_refreshToken: string): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: number }> { throw new Error("MeWe tokens — regenerate from app settings") }
 
   async publishPost(_params: PublishParams): Promise<SocialProviderPostResult> {
     throw new Error("MeWe API access requires partnership approval")
@@ -251,7 +251,7 @@ export class SkoolProvider implements SocialProvider {
     return { providerAccountId: params.codeVerifier || "skool-user", name: params.codeVerifier || "Skool User", username: params.codeVerifier || "", accessToken: params.code }
   }
 
-  async refreshToken() { throw new Error("Skool tokens don't expire") }
+  async refreshToken(_refreshToken: string): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: number }> { throw new Error("Skool tokens don't expire") }
 
   async publishPost(_params: PublishParams): Promise<SocialProviderPostResult> {
     throw new Error("Skool API is not publicly available — use browser automation")

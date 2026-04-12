@@ -21,12 +21,14 @@ export function CustomersView({
   total,
   currencies = [],
   countries = [],
+  categories = [],
 }: {
   tab: string,
   data: any[],
   total: number,
   currencies?: Array<{ code: string; name: string }>,
   countries?: string[],
+  categories?: any[],
 }) {
   const router = useRouter()
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -94,7 +96,7 @@ export function CustomersView({
         </Card>
       </div>
 
-      <ContactSearchAndFilters countries={countries} />
+      <ContactSearchAndFilters countries={countries} categories={categories} />
 
       <ContactsGrid contacts={data} activeTab={tab} />
     </div>

@@ -100,28 +100,30 @@ async function getFiscalYearComparison(orgId: string): Promise<FiscalYearCompari
   const previousFyEnd = new Date(currentFyStart)
   previousFyEnd.setMilliseconds(-1)
 
-  const [currentTransactions, previousTransactions] = await Promise.all([
-    prisma.transaction.findMany({
+  const [currentStats, previousStats] = await Promise.all([
+    prisma.transaction.groupBy({
+      by: ["type"],
       where: { organizationId: orgId, issuedAt: { gte: currentFyStart, lte: currentFyEnd } },
-      select: { type: true, total: true }
+      _sum: { total: true },
     }),
-    prisma.transaction.findMany({
+    prisma.transaction.groupBy({
+      by: ["type"],
       where: { organizationId: orgId, issuedAt: { gte: previousFyStart, lte: previousFyEnd } },
-      select: { type: true, total: true }
-    })
+      _sum: { total: true },
+    }),
   ])
 
-  const calc = (txs: any[]) => {
-    const income = txs.filter(t => t.type === "income").reduce((acc, t) => acc + (t.total || 0), 0)
-    const expense = txs.filter(t => t.type === "expense").reduce((acc, t) => acc + (t.total || 0), 0)
+  const calc = (stats: any[]) => {
+    const income = stats.find((s) => s.type === "income")?._sum.total || 0
+    const expense = stats.find((s) => s.type === "expense")?._sum.total || 0
     return { income, expense, net: income - expense }
   }
 
   const formatFYLabel = (start: Date) => `FY ${start.getFullYear()}-${(start.getFullYear() + 1).toString().slice(-2)}`
 
   return {
-    previous: { ...calc(previousTransactions), label: formatFYLabel(previousFyStart) },
-    current: { ...calc(currentTransactions), label: formatFYLabel(currentFyStart) }
+    previous: { ...calc(previousStats), label: formatFYLabel(previousFyStart) },
+    current: { ...calc(currentStats), label: formatFYLabel(currentFyStart) }
   }
 }
 

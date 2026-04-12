@@ -51,6 +51,8 @@ const envSchema = z.object({
   NEXT_PUBLIC_MICROSOFT_CLIENT_ID: z.string().default(""),
   GITHUB_TOKEN: z.string().optional(),
   GITHUB_REPO: z.string().default("mindtris/mintax"),
+  TELEMETRY_ENDPOINT: z.string().optional(),
+  TELEMETRY_DISABLED: z.enum(["true", "false"]).default("false"),
 })
 
 const env = envSchema.parse(process.env)
@@ -135,6 +137,10 @@ const config = {
   github: {
     token: env.GITHUB_TOKEN,
     repo: env.GITHUB_REPO,
+  },
+  telemetry: {
+    endpoint: env.TELEMETRY_ENDPOINT,
+    isDisabled: env.TELEMETRY_DISABLED === "true",
   },
 } as const
 

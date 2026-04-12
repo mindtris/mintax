@@ -3,7 +3,7 @@ import config from "@/lib/core/config"
 import { redirect } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import { Bug } from "lucide-react"
+import { Bug, Github } from "lucide-react"
 
 export default async function Home() {
   const session = await getSession()
@@ -46,11 +46,22 @@ export default async function Home() {
           <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-1000">
             <div className="flex justify-center items-center gap-3 mb-10">
               <Image src="/logo/logo.svg" alt="Mindtris" width={64} height={64} className="brightness-0 invert opacity-80" />
-              <span className="text-3xl font-bold tracking-tight text-white/90">Mindtris&trade;</span>
+              <span className="text-3xl font-bold tracking-tight text-white/90 leading-tight">Mindtris&trade;</span>
             </div>
-            <h1 className="text-3xl md:text-5xl font-bold tracking-tighter text-white leading-tight">
-              Automate the mundane so your team can focus on <span className="text-primary">what actually matters</span>
-            </h1>
+            <div className="relative inline-block">
+              <div className="absolute -top-3 -right-4 md:-top-4 md:-right-6">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/10 backdrop-blur-sm">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                  </span>
+                  <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest">Open Source</span>
+                </span>
+              </div>
+              <h1 className="text-3xl md:text-5xl font-bold tracking-tighter text-white leading-tight">
+                Automate the mundane so your team can focus on <span className="text-primary">what actually matters</span>
+              </h1>
+            </div>
             <p className="mt-4 text-base md:text-lg text-white/60 max-w-2xl mx-auto leading-relaxed">
               One platform for accounting, invoicing, hiring, and engagement. Built for businesses that move fast.
             </p>
@@ -67,6 +78,15 @@ export default async function Home() {
               >
                 Sign in
               </Link>
+              <a
+                href="https://github.com/mindtris/mintax"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-white/10 text-white px-6 py-3 rounded-lg hover:bg-white/20 transition-colors font-medium text-sm backdrop-blur-sm border border-white/10"
+              >
+                <Github className="h-4 w-4" />
+                GitHub
+              </a>
             </div>
           </div>
         </main>

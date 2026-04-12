@@ -7,47 +7,60 @@ export type SocialPostFilters = {
   status?: string
   provider?: string
   contentType?: string
+  category?: string
   dateFrom?: string
   dateTo?: string
   search?: string
 }
 
-export const getSocialPosts = cache(async (orgId: string, filters?: SocialPostFilters, options?: { ordering?: string }) => {
-  const where: Prisma.SocialPostWhereInput = { organizationId: orgId }
+export const getSocialPosts = cache(
+  async (orgId: string, filters?: SocialPostFilters, options?: { ordering?: string; take?: number; skip?: number }) => {
+    const where: Prisma.SocialPostWhereInput = { organizationId: orgId }
 
-  if (filters) {
-    if (filters.status && filters.status !== "-") where.status = filters.status
-    if (filters.contentType) where.contentType = filters.contentType
-    if (filters.provider && filters.provider !== "-") {
-      where.socialAccount = { provider: filters.provider }
-    }
-    if (filters.search) {
-      where.OR = [
-        { content: { contains: filters.search, mode: "insensitive" } },
-        { title: { contains: filters.search, mode: "insensitive" } },
-      ]
-    }
-    if (filters.dateFrom || filters.dateTo) {
-      where.createdAt = {
-        gte: filters.dateFrom ? new Date(filters.dateFrom) : undefined,
-        lte: filters.dateTo ? new Date(filters.dateTo) : undefined,
+    if (filters) {
+      if (filters.status && filters.status !== "-") where.status = filters.status
+      if (filters.contentType) where.contentType = filters.contentType
+      if (filters.provider && filters.provider !== "-") {
+        where.socialAccount = { provider: filters.provider }
+      }
+      if (filters.search) {
+        where.OR = [
+          { content: { contains: filters.search, mode: "insensitive" } },
+          { title: { contains: filters.search, mode: "insensitive" } },
+        ]
+      }
+      if (filters.dateFrom || filters.dateTo) {
+        where.createdAt = {
+          gte: filters.dateFrom ? new Date(filters.dateFrom) : undefined,
+          lte: filters.dateTo ? new Date(filters.dateTo) : undefined,
+        }
       }
     }
+
+    const orderByMatch = options?.ordering?.match(/^-?(.+)$/)
+    const orderByField = orderByMatch ? orderByMatch[1] : "createdAt"
+    const orderDirection = options?.ordering?.startsWith("-") ? "desc" : "asc"
+
+    const [posts, total] = await Promise.all([
+      prisma.socialPost.findMany({
+        where,
+        include: {
+          socialAccount: true,
+          media: { orderBy: { sortOrder: "asc" } },
+        },
+        orderBy: { [orderByField]: orderDirection },
+        take: options?.take,
+        skip: options?.skip,
+      }),
+      prisma.socialPost.count({ where }),
+    ])
+
+    return {
+      items: posts,
+      total,
+    }
   }
-
-  const orderByMatch = options?.ordering?.match(/^-?(.+)$/)
-  const orderByField = orderByMatch ? orderByMatch[1] : "createdAt"
-  const orderDirection = options?.ordering?.startsWith("-") ? "desc" : "asc"
-
-  return await prisma.socialPost.findMany({
-    where,
-    include: {
-      socialAccount: true,
-      media: { orderBy: { sortOrder: "asc" } },
-    },
-    orderBy: { [orderByField]: orderDirection },
-  })
-})
+)
 
 export const getSocialPostById = cache(async (id: string, orgId: string) => {
   return await prisma.socialPost.findFirst({
@@ -140,13 +153,18 @@ export async function createSocialPost(
     group?: string
   }
 ) {
+  const defaultContentType = data.contentType || (await prisma.category.findFirst({
+    where: { organizationId: orgId, type: "engage" },
+    orderBy: { name: "asc" }
+  }))?.code || "post"
+
   return await prisma.socialPost.create({
     data: {
       organizationId: orgId,
       createdById: userId,
       socialAccountId: data.socialAccountId,
       content: data.content,
-      contentType: data.contentType || "post",
+      contentType: defaultContentType,
       title: data.title,
       excerpt: data.excerpt,
       slug: data.slug,
@@ -175,10 +193,15 @@ export async function createMultiPlatformPost(
     scheduledAt?: Date | null
     settings?: any
     templateId?: string
+    mediaUrls?: string[]
   },
   accountIds: string[]
 ) {
   const group = randomUUID()
+  const defaultContentType = data.contentType || (await prisma.category.findFirst({
+    where: { organizationId: orgId, type: "engage" },
+    orderBy: { name: "asc" }
+  }))?.code || "post"
 
   const posts = await Promise.all(
     accountIds.map((accountId) =>
@@ -188,7 +211,7 @@ export async function createMultiPlatformPost(
           createdById: userId,
           socialAccountId: accountId,
           content: data.content,
-          contentType: data.contentType || "post",
+          contentType: defaultContentType,
           title: data.title,
           excerpt: data.excerpt,
           slug: data.slug,
@@ -198,6 +221,13 @@ export async function createMultiPlatformPost(
           settings: data.settings,
           templateId: data.templateId,
           group,
+          media: data.mediaUrls && data.mediaUrls.length > 0 ? {
+            create: data.mediaUrls.map((url, index) => ({
+              url,
+              type: url.match(/\.(mp4|webm|ogg)$/i) ? "video" : "image",
+              sortOrder: index
+            }))
+          } : undefined
         },
       })
     )

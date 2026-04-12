@@ -222,6 +222,7 @@ model BankStatement {
   bankAccountId String      @map("bank_account_id") @db.Uuid
   bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
   fileId        String?     @map("file_id") @db.Uuid
+  file          File?       @relation(fields: [fileId], references: [id], onDelete: SetNull)
   periodStart   DateTime    @map("period_start")
   periodEnd     DateTime    @map("period_end")
   importedAt    DateTime    @default(now()) @map("imported_at")
@@ -283,7 +284,8 @@ model Invoice {
   paidAt          DateTime?    @map("paid_at")
   notes           String?
   transactionId   String?      @map("transaction_id") @db.Uuid
-  files           Json         @default("[]")
+  files           Json         @default("[]") // @deprecated — use invoiceFiles relation
+  invoiceFiles    InvoiceFile[]
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
 
@@ -364,7 +366,8 @@ model Transaction {
   type                  String?       @default("expense") // "expense" | "income" | "transfer"
   items                 Json          @default("[]")
   note                  String?
-  files                 Json          @default("[]")
+  files                 Json          @default("[]") // @deprecated — use transactionFiles relation
+  transactionFiles      TransactionFile[]
   extra                 Json?
   category              Category?     @relation(fields: [categoryCode, organizationId], references: [code, organizationId])
   categoryCode          String?       @map("category_code")
@@ -550,14 +553,95 @@ model File {
   filename          String
   path              String
   mimetype          String
+  size              Int          @default(0)
   metadata          Json?
   isReviewed        Boolean      @default(false) @map("is_reviewed")
   isSplitted        Boolean      @default(false) @map("is_splitted")
   cachedParseResult Json?        @map("cached_parse_result")
   createdAt         DateTime     @default(now()) @map("created_at")
 
+  transactionFiles  TransactionFile[]
+  invoiceFiles      InvoiceFile[]
+  billFiles         BillFile[]
+  candidateFiles    CandidateFile[]
+  leadFiles         LeadFile[]
+  socialPostMedia   SocialPostMedia[]
+  bankStatements    BankStatement[]
+
   @@index([organizationId])
   @@map("files")
+}
+
+model TransactionFile {
+  id            String      @id @default(uuid()) @db.Uuid
+  transactionId String      @map("transaction_id") @db.Uuid
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  fileId        String      @map("file_id") @db.Uuid
+  file          File        @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  @@unique([transactionId, fileId])
+  @@index([transactionId])
+  @@index([fileId])
+  @@map("transaction_files")
+}
+
+model InvoiceFile {
+  id        String   @id @default(uuid()) @db.Uuid
+  invoiceId String   @map("invoice_id") @db.Uuid
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  fileId    String   @map("file_id") @db.Uuid
+  file      File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([invoiceId, fileId])
+  @@index([invoiceId])
+  @@index([fileId])
+  @@map("invoice_files")
+}
+
+model BillFile {
+  id        String   @id @default(uuid()) @db.Uuid
+  billId    String   @map("bill_id") @db.Uuid
+  bill      Bill     @relation(fields: [billId], references: [id], onDelete: Cascade)
+  fileId    String   @map("file_id") @db.Uuid
+  file      File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([billId, fileId])
+  @@index([billId])
+  @@index([fileId])
+  @@map("bill_files")
+}
+
+model CandidateFile {
+  id          String    @id @default(uuid()) @db.Uuid
+  candidateId String    @map("candidate_id") @db.Uuid
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  fileId      String    @map("file_id") @db.Uuid
+  file        File      @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  label       String?   // "resume" | "cover_letter" | "portfolio" | "other"
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@unique([candidateId, fileId])
+  @@index([candidateId])
+  @@index([fileId])
+  @@map("candidate_files")
+}
+
+model LeadFile {
+  id        String   @id @default(uuid()) @db.Uuid
+  leadId    String   @map("lead_id") @db.Uuid
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  fileId    String   @map("file_id") @db.Uuid
+  file      File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  label     String?  // "proposal" | "contract" | "nda" | "other"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([leadId, fileId])
+  @@index([leadId])
+  @@index([fileId])
+  @@map("lead_files")
 }
 
 model Currency {
@@ -684,6 +768,7 @@ model SocialPostMedia {
   postId    String     @map("post_id") @db.Uuid
   post      SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
   fileId    String?    @map("file_id") @db.Uuid
+  file      File?      @relation(fields: [fileId], references: [id], onDelete: SetNull)
   url       String?
   type      String     @default("image") // "image" | "video" | "gif"
   alt       String?
@@ -691,6 +776,7 @@ model SocialPostMedia {
   createdAt DateTime   @default(now()) @map("created_at")
 
   @@index([postId])
+  @@index([fileId])
   @@map("social_post_media")
 }
 
@@ -939,8 +1025,9 @@ model Bill {
   
   notes           String?
   transactionId   String?      @map("transaction_id") @db.Uuid
-  files           Json         @default("[]")
-  
+  files           Json         @default("[]") // @deprecated — use billFiles relation
+  billFiles       BillFile[]
+
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
 
@@ -1054,7 +1141,8 @@ model Candidate {
   externalCandidateId String?  @map("external_candidate_id")
   
   submissions     MarketingSubmission[]
-  
+  candidateFiles  CandidateFile[]
+
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
 
@@ -1124,6 +1212,8 @@ model Lead {
   description     String?      @db.Text
   expectedCloseAt DateTime?    @map("expected_close_at")
   lostReason      String?      @map("lost_reason")
+
+  leadFiles       LeadFile[]
 
   // Lifecycle
   createdAt       DateTime     @default(now()) @map("created_at")

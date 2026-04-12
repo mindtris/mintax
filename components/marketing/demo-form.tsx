@@ -60,7 +60,7 @@ export function DemoForm() {
           <FormInput
             title="Company"
             name="company"
-            placeholder="Acme Inc"
+            placeholder="Mindtris"
             required
           />
           <FormInput

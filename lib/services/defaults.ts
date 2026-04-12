@@ -81,45 +81,62 @@ export const DEFAULT_SETTINGS = [
 export const BUSINESS_DEFAULTS = {
   categories: {
     expense: [
-      { code: "ads", name: "Ads", color: "#ef4444", llm: "advertising, marketing" },
-      { code: "swag", name: "Swag", color: "#ef4444", llm: "company swag, branding" },
-      { code: "donations", name: "Donations", color: "#10b981", llm: "charities, gifts" },
-      { code: "tools", name: "Tools", color: "#f59e0b", llm: "hardware tools, equipment" },
-      { code: "events", name: "Events", color: "#f97316", llm: "conferences, meetups" },
-      { code: "food", name: "Food", color: "#ec4899", llm: "meals, dining" },
-      { code: "insurance", name: "Insurance", color: "#1e3a8a", llm: "business insurance" },
-      { code: "invoice", name: "Invoice", color: "#2563eb", llm: "general billing" },
-      { code: "communication", name: "Communication", color: "#0d9488", llm: "phone, internet" },
-      { code: "office", name: "Office", color: "#06b6d4", llm: "stationery, office rent" },
-      { code: "online_services", name: "Online services", color: "#8b5cf6", llm: "saas, subscriptions" },
-      { code: "rental", name: "Rental", color: "#1e3a8a", llm: "office lease" },
-      { code: "education", name: "Education", color: "#f43f5e", llm: "trainings, books" },
-      { code: "salary", name: "Salary", color: "#db2777", llm: "payroll, wages" },
-      { code: "fees", name: "Fees", color: "#7e22ce", llm: "bank fees, legal fees" },
-      { code: "travel", name: "Travel", color: "#f97316", llm: "flights, hotels" },
-      { code: "utility_bills", name: "Utility bills", color: "#d97706", llm: "electricity, water" },
-      { code: "transport", name: "Transport", color: "#991b1b", llm: "fuel, logistics" },
-      { code: "software", name: "Software", color: "#15803d", llm: "licenses" },
-      { code: "other_expense", name: "Other", color: "#1f2937", llm: "miscellaneous" },
+      { code: "ads", name: "Advertising & promotion", color: "#ef4444", llm: "advertising, marketing, promo, facebook ads, google ads, flyers" },
+      { code: "auto_vehicle", name: "Auto & vehicle", color: "#f97316", llm: "fuel, gas, vehicle repair, car insurance, parking, tolls" },
+      { code: "bank_fees", name: "Bank & service fees", color: "#7e22ce", llm: "bank charges, service fees, transaction fees, interest paid" },
+      { code: "capital_assets", name: "Capital assets & depreciation", color: "#1f2937", llm: "equipment purchase, machinery, depreciation, amortization" },
+      { code: "childcare", name: "Childcare", color: "#ec4899", llm: "daycare, nanny, child services" },
+      { code: "clothing", name: "Clothing", color: "#8b5cf6", llm: "uniforms, work clothes, apparel" },
+      { code: "communication", name: "Communication", color: "#0d9488", llm: "phone, internet, mobile bill, zoom, slack" },
+      { code: "donations", name: "Donations & gifts", color: "#10b981", llm: "charities, philantropy, corporate gifts" },
+      { code: "education", name: "Education & training", color: "#f43f5e", llm: "trainings, books, courses, certifications" },
+      { code: "entertainment", name: "Entertainment", color: "#f97316", llm: "team events, client entertainment" },
+      { code: "food", name: "Food & dining", color: "#ec4899", llm: "meals, business lunch, dinner, cafe" },
+      { code: "groceries", name: "Groceries", color: "#10b981", llm: "supermarket, food supplies" },
+      { code: "healthcare", name: "Healthcare & medical", color: "#ec4899", llm: "medical bills, health insurance, pharmacy" },
+      { code: "home_office", name: "Home office", color: "#06b6d4", llm: "office equipment at home, desk, chair, monitor" },
+      { code: "insurance", name: "Insurance", color: "#1e3a8a", llm: "business insurance, liability, property insurance" },
+      { code: "interest", name: "Interest & loan payments", color: "#7e22ce", llm: "loan interest, mortgage interest" },
+      { code: "office_supplies", name: "Office supplies", color: "#06b6d4", llm: "stationery, paper, ink, desk supplies" },
+      { code: "personal_care", name: "Personal care", color: "#ec4899", llm: "gym, salon, self care" },
+      { code: "pets", name: "Pet expenses", color: "#f43f5e", llm: "veterinary, pet food, pet supplies" },
+      { code: "professional_fees", name: "Professional fees", color: "#7e22ce", llm: "legal, accounting, consultancy, auditing" },
+      { code: "rent_lease", name: "Rent & lease", color: "#1e3a8a", llm: "office rent, equipment lease, property lease" },
+      { code: "repairs_maintenance", name: "Repairs & maintenance", color: "#b45309", llm: "equipment repair, office maintenance, cleaning" },
+      { code: "salaries_wages", name: "Salaries & wages", color: "#db2777", llm: "payroll, wages, employee benefits, bonuses" },
+      { code: "software", name: "Software & subscriptions", color: "#8b5cf6", llm: "saas, digital tools, icloud, adobe, microsoft" },
+      { code: "shipping_expense", name: "Shipping & freight", color: "#ca8a04", llm: "courier, shipping costs, postage" },
+      { code: "tax_payments", name: "Tax payments", color: "#1f2937", llm: "income tax, gst payment, vat payment" },
+      { code: "transport_delivery", name: "Transport & delivery", color: "#991b1b", llm: "logistics, delivery services" },
+      { code: "travel", name: "Travel", color: "#f97316", llm: "flights, hotels, airbnb, travel insurance" },
+      { code: "utilities", name: "Utilities", color: "#d97706", llm: "electricity, water, gas, heating" },
+      { code: "other_expense", name: "Other", color: "#1f2937", llm: "miscellaneous, general" },
     ],
     income: [
       { code: "sales_revenue", name: "Sales revenue", color: "#059669", llm: "product sales" },
-      { code: "service_revenue", name: "Service revenue", color: "#059669", llm: "consulting, services" },
-      { code: "interest_income", name: "Interest income", color: "#059669", llm: "bank interest" },
-      { code: "rental_income", name: "Rental income", color: "#059669", llm: "property rent" },
-      { code: "royalties", name: "Royalties", color: "#059669", llm: "licensing income" },
-      { code: "commission", name: "Commission", color: "#059669", llm: "sales commission" },
+      { code: "service_revenue", name: "Service revenue", color: "#059669", llm: "consulting, services, professional fees" },
+      { code: "commission", name: "Commission", color: "#10b981", llm: "sales commission, affiliate income" },
+      { code: "rental_income", name: "Rental income", color: "#0d9488", llm: "property rent, asset rental" },
+      { code: "interest_income", name: "Interest income", color: "#059669", llm: "bank interest, investment interest" },
+      { code: "royalties", name: "Royalties", color: "#059669", llm: "licensing income, ip royalties" },
+      { code: "dividends", name: "Dividends", color: "#059669", llm: "stock dividends, profit distribution" },
+      { code: "salary_income", name: "Salary & wages", color: "#059669", llm: "employment income, paycheck" },
+      { code: "government_benefits", name: "Government benefits", color: "#10b981", llm: "subsidies, grants, welfare" },
+      { code: "refunds", name: "Refunds & reimbursements", color: "#0d9488", llm: "tax refund, vendor refund" },
       { code: "other_income", name: "Other income", color: "#059669", llm: "miscellaneous" },
     ],
     cogs: [
-      { code: "raw_materials", name: "Raw materials", color: "#ca8a04", llm: "manufacturing stock" },
-      { code: "manufacturing", name: "Manufacturing", color: "#ca8a04", llm: "production costs" },
-      { code: "shipping", name: "Shipping and freight", color: "#ca8a04", llm: "delivery costs" },
+      { code: "raw_materials", name: "Raw materials", color: "#ca8a04", llm: "manufacturing stock, parts" },
+      { code: "manufacturing", name: "Manufacturing & production", color: "#ca8a04", llm: "production costs, factory costs" },
+      { code: "shipping_cogs", name: "Shipping & freight", color: "#ca8a04", llm: "inbound shipping, cargo" },
+      { code: "direct_labor", name: "Direct labor", color: "#ca8a04", llm: "production staff wages" },
+      { code: "packaging", name: "Packaging", color: "#ca8a04", llm: "boxes, wrappers, containers" },
     ],
     item: [
-      { code: "products", name: "Products", color: "#6366f1", llm: "physical goods" },
-      { code: "services", name: "Services", color: "#6366f1", llm: "consultancy, work" },
-      { code: "subscriptions", name: "Subscriptions", color: "#6366f1", llm: "recurring billing" },
+      { code: "product_item", name: "Product", color: "#6366f1", llm: "physical goods" },
+      { code: "service_item", name: "Service", color: "#6366f1", llm: "consultancy, work" },
+      { code: "subscription_item", name: "Subscription", color: "#6366f1", llm: "recurring billing" },
+      { code: "digital_product", name: "Digital product", color: "#8b5cf6", llm: "software download, ebook, course" },
     ],
     sales: [
       { code: "lead", name: "Lead", color: "#94a3b8", llm: "new prospect" },
@@ -128,15 +145,19 @@ export const BUSINESS_DEFAULTS = {
       { code: "negotiation", name: "Negotiation", color: "#f59e0b", llm: "price talks" },
       { code: "closed_won", name: "Closed won", color: "#10b981", llm: "sale finished" },
       { code: "closed_lost", name: "Closed lost", color: "#ef4444", llm: "lost deal" },
+      { code: "churned", name: "Churned", color: "#475569", llm: "lost customer" },
     ],
     hire: [
-      { code: "engineering", name: "Engineering", color: "#3b82f6" },
       { code: "design", name: "Design", color: "#ec4899" },
-      { code: "sales", name: "Sales", color: "#10b981" },
+      { code: "engineering", name: "Engineering", color: "#3b82f6" },
+      { code: "finance", name: "Finance", color: "#14b8a6" },
+      { code: "hr", name: "Human resources", color: "#8b5cf6" },
       { code: "marketing", name: "Marketing", color: "#f97316" },
       { code: "operations", name: "Operations", color: "#6366f1" },
-      { code: "hr", name: "Human resources", color: "#8b5cf6" },
-      { code: "finance", name: "Finance", color: "#14b8a6" },
+      { code: "sales", name: "Sales", color: "#10b981" },
+      { code: "support", name: "Customer support", color: "#06b6d4" },
+      { code: "legal", name: "Legal", color: "#1e3a8a" },
+      { code: "product_dept", name: "Product", color: "#8b5cf6" },
     ],
     hire_expense: [
       { code: "job_boards", name: "Job board fees", color: "#ef4444", llm: "linkedin ads, indeed postings" },
@@ -174,10 +195,14 @@ export const BUSINESS_DEFAULTS = {
       { code: "rejected", name: "Rejected", color: "#ef4444" },
     ],
     engage: [
+      { code: "announcement", name: "Announcement", color: "#f59e0b" },
+      { code: "case_study", name: "Case study", color: "#ec4899" },
       { code: "product_update", name: "Product update", color: "#3b82f6" },
       { code: "tutorial", name: "Tutorial", color: "#8b5cf6" },
-      { code: "case_study", name: "Case study", color: "#ec4899" },
-      { code: "announcement", name: "Announcement", color: "#f59e0b" },
+      { code: "blog", name: "Blog post", color: "#0d9488" },
+      { code: "job_post", name: "Job posting", color: "#6366f1" },
+      { code: "event", name: "Event", color: "#f97316" },
+      { code: "newsletter", name: "Newsletter", color: "#10b981" },
     ],
   },
   chartAccounts: [
@@ -209,40 +234,7 @@ export const BUSINESS_DEFAULTS = {
   ],
 }
 
-export const PERSONAL_DEFAULTS = {
-  categories: {
-    expense: [
-      { code: "groceries", name: "Groceries", color: "#10b981", llm: "food, super market" },
-      { code: "rent", name: "Rent", color: "#1e3a8a", llm: "house rent" },
-      { code: "utilities", name: "Utilities", color: "#d97706", llm: "electricity, water, gas" },
-      { code: "transport", name: "Transport", color: "#991b1b", llm: "fuel, bus, taxi" },
-      { code: "entertainment", name: "Entertainment", color: "#f97316", llm: "movies, gaming" },
-      { code: "health", name: "Health", color: "#ec4899", llm: "medicine, gym" },
-      { code: "education", name: "Education", color: "#f43f5e", llm: "courses, books" },
-      { code: "shopping", name: "Shopping", color: "#8b5cf6", llm: "clothes, gadgets" },
-      { code: "subscriptions", name: "Subscriptions", color: "#6366f1", llm: "saas, streaming" },
-      { code: "savings", name: "Savings", color: "#059669", llm: "investment, savings" },
-      { code: "other_expense", name: "Other", color: "#1f2937", llm: "miscellaneous" },
-    ],
-    income: [
-      { code: "salary", name: "Salary", color: "#059669", llm: "monthly wage" },
-      { code: "freelance", name: "Freelance", color: "#059669", llm: "side gig income" },
-      { code: "investments", name: "Investments", color: "#059669", llm: "dividends, interest" },
-      { code: "rental_income", name: "Rental income", color: "#059669", llm: "property rent" },
-      { code: "other_income", name: "Other income", color: "#059669", llm: "miscellaneous" },
-    ],
-  },
-  chartAccounts: [
-    { code: "1000", name: "Cash", type: "asset", isSystem: true },
-    { code: "1100", name: "Bank Accounts", type: "asset", isSystem: true },
-    { code: "1200", name: "Investments", type: "asset", isSystem: true },
-    { code: "2000", name: "Credit Cards", type: "liability", isSystem: true },
-    { code: "2100", name: "Loans", type: "liability", isSystem: true },
-    { code: "3000", name: "Net Worth", type: "equity", isSystem: true },
-    { code: "4000", name: "Income", type: "revenue", isSystem: true },
-    { code: "5000", name: "Expenses", type: "expense", isSystem: true },
-  ],
-}
+export const PERSONAL_DEFAULTS = BUSINESS_DEFAULTS
 
 // --- Regional Tax Seeding ---
 
@@ -332,8 +324,9 @@ export async function seedDefaultTaxes(orgId: string, currency: string) {
   }
 }
 
-export async function createOrgDefaults(orgId: string, orgType = "business") {
+export async function createOrgDefaults(orgId: string, orgType = "business", options?: { baseCurrency?: string }) {
   const defaults = orgType === "personal" ? PERSONAL_DEFAULTS : BUSINESS_DEFAULTS
+  const baseCurrency = options?.baseCurrency || "INR"
 
   // Default projects
   for (const project of DEFAULT_PROJECTS) {
@@ -390,10 +383,15 @@ export async function createOrgDefaults(orgId: string, orgType = "business") {
 
   // Default settings
   for (const setting of DEFAULT_SETTINGS) {
+    let value = setting.value
+    if (setting.code === "default_currency" && options?.baseCurrency) {
+      value = options.baseCurrency
+    }
+
     await prisma.setting.upsert({
       where: { organizationId_code: { code: setting.code, organizationId: orgId } },
-      update: { name: setting.name, description: setting.description, value: setting.value },
-      create: { ...setting, organizationId: orgId },
+      update: { name: setting.name, description: setting.description, value },
+      create: { ...setting, organizationId: orgId, value },
     })
   }
 
@@ -407,13 +405,7 @@ export async function createOrgDefaults(orgId: string, orgType = "business") {
   }
 
   // Regional Taxes based on org currency
-  const org = await prisma.organization.findUnique({
-    where: { id: orgId },
-    select: { baseCurrency: true }
-  })
-  if (org) {
-    await seedDefaultTaxes(orgId, org.baseCurrency)
-  }
+  await seedDefaultTaxes(orgId, baseCurrency)
 }
 
 export async function isOrgEmpty(orgId: string) {

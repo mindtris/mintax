@@ -29,7 +29,7 @@ export default function NewOrganizationPage() {
               <Input
                 id="name"
                 name="name"
-                placeholder="e.g., My Company Pvt Ltd"
+                placeholder="e.g., Mindtris"
                 required
               />
             </div>

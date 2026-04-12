@@ -10,7 +10,7 @@ import {
 import {
   DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { LEAD_STAGES, LEAD_SOURCES, STAGE_LABELS, SOURCE_LABELS } from "@/lib/services/leads"
+import { LEAD_SOURCES, SOURCE_LABELS } from "@/lib/services/leads"
 import { ColumnsIcon, Filter, X, Search } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
@@ -21,10 +21,12 @@ export function LeadsSearchAndFilters({
   columns = [],
   visibleColumns = [],
   onToggleColumn,
+  categories = [],
 }: {
   columns?: ColumnConfig[]
   visibleColumns?: string[]
   onToggleColumn?: (key: string) => void
+  categories?: any[]
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -126,8 +128,8 @@ export function LeadsSearchAndFilters({
                 <SelectTrigger className="w-full h-10"><SelectValue placeholder="All stages" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="-">All stages</SelectItem>
-                  {LEAD_STAGES.map((s) => (
-                    <SelectItem key={s} value={s}>{STAGE_LABELS[s]}</SelectItem>
+                  {categories?.map((c) => (
+                    <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

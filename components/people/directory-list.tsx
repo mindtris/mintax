@@ -4,6 +4,7 @@ import { DataGrid } from "@/components/ui/data-grid"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Sheet,
   SheetContent,
@@ -22,10 +23,31 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ColumnsIcon, Filter, Search, X } from "lucide-react"
+import { 
+  ColumnsIcon, 
+  Filter, 
+  Search, 
+  X, 
+  UserRoundCog, 
+  Trash2, 
+  MoreVertical,
+  Mail,
+  ShieldAlert,
+  UserX,
+  UserPlus
+} from "lucide-react"
 import { useMemo, useState } from "react"
+import Image from "next/image"
+import Link from "next/link"
+import { DirectoryBulkActions } from "./directory-bulk-actions"
+import { updateMemberRoleAction, removeMemberAction } from "@/app/(app)/people/actions"
+import { InviteMemberSheet } from "./invite-member-sheet"
+import { ORGANIZATION_ROLES } from "@/lib/constants/auth"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 const roleBadgeVariant: Record<string, "default" | "secondary" | "outline"> = {
   owner: "default",
@@ -55,6 +77,8 @@ export function DirectoryList({ members }: { members: MemberRow[] }) {
   const [roleFilter, setRoleFilter] = useState("-")
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(["name", "role"])
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [isUpdating, setIsUpdating] = useState(false)
 
   const filtered = useMemo(() => {
     let result = members
@@ -70,6 +94,35 @@ export function DirectoryList({ members }: { members: MemberRow[] }) {
     return result
   }, [members, search, roleFilter])
 
+  const handleRoleUpdate = async (userId: string, newRole: string) => {
+    try {
+      setIsUpdating(true)
+      const res = await updateMemberRoleAction(userId, newRole)
+      if (res.success) {
+        toast.success("Member role updated")
+      } else {
+        toast.error(res.error || "Failed to update role")
+      }
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const handleRemoveMember = async (userId: string) => {
+    if (!confirm("Are you sure you want to remove this member?")) return
+    try {
+      setIsUpdating(true)
+      const res = await removeMemberAction(userId)
+      if (res.success) {
+        toast.success("Member removed from organization")
+      } else {
+        toast.error(res.error || "Failed to remove member")
+      }
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
   const allColumns = useMemo(() => [
     {
       key: "name",
@@ -77,7 +130,7 @@ export function DirectoryList({ members }: { members: MemberRow[] }) {
       sortable: true,
       render: (row: MemberRow) => (
         <div className="flex items-center gap-3 py-1">
-          <div className="h-8 w-8 rounded-full bg-[#c96442]/10 flex items-center justify-center text-xs font-bold text-[#c96442] shrink-0">
+          <div className="h-8 w-8 rounded-full bg-[#c96442]/10 flex items-center justify-center text-xs font-bold text-[#c96442] shrink-0 border border-[#c96442]/20">
             {row.initial}
           </div>
           <div className="flex flex-col">
@@ -92,7 +145,7 @@ export function DirectoryList({ members }: { members: MemberRow[] }) {
       label: "Role",
       sortable: true,
       render: (row: MemberRow) => (
-        <Badge variant={roleBadgeVariant[row.role] || "outline"} className="text-[10px] capitalize">
+        <Badge variant={roleBadgeVariant[row.role] || "outline"} className="text-[10px] capitalize font-medium">
           {row.role}
         </Badge>
       ),
@@ -119,13 +172,9 @@ export function DirectoryList({ members }: { members: MemberRow[] }) {
         <div className="flex-1 min-w-[200px] relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name or email..."
-            defaultValue={search}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                setSearch((e.target as HTMLInputElement).value)
-              }
-            }}
+            placeholder="Search team..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 bg-background/50"
           />
         </div>
@@ -133,7 +182,7 @@ export function DirectoryList({ members }: { members: MemberRow[] }) {
         <Button
           variant={activeFilterCount > 0 ? "default" : "outline"}
           onClick={() => setFilterSheetOpen(true)}
-          className="px-4 text-xs"
+          className="px-4 text-xs h-10"
         >
           <Filter className="h-3.5 w-3.5 mr-2" />
           Filters
@@ -152,7 +201,7 @@ export function DirectoryList({ members }: { members: MemberRow[] }) {
               setSearch("")
               setRoleFilter("-")
             }}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground h-10 w-10"
             title="Clear all filters"
           >
             <X className="h-4 w-4" />
@@ -161,7 +210,7 @@ export function DirectoryList({ members }: { members: MemberRow[] }) {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" title="Select table columns">
+            <Button variant="outline" size="icon" title="Select columns" className="h-10 w-10">
               <ColumnsIcon className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -181,24 +230,24 @@ export function DirectoryList({ members }: { members: MemberRow[] }) {
       </div>
 
       <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
-        <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] w-[95vw] sm:max-w-md flex flex-col gap-0 p-0 overflow-hidden shadow-2xl">
+        <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] rounded-lg w-[95vw] sm:max-w-md flex flex-col gap-0 p-0 shadow-2xl overflow-hidden">
           <SheetHeader className="px-6 pt-6 pb-4 shrink-0 border-b">
             <SheetTitle>Filters</SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">Role</label>
+            <div className="space-y-3">
+              <Label className="text-xs text-muted-foreground">User role</Label>
               <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="w-full h-10">
+                <SelectTrigger className="w-full h-11">
                   <SelectValue placeholder="All roles" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="-">All roles</SelectItem>
-                  <SelectItem value="owner">Owner</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="accountant">Accountant</SelectItem>
-                  <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="viewer">Viewer</SelectItem>
+                  {ORGANIZATION_ROLES.map((role) => (
+                    <SelectItem key={role.value} value={role.value}>
+                      {role.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -206,7 +255,7 @@ export function DirectoryList({ members }: { members: MemberRow[] }) {
           <SheetFooter className="px-6 py-4 shrink-0 border-t">
             <div className="flex gap-2 w-full">
               <Button className="flex-1" onClick={() => setFilterSheetOpen(false)}>
-                Apply
+                Apply filters
               </Button>
               <Button
                 variant="outline"
@@ -216,7 +265,7 @@ export function DirectoryList({ members }: { members: MemberRow[] }) {
                   setFilterSheetOpen(false)
                 }}
               >
-                Clear all
+                Reset
               </Button>
             </div>
           </SheetFooter>
@@ -226,9 +275,91 @@ export function DirectoryList({ members }: { members: MemberRow[] }) {
       <DataGrid
         data={filtered}
         columns={dynamicColumns}
-        emptyTitle="Directory"
-        emptyDescription="No team members yet. Invite your first member to get started."
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        renderDetailSheet={(member, onClose) => (
+          <div className="flex flex-col h-full gap-0">
+            <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-[#c96442]/10 flex items-center justify-center text-lg font-bold text-[#c96442] shrink-0 border-2 border-[#c96442]/20">
+                  {member.initial}
+                </div>
+                <div className="flex flex-col">
+                  <SheetTitle className="text-xl leading-none mb-1">{member.name}</SheetTitle>
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <Mail className="h-3.5 w-3.5" />
+                    <span>{member.email}</span>
+                  </div>
+                </div>
+              </div>
+            </SheetHeader>
+
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <UserRoundCog className="h-4 w-4 text-primary" />
+                  <Label className="text-sm font-semibold">Security and access</Label>
+                </div>
+                <div className="bg-muted/40 rounded-xl p-5 border border-border/50">
+                  <div className="space-y-3">
+                    <Label className="text-xs text-muted-foreground">Organization role</Label>
+                    <Select defaultValue={member.role} onValueChange={(val) => handleRoleUpdate(member.id, val)} disabled={isUpdating}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="owner">Owner</SelectItem>
+                        {ORGANIZATION_ROLES.map((role) => (
+                          <SelectItem key={role.value} value={role.value}>
+                            {role.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Roles determine what actions this user can perform. Administrators can manage settings and billing.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <ShieldAlert className="h-4 w-4 text-destructive" />
+                  <Label className="text-sm font-semibold text-destructive">Danger zone</Label>
+                </div>
+                <div className="bg-destructive/5 rounded-xl p-5 border border-destructive/10">
+                  <h4 className="text-sm font-semibold text-destructive mb-1">Remove from organization</h4>
+                  <p className="text-xs text-destructive/80 mb-4 leading-relaxed">
+                    Once removed, this user will lose all access to this organization and its data immediately.
+                  </p>
+                  <Button variant="destructive" size="sm" className="w-full gap-2" disabled={isUpdating} onClick={() => { handleRemoveMember(member.id); onClose() }}>
+                    <UserX className="h-4 w-4" />
+                    Remove member
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <SheetFooter className="px-6 py-4 border-t shrink-0">
+              <Button variant="secondary" className="w-full" onClick={onClose}>Close</Button>
+            </SheetFooter>
+          </div>
+        )}
+        emptyIcon={
+          <Image src="/empty-state.svg" alt="No members" width={120} height={120} priority />
+        }
+        emptyTitle="Team Directory"
+        emptyDescription="Your organization library is currently empty. Invite team members to collaborate."
+        emptyActions={
+          <InviteMemberSheet />
+        }
       />
+
+      {selectedIds.length > 0 && (
+        <DirectoryBulkActions selectedIds={selectedIds} onActionComplete={() => setSelectedIds([])} />
+      )}
     </div>
   )
 }

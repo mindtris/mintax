@@ -23,7 +23,7 @@ import {
   Landmark,
   LayoutDashboard,
   Link as LinkIcon,
-  LoaderPinwheel,
+  ShipWheel,
   LogOut,
   Mail,
   Menu,
@@ -52,12 +52,14 @@ import {
   Wrench,
   X,
   CircleUserRound,
+  Bug,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import { useState } from "react"
 import { OrgSwitcher } from "../sidebar/org-switcher"
+import { BugReportSheet } from "./bug-report-sheet"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -114,10 +116,10 @@ const modules: NavModule[] = [
     items: [
       { href: "/people?tab=directory", label: "Directory", icon: Users },
       { href: "/people?tab=reminders", label: "Reminders", icon: ClockArrowUp },
-      { href: "/people?tab=time-off", label: "Time off", icon: CalendarOff },
-      { href: "/people?tab=documents", label: "Documents", icon: FileText },
+      // { href: "/people?tab=time-off", label: "Time off", icon: CalendarOff },
+      // { href: "/people?tab=documents", label: "Documents", icon: FileText },
       { href: "/people?tab=quicklinks", label: "Quicklinks", icon: LinkIcon },
-      { href: "/people?tab=onboarding", label: "Onboarding", icon: UserPlus },
+      // { href: "/people?tab=onboarding", label: "Onboarding", icon: UserPlus },
     ],
   },
   {
@@ -135,7 +137,7 @@ const modules: NavModule[] = [
   {
     key: "hire",
     label: "Hire",
-    icon: LoaderPinwheel,
+    icon: ShipWheel,
     basePaths: ["/hire"],
     items: [
       { href: "/hire?tab=jobs", label: "Jobs", icon: BriefcaseBusiness },
@@ -164,7 +166,7 @@ const modules: NavModule[] = [
 function getActiveModule(pathname: string, searchParams: URLSearchParams): NavModule | null {
   const tab = searchParams.get("tab")
   if (pathname === "/dashboard" || pathname === "/" || (pathname.startsWith("/apps") && !tab) || (pathname.startsWith("/apps") && tab !== "outlook")) return null
-  
+
   // Special case for accounts landing page or any accounts-based tab
   if (pathname === "/accounts") {
     return modules.find(m => m.key === "accounts") || null
@@ -255,7 +257,7 @@ export function TopNav({
 
         {/* Right section */}
         <div className="flex items-center gap-3 ml-auto shrink-0">
-          <div className="hidden lg:block">
+          <div className="hidden sm:block">
             <OrgSwitcher activeOrg={activeOrg} organizations={organizations} />
           </div>
 
@@ -321,7 +323,7 @@ export function TopNav({
           <Link
             href="/settings"
             className={cn(
-              "hidden lg:flex items-center justify-center h-8 w-8 rounded-md transition-colors",
+              "hidden sm:flex items-center justify-center h-8 w-8 rounded-md transition-colors",
               pathname.startsWith("/settings")
                 ? "bg-foreground/10 text-foreground"
                 : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -348,31 +350,35 @@ export function TopNav({
                 <p className="text-xs text-muted-foreground">{profile.email}</p>
               </div>
               <DropdownMenuItem asChild className="px-3 cursor-pointer">
-                <Link href="/settings/profile" className="flex items-center gap-2">
+                <Link href="/settings?tab=profile" className="flex items-center gap-2">
                   <UserRound className="h-4 w-4 text-muted-foreground" />
-                  <span>My Profile</span>
+                  <span>My profile</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="px-3 cursor-pointer">
-                <Link href="/settings/business" className="flex items-center gap-2">
+                <Link href="/settings?tab=business" className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <span>Organization Settings</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="px-3 cursor-pointer">
-                <Link href="/settings" className="flex items-center gap-2">
-                  <Settings className="h-4 w-4 text-muted-foreground" />
-                  <span>Global Settings</span>
+                  <span>Organization settings</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="px-3 cursor-pointer">
                 <Link href="/import/csv" className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span>Import Tools</span>
+                  <span>Import tools</span>
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <BugReportSheet>
+                <DropdownMenuItem
+                  className="px-3 cursor-pointer"
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <Bug className="h-4 w-4 text-muted-foreground" />
+                  <span>Report a bug</span>
+                </DropdownMenuItem>
+              </BugReportSheet>
               <DropdownMenuItem
-                className="px-3 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10 mt-1"
+                className="px-3 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
                 onClick={async () => {
                   const { authClient } = await import("@/lib/core/auth-client")
                   await authClient.signOut({})
@@ -397,57 +403,57 @@ export function TopNav({
 
       {/* Secondary bar — sub-navigation for active module */}
       {activeModule && (
-      <div>
-        <div className="flex h-10 items-center px-4 gap-1 overflow-x-auto scrollbar-none">
-          {activeModule.items.map((item) => {
-            // Handle items that use query params (e.g. /customers?type=client or /accounts?tab=transactions)
-            const [itemPath, itemQuery] = item.href.split("?")
-            const itemParams = new URLSearchParams(itemQuery ?? "")
-            const itemType = itemParams.get("type")
-            const itemTab = itemParams.get("tab")
+        <div>
+          <div className="flex h-10 items-center px-4 gap-1 overflow-x-auto scrollbar-none">
+            {activeModule.items.map((item) => {
+              // Handle items that use query params (e.g. /customers?type=client or /accounts?tab=transactions)
+              const [itemPath, itemQuery] = item.href.split("?")
+              const itemParams = new URLSearchParams(itemQuery ?? "")
+              const itemType = itemParams.get("type")
+              const itemTab = itemParams.get("tab")
 
-            let isActive = false
-            if (item.href === "/customers" && !itemType) {
-              // "All" — active only when on /customers with no type or type=all
-              isActive =
-                pathname === "/customers" &&
-                (!searchParams.get("type") || searchParams.get("type") === "all")
-            } else if (itemType) {
-              // typed sub-items — match by pathname + query param 'type'
-              isActive =
-                pathname === itemPath && searchParams.get("type") === itemType
-            } else if (itemTab) {
-              // tabbed sub-items — match by pathname + query param 'tab'
-              isActive =
-                pathname === itemPath && searchParams.get("tab") === itemTab
-            } else {
-              isActive = pathname === item.href || pathname.startsWith(item.href + "/")
-            }
+              let isActive = false
+              if (item.href === "/customers" && !itemType) {
+                // "All" — active only when on /customers with no type or type=all
+                isActive =
+                  pathname === "/customers" &&
+                  (!searchParams.get("type") || searchParams.get("type") === "all")
+              } else if (itemType) {
+                // typed sub-items — match by pathname + query param 'type'
+                isActive =
+                  pathname === itemPath && searchParams.get("type") === itemType
+              } else if (itemTab) {
+                // tabbed sub-items — match by pathname + query param 'tab'
+                isActive =
+                  pathname === itemPath && searchParams.get("tab") === itemTab
+              } else {
+                isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+              }
 
-            const Icon = item.icon
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md whitespace-nowrap transition-all duration-200",
-                  isActive
-                    ? "bg-foreground/10 text-foreground font-semibold shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                )}
-              >
-                <Icon className={cn("h-4 w-4", isActive ? "text-foreground" : "text-muted-foreground/70")} />
-                <span>{item.label}</span>
-                {item.label === "Unsorted" && unsortedFilesCount > 0 && (
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
-                    {unsortedFilesCount}
-                  </span>
-                )}
-              </Link>
-            )
-          })}
+              const Icon = item.icon
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md whitespace-nowrap transition-all duration-200",
+                    isActive
+                      ? "bg-foreground/10 text-foreground font-semibold shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  <Icon className={cn("h-4 w-4", isActive ? "text-foreground" : "text-muted-foreground/70")} />
+                  <span>{item.label}</span>
+                  {item.label === "Unsorted" && unsortedFilesCount > 0 && (
+                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                      {unsortedFilesCount}
+                    </span>
+                  )}
+                </Link>
+              )
+            })}
+          </div>
         </div>
-      </div>
       )}
 
       {/* Mobile navigation */}
@@ -483,33 +489,33 @@ export function TopNav({
 
           {/* Sub items for active module */}
           {activeModule && (
-          <div className="space-y-0.5">
-            {activeModule.items.map((item) => {
-              const isActive = pathname.startsWith(item.href)
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    "flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors",
-                    isActive
-                      ? "bg-foreground/10 text-foreground font-semibold"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                  {item.href === "/unsorted" && unsortedFilesCount > 0 && (
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
-                      {unsortedFilesCount}
-                    </span>
-                  )}
-                </Link>
-              )
-            })}
-          </div>
+            <div className="space-y-0.5">
+              {activeModule.items.map((item) => {
+                const isActive = pathname.startsWith(item.href)
+                const Icon = item.icon
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors",
+                      isActive
+                        ? "bg-foreground/10 text-foreground font-semibold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                    {item.href === "/unsorted" && unsortedFilesCount > 0 && (
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
+                        {unsortedFilesCount}
+                      </span>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
           )}
 
           <div className="pt-1">

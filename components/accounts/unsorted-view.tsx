@@ -57,7 +57,7 @@ export async function UnsortedView({ searchParams }: { searchParams: Promise<any
                   Please set your LLM provider API key in the settings to use the analyze form.
                 </AlertDescription>
               </div>
-              <Link href="/settings/llm">
+              <Link href="/settings?tab=llm">
                 <Button>Go to Settings</Button>
               </Link>
             </div>

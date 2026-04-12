@@ -135,7 +135,7 @@ export default function TransactionCreateForm({
               Creating...
             </>
           ) : (
-            "Create and Add Files"
+            "Create transaction"
           )}
         </Button>
       </div>

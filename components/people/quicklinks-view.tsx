@@ -22,7 +22,7 @@ export async function QuicklinksView() {
         <NewQuicklinkSheet categories={categories} />
       </header>
 
-      <QuicklinksList links={links} />
+      <QuicklinksList links={links} categories={categories} />
     </div>
   )
 }

@@ -41,7 +41,7 @@ export default async function TransactionPage({ params }: { params: Promise<{ tr
             </span>
             <span className="text-xs text-muted-foreground">
               You can decide which fields are required for you in{" "}
-              <Link href="/settings/fields" className="underline">
+              <Link href="/settings?tab=fields" className="underline">
                 Fields settings
               </Link>
               .

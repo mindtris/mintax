@@ -22,22 +22,20 @@ export function BugReportForm() {
         <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
           <CheckCircle2 className="h-10 w-10 text-primary" />
         </div>
-        <h2 className="text-xl font-bold text-white mb-2">Issue reported</h2>
-        <p className="text-white/60 text-sm max-w-sm mb-6">
+        <h2 className="text-xl font-bold mb-2">Issue reported</h2>
+        <p className="text-muted-foreground text-sm max-w-sm mb-6">
           Your bug report has been successfully created in our GitHub repository.
         </p>
         <div className="flex flex-col gap-3 w-full">
           <Button
-            variant="outline"
-            className="border-white/10 text-white hover:bg-white/5 flex items-center gap-2"
+            className="flex items-center gap-2"
             onClick={() => window.open(state?.data?.url, "_blank")}
           >
             View on GitHub
             <ExternalLink className="h-4 w-4" />
           </Button>
           <Button
-            variant="ghost"
-            className="text-white/40 hover:text-white"
+            variant="secondary"
             onClick={() => window.location.href = "/"}
           >
             Back to home
@@ -49,7 +47,7 @@ export function BugReportForm() {
 
   return (
     <form action={formAction} className="flex flex-col gap-2 w-full">
-      <div className="flex flex-col gap-3 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
+      <div className="flex flex-col gap-3">
         <FormInput
           title="Title"
           name="title"

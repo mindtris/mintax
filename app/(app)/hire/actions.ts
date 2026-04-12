@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache"
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import * as jobsService from "@/lib/services/jobs"
 import * as candidatesService from "@/lib/services/candidates"
+import { getCandidateFilePath } from "@/lib/files"
+import { uploadAndCreateFile, attachFileToCandidate } from "@/lib/services/files"
 
 // ──────────────────────────────────────────────
 // Talent Actions (Unified)
@@ -15,6 +17,7 @@ export async function createCandidateAction(_prevState: any, formData: FormData)
 
   const group = (formData.get("group") as "ATS" | "BENCH") || "ATS"
   const jobId = formData.get("jobId") as string || undefined
+  const resumeFile = formData.get("resume") as File | null
 
   const data: candidatesService.CandidateInput = {
     organizationId: org.id,
@@ -39,7 +42,19 @@ export async function createCandidateAction(_prevState: any, formData: FormData)
   }
 
   try {
-    await candidatesService.createCandidate(data)
+    const candidate = await candidatesService.createCandidate(data)
+
+    // Upload resume via storage abstraction
+    if (resumeFile && resumeFile.size > 0) {
+      try {
+        const { randomUUID } = await import("crypto")
+        const relativePath = getCandidateFilePath(randomUUID(), resumeFile.name)
+        const fileRecord = await uploadAndCreateFile(org.id, user.id, user.email, resumeFile, relativePath)
+        await attachFileToCandidate(candidate.id, fileRecord.id, "resume")
+      } catch (e) {
+        console.error("Resume upload failed:", e)
+      }
+    }
     revalidatePath("/hire")
     revalidatePath("/hire/candidates")
     if (jobId) revalidatePath(`/hire/${jobId}/applicants`)

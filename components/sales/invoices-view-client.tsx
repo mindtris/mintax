@@ -2,6 +2,7 @@
 
 import { InvoicesTable } from "./invoices-table"
 import { SalesSearchAndFilters } from "./filters"
+import { NewInvoiceSheet } from "@/components/invoices/new-invoice-sheet"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
@@ -19,10 +20,20 @@ export function InvoicesViewClient({
   invoices,
   total,
   stats,
+  baseCurrency = "INR",
+  invoiceSettings = {},
+  currencies = [],
+  items = [],
+  taxes = [],
 }: {
   invoices: any[]
   total: number
   stats: any
+  baseCurrency?: string
+  invoiceSettings?: Record<string, string>
+  currencies?: { code: string; name: string }[]
+  items?: { id: string; name: string; salePrice: number }[]
+  taxes?: { id: string; name: string; rate: number; type: string }[]
 }) {
   const [visibleColumns, setVisibleColumns] = useState(ALL_COLUMNS.map((c) => c.key))
 
@@ -45,12 +56,18 @@ export function InvoicesViewClient({
           <Button asChild variant="outline">
             <Link href="/import/csv">Import</Link>
           </Button>
-          <Button asChild>
-            <Link href="/invoices/new">
+          <NewInvoiceSheet
+            baseCurrency={baseCurrency}
+            invoiceSettings={invoiceSettings}
+            currencies={currencies}
+            items={items}
+            taxes={taxes}
+          >
+            <Button>
               <Plus className="h-4 w-4" />
               <span className="hidden md:block">New invoice</span>
-            </Link>
-          </Button>
+            </Button>
+          </NewInvoiceSheet>
         </div>
       </header>
 

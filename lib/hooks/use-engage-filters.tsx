@@ -2,7 +2,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { SocialPostFilters } from "@/lib/services/social-posts"
 
-const filterKeys = ["search", "status", "provider", "ordering"]
+const filterKeys = ["search", "status", "provider", "category", "ordering"]
 
 export function useEngageFilters(defaultFilters?: SocialPostFilters & { ordering?: string }) {
   const router = useRouter()

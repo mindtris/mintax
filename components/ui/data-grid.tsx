@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useState, useMemo, useCallback } from "react"
 import { ArrowDownIcon, ArrowUpIcon, Edit, EllipsisVertical, Plus, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -281,7 +282,7 @@ export function DataGrid<T extends Record<string, any>>({
       const id = getRowId(row)
       const result = await onDelete(id)
       if (!result.success) {
-        alert(result.error ?? "Failed to delete")
+        toast.error(result.error ?? "Failed to delete")
       }
     },
     [onDelete, getRowId]

@@ -46,7 +46,7 @@ interface ContactStatsCardsProps {
 }
 
 function formatCurrency(amount: number, currency = "INR") {
-  return new Intl.NumberFormat("en-IN", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
     maximumFractionDigits: 0,

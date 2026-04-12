@@ -108,21 +108,34 @@ export async function updateSubmissionStatus(id: string, status: string, notes?:
   })
 }
 
-export async function getCandidatePipeline(jobId: string) {
-  const candidates = await prisma.candidate.findMany({
-    where: { jobId, group: "ATS" },
-    orderBy: { updatedAt: "desc" }
+export async function getCandidatePipeline(organizationId: string, jobId: string) {
+  const [candidates, categories] = await Promise.all([
+    prisma.candidate.findMany({
+      where: { jobId, group: "ATS" },
+      orderBy: { updatedAt: "desc" }
+    }),
+    prisma.category.findMany({
+      where: { organizationId, type: "applicant_status" },
+      orderBy: { name: "asc" }
+    })
+  ])
+
+  // Group by status dynamically based on current settings
+  const pipeline: Record<string, any[]> = {}
+  
+  // Initialize buckets for all active statuses
+  categories.forEach(cat => {
+    if (cat.code) pipeline[cat.code] = []
   })
 
-  // Group by status for the "Status-Tabbed" view
-  return {
-    new: candidates.filter((c: any) => c.status === "new"),
-    screening: candidates.filter((c: any) => c.status === "screening"),
-    interview: candidates.filter((c: any) => c.status === "interview"),
-    offered: candidates.filter((c: any) => c.status === "offered"),
-    hired: candidates.filter((c: any) => c.status === "hired"),
-    rejected: candidates.filter((c: any) => c.status === "rejected"),
-  }
+  // Fill buckets
+  candidates.forEach(candidate => {
+    const status = candidate.status || "unprocessed"
+    if (!pipeline[status]) pipeline[status] = []
+    pipeline[status].push(candidate)
+  })
+
+  return pipeline
 }
 
 export async function getBenchResources(organizationId: string) {

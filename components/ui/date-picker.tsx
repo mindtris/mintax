@@ -32,6 +32,8 @@ interface DatePickerProps {
   dateFormat?: string
   /** id for label association */
   id?: string
+  /** locale for date formatting */
+  locale?: any
 }
 
 function parseDate(value: Date | string | null | undefined): Date | undefined {
@@ -51,6 +53,7 @@ export function DatePicker({
   className,
   dateFormat = "PPP",
   id,
+  locale,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
   const isControlled = value !== undefined
@@ -85,7 +88,7 @@ export function DatePicker({
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-          {selectedDate ? format(selectedDate, dateFormat) : <span>{placeholder}</span>}
+          {selectedDate ? format(selectedDate, dateFormat, { locale }) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">

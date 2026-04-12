@@ -27,7 +27,8 @@ import {
   FileText, 
   Sparkles,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  Copy
 } from "lucide-react";
 import { resolveTemplate } from "@/lib/services/content-templates";
 import { submitToClientAction } from "@/app/(app)/hire/actions";
@@ -87,9 +88,22 @@ export function SubmitToClientModal({
     try {
       // 1. Check MGT Provider
       const provider = Providers.globalProvider;
-      if (!provider || provider.state !== ProviderState.SignedIn) {
-        toast.error("Please connect your Outlook account in the Apps gallery first.");
-        setLoading(false);
+      const isOutlookConnected = provider && provider.state === ProviderState.SignedIn;
+
+      if (!isOutlookConnected) {
+        // Fallback: Use mailto:
+        const mailtoUrl = `mailto:${selectedContact.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.location.href = mailtoUrl;
+        
+        // Log Submission in DB anyway
+        await submitToClientAction(candidate.id, selectedContact.id, `Sent via mailto fallback: ${selectedTemplate?.name || 'Default'}`);
+        
+        setSuccess(true);
+        toast.info("Opening default mail application...");
+        setTimeout(() => {
+          setOpen(false);
+          setSuccess(false);
+        }, 2000);
         return;
       }
 
@@ -201,7 +215,7 @@ export function SubmitToClientModal({
 
         <DialogFooter className="p-6 bg-black/[0.02] border-t border-black/[0.03]">
           <Button variant="ghost" onClick={() => setOpen(false)} disabled={loading}>Cancel</Button>
-          <Button 
+            <Button 
             disabled={!selectedContactId || loading || success} 
             onClick={handleSend}
             className="rounded-xl px-8"
@@ -213,7 +227,7 @@ export function SubmitToClientModal({
             ) : (
               <Send className="w-4 h-4 mr-2" />
             )}
-            {loading ? "Sending..." : success ? "Sent!" : "Send via Outlook"}
+            {loading ? "Sending..." : success ? "Sent!" : "Submit Profile"}
           </Button>
         </DialogFooter>
       </DialogContent>

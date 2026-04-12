@@ -62,8 +62,8 @@ export function ExpenseBreakdownWidget({ data }: ExpenseBreakdownWidgetProps) {
       </CardHeader>
       <CardContent className="flex-1 p-0 flex flex-col">
         {totalExpenses > 0 ? (
-          <div className="flex-1 h-[480px] w-full p-6">
-            <DoughnutChart data={chartData} width={480} height={480} />
+          <div className="flex-1 min-h-[300px] w-full p-6 lg:p-10">
+            <DoughnutChart data={chartData} />
           </div>
         ) : (
           <div className="flex-1 h-[480px] flex flex-col items-center justify-center py-12 text-muted-foreground p-6">

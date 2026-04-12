@@ -31,42 +31,52 @@ export type InvoiceFilters = {
   dateTo?: string
 }
 
-export const getInvoices = cache(async (orgId: string, filters?: InvoiceFilters, options?: { ordering?: string }) => {
-  const where: Prisma.InvoiceWhereInput = { organizationId: orgId }
+export const getInvoices = cache(
+  async (orgId: string, filters?: InvoiceFilters, options?: { ordering?: string; take?: number; skip?: number }) => {
+    const where: Prisma.InvoiceWhereInput = { organizationId: orgId }
 
-  if (filters) {
-    if (filters.search) {
-      where.OR = [
-        { invoiceNumber: { contains: filters.search, mode: "insensitive" } },
-        { clientName: { contains: filters.search, mode: "insensitive" } },
-        { clientEmail: { contains: filters.search, mode: "insensitive" } },
-      ]
-    }
-    if (filters.status && filters.status !== "-") where.status = filters.status
-    if (filters.type) where.type = filters.type
-    if (filters.dateFrom || filters.dateTo) {
-      where.issuedAt = {
-        gte: filters.dateFrom ? new Date(filters.dateFrom) : undefined,
-        lte: filters.dateTo ? new Date(filters.dateTo) : undefined,
+    if (filters) {
+      if (filters.search) {
+        where.OR = [
+          { invoiceNumber: { contains: filters.search, mode: "insensitive" } },
+          { clientName: { contains: filters.search, mode: "insensitive" } },
+          { clientEmail: { contains: filters.search, mode: "insensitive" } },
+        ]
+      }
+      if (filters.status && filters.status !== "-") where.status = filters.status
+      if (filters.type) where.type = filters.type
+      if (filters.dateFrom || filters.dateTo) {
+        where.issuedAt = {
+          gte: filters.dateFrom ? new Date(filters.dateFrom) : undefined,
+          lte: filters.dateTo ? new Date(filters.dateTo) : undefined,
+        }
       }
     }
+
+    const orderByMatch = options?.ordering?.match(/^-?(.+)$/)
+    const orderByField = orderByMatch ? orderByMatch[1] : "createdAt"
+    const orderDirection = options?.ordering?.startsWith("-") ? "desc" : "asc"
+
+    const [invoices, total] = await Promise.all([
+      prisma.invoice.findMany({
+        where,
+        include: { invoiceItems: true },
+        orderBy: { [orderByField]: orderDirection },
+        take: options?.take,
+        skip: options?.skip,
+      }),
+      prisma.invoice.count({ where }),
+    ])
+
+    return {
+      items: invoices.map((inv: any) => ({
+        ...inv,
+        items: inv.invoiceItems || [], // Backward proxy
+      })),
+      total,
+    }
   }
-
-  const orderByMatch = options?.ordering?.match(/^-?(.+)$/)
-  const orderByField = orderByMatch ? orderByMatch[1] : "createdAt"
-  const orderDirection = options?.ordering?.startsWith("-") ? "desc" : "asc"
-
-  const invoices = await prisma.invoice.findMany({
-    where,
-    include: { invoiceItems: true },
-    orderBy: { [orderByField]: orderDirection },
-  })
-
-  return invoices.map((inv: any) => ({
-    ...inv,
-    items: inv.invoiceItems || [] // Backward proxy
-  }))
-})
+)
 
 export const getInvoiceById = cache(async (id: string, orgId: string) => {
   const inv: any = await prisma.invoice.findFirst({

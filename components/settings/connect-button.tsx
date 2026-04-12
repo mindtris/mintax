@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -191,6 +192,7 @@ const blogProviders: ProviderDef[] = [
 export function ConnectAccountButton() {
   const [connectSheet, setConnectSheet] = useState<ProviderDef | null>(null)
   const [formData, setFormData] = useState<Record<string, string>>({})
+  const router = useRouter()
   const [saving, setSaving] = useState(false)
 
   const handleOAuthConnect = (providerId: string) => {
@@ -217,7 +219,7 @@ export function ConnectAccountButton() {
       if (data.success) {
         toast.success(`${connectSheet.label} connected`)
         setConnectSheet(null)
-        window.location.reload()
+        router.refresh()
       } else {
         toast.error(data.error || "Connection failed")
       }

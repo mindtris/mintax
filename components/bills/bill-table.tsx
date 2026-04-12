@@ -25,7 +25,7 @@ const statusVariant: Record<string, "default" | "secondary" | "destructive" | "o
 }
 
 function formatAmount(amount: number, currency: string) {
-  return (amount / 100).toLocaleString("en-IN", {
+  return (amount / 100).toLocaleString("en-US", {
     style: "currency",
     currency,
     minimumFractionDigits: 2,
@@ -222,11 +222,10 @@ function BillDetailSheet({ bill, onClose }: { bill: Bill; onClose: () => void })
             </Button>
           )}
           <div className="flex gap-3">
-            <Button 
-                variant="outline" 
-                className="flex-1 h-11 font-medium" 
-                onClick={onClose}
-                disabled
+            <Button
+                variant="outline"
+                className="flex-1 h-11 font-medium"
+                onClick={() => { onClose(); window.location.href = `/bills/${bill.id}` }}
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               Full view
@@ -241,7 +240,7 @@ function BillDetailSheet({ bill, onClose }: { bill: Bill; onClose: () => void })
   )
 }
 
-export function BillTable({ bills, baseCurrency }: { bills: Bill[]; baseCurrency: string }) {
+export function BillTable({ bills, baseCurrency, items, taxes, defaultDueDays }: { bills: Bill[]; baseCurrency: string; items?: any[]; taxes?: any[]; defaultDueDays?: number }) {
   const { visibleColumns } = useBillVisibility()
 
   // Filter columns based on user selection
@@ -272,7 +271,7 @@ export function BillTable({ bills, baseCurrency }: { bills: Bill[]; baseCurrency
         emptyTitle="Bills"
         emptyDescription="You don't seem to have any bills recorded yet. Every bill helps you maintain a clear cash flow."
         emptyActions={
-          <NewBillSheet baseCurrency={baseCurrency}>
+          <NewBillSheet baseCurrency={baseCurrency} items={items} taxes={taxes} defaultDueDays={defaultDueDays}>
             <Button className="text-white">
               <Plus className="h-4 w-4 mr-2" />
               Record bill

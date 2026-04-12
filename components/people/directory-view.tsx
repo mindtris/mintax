@@ -3,6 +3,7 @@ import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { getOrgMembers } from "@/lib/services/organizations"
 import { UserPlus } from "lucide-react"
 import Link from "next/link"
+import { InviteMemberSheet } from "./invite-member-sheet"
 import { DirectoryList } from "./directory-list"
 
 export async function DirectoryView() {
@@ -28,12 +29,7 @@ export async function DirectoryView() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/settings">
-            <Button>
-              <UserPlus className="h-4 w-4" />
-              <span className="hidden md:block">Invite</span>
-            </Button>
-          </Link>
+          <InviteMemberSheet />
         </div>
       </header>
 

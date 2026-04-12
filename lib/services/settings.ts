@@ -75,6 +75,31 @@ export const getSettings = cache(async (orgId: string): Promise<SettingsMap> => 
 })
 
 /**
+ * Get settings for multiple orgs at once to avoid N+1 issues.
+ */
+export async function getSettingsBatch(orgIds: string[]): Promise<Record<string, SettingsMap>> {
+  if (orgIds.length === 0) return {}
+
+  const settings = await prisma.setting.findMany({
+    where: { organizationId: { in: orgIds } },
+  })
+
+  const batch: Record<string, SettingsMap> = {}
+  for (const orgId of orgIds) {
+    batch[orgId] = {}
+  }
+
+  for (const setting of settings) {
+    const isSensitive = SENSITIVE_SETTINGS.includes(setting.code)
+    batch[setting.organizationId][setting.code] = isSensitive
+      ? decrypt(setting.value || "")
+      : (setting.value || "")
+  }
+
+  return batch
+}
+
+/**
  * Update a setting. Sensitive values are encrypted before storage.
  */
 export async function updateSettings(orgId: string, code: string, value: string | undefined) {

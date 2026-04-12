@@ -51,7 +51,7 @@ export class ThreadsProvider implements SocialProvider {
     }
   }
 
-  async refreshToken(_refreshToken: string) {
+  async refreshToken(_refreshToken: string): Promise<{ accessToken: string; refreshToken?: string; expiresIn?: number }> {
     throw new Error("Threads uses long-lived tokens. Reconnect when expired.")
   }
 

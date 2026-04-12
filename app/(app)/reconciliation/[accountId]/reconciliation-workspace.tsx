@@ -9,6 +9,7 @@ import { ArrowLeft, ArrowRight, Check, Sparkles, X } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { toast } from "sonner"
 
 type Props = {
   accountId: string
@@ -34,9 +35,11 @@ export function ReconciliationWorkspace({ accountId, entries, transactions, sugg
     try {
       const { matchEntry } = await import("@/lib/services/reconciliation")
       await matchEntry(entryId, transactionId)
+      toast.success("Entry matched successfully")
       router.refresh()
     } catch (error) {
       console.error("Match failed:", error)
+      toast.error("Failed to match entry")
     } finally {
       setLoading(null)
       setSelectedEntry(null)
@@ -48,9 +51,11 @@ export function ReconciliationWorkspace({ accountId, entries, transactions, sugg
     try {
       const { excludeEntry } = await import("@/lib/services/reconciliation")
       await excludeEntry(entryId)
+      toast.success("Entry excluded")
       router.refresh()
     } catch (error) {
       console.error("Exclude failed:", error)
+      toast.error("Failed to exclude entry")
     } finally {
       setLoading(null)
     }
@@ -60,12 +65,15 @@ export function ReconciliationWorkspace({ accountId, entries, transactions, sugg
     setLoading("auto")
     try {
       const { matchEntry } = await import("@/lib/services/reconciliation")
-      for (const suggestion of suggestions.filter((s) => s.confidence >= 80)) {
+      const matched = suggestions.filter((s) => s.confidence >= 80)
+      for (const suggestion of matched) {
         await matchEntry(suggestion.entryId, suggestion.transactionId)
       }
+      toast.success(`Auto-matched ${matched.length} entries`)
       router.refresh()
     } catch (error) {
       console.error("Auto-match failed:", error)
+      toast.error("Auto-match failed")
     } finally {
       setLoading(null)
     }

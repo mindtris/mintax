@@ -30,7 +30,7 @@ import { toast } from 'sonner';
 
 interface KanbanBoardProps {
   initialData: Record<string, any[]>;
-  stages: { id: string; name: string; icon: any; color: string }[];
+  stages: { id: string; name: string; icon?: any; color: string }[];
 }
 
 export function KanbanBoard({ initialData, stages }: KanbanBoardProps) {
@@ -172,7 +172,7 @@ function KanbanColumn({ id, title, icon: Icon, items, color }: any) {
     <div className="min-w-[240px] w-[240px] flex flex-col gap-3">
       <div className="px-4 py-3 rounded-2xl border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${color}`}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${color}15`, color }}>
             {Icon && <Icon className="w-4 h-4" />}
           </div>
           <div>

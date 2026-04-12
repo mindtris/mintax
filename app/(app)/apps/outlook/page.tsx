@@ -13,6 +13,7 @@ export default function OutlookAppPage() {
   const [providerState, setProviderState] = useState<ProviderState>(
     Providers.globalProvider?.state || ProviderState.Loading
   )
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     const updateState = () => {
@@ -50,8 +51,8 @@ export default function OutlookAppPage() {
           <p className="text-muted-foreground">Manage your Microsoft 365 communications.</p>
         </div>
         <div className="flex gap-2">
-           <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+           <Button variant="outline" size="sm" onClick={() => setRefreshKey(prev => prev + 1)}>
+            <RefreshCw className={cn("h-4 w-4 mr-2", refreshKey > 0 && "animate-spin-once")} />
             Sync
           </Button>
           <Button size="sm">
@@ -70,7 +71,7 @@ export default function OutlookAppPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <Get resource="/me/messages" version="v1.0" max-pages="1">
+              <Get key={refreshKey} resource="/me/messages" version="v1.0" max-pages="1">
                 <template data-type="default">
                   <div className="divide-y divide-border/50">
                     <div className="p-4 hover:bg-muted/30 transition-colors cursor-pointer flex items-center gap-4 group">

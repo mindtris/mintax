@@ -106,7 +106,7 @@ export function EditInvoiceForm({ invoice, baseCurrency }: { invoice: any; baseC
             <Input
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
-              placeholder="Client name"
+              placeholder="Mindtris"
             />
           </div>
 
@@ -118,7 +118,7 @@ export function EditInvoiceForm({ invoice, baseCurrency }: { invoice: any; baseC
                 type="email"
                 value={clientEmail}
                 onChange={(e) => setClientEmail(e.target.value)}
-                placeholder="client@example.com"
+                placeholder="akshitha@mindtris.com"
               />
             </div>
             <div className="flex flex-col gap-2">

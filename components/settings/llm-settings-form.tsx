@@ -48,7 +48,7 @@ export default function LLMSettingsForm({
             Current JSON Schema
           </span>
           <Link
-            href="/settings/fields"
+            href="/settings?tab=fields"
             className="text-xs underline inline-flex flex-row items-center gap-1 text-muted-foreground"
           >
             <Edit className="w-4 h-4" /> Edit fields

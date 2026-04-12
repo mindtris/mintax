@@ -22,11 +22,13 @@ export function LeadsViewClient({
   total,
   stats,
   currency,
+  categories,
 }: {
   leads: any[]
   total: number
   stats: any
   currency: string
+  categories: any[]
 }) {
   const [visibleColumns, setVisibleColumns] = useState(ALL_COLUMNS.map((c) => c.key))
 
@@ -46,7 +48,7 @@ export function LeadsViewClient({
             {total}
           </div>
         </div>
-        <NewLeadSheet currency={currency}>
+        <NewLeadSheet currency={currency} categories={categories}>
           <Button>
             <Plus className="h-4 w-4" />
             <span className="hidden md:block">New lead</span>
@@ -87,9 +89,10 @@ export function LeadsViewClient({
         columns={ALL_COLUMNS}
         visibleColumns={visibleColumns}
         onToggleColumn={toggleColumn}
+        categories={categories}
       />
 
-      <LeadsTable leads={leads} visibleColumns={visibleColumns} currency={currency} />
+      <LeadsTable leads={leads} visibleColumns={visibleColumns} currency={currency} categories={categories} />
     </div>
   )
 }

@@ -20,7 +20,7 @@ const statusVariant: Record<string, "default" | "secondary" | "destructive" | "o
 }
 
 function formatAmount(amount: number, currency: string) {
-  return (amount / 100).toLocaleString("en-IN", {
+  return (amount / 100).toLocaleString("en-US", {
     style: "currency",
     currency,
     minimumFractionDigits: 2,

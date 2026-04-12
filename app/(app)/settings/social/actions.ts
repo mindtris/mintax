@@ -19,12 +19,12 @@ export async function disableSocialAccountAction(accountId: string, disable: boo
     })
   }
 
-  revalidatePath("/settings/social")
+  revalidatePath("/settings")
 }
 
 export async function deleteSocialAccountAction(accountId: string) {
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
   await deleteSocialAccount(accountId, org.id)
-  revalidatePath("/settings/social")
+  revalidatePath("/settings")
 }

@@ -6,18 +6,6 @@ import { cache } from "react"
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const LEAD_STAGES = [
-  "new",
-  "contacted",
-  "qualified",
-  "proposal",
-  "negotiation",
-  "won",
-  "lost",
-] as const
-
-export type LeadStage = (typeof LEAD_STAGES)[number]
-
 export const LEAD_SOURCES = [
   "website",
   "referral",
@@ -28,16 +16,6 @@ export const LEAD_SOURCES = [
 ] as const
 
 export type LeadSource = (typeof LEAD_SOURCES)[number]
-
-export const STAGE_LABELS: Record<string, string> = {
-  new: "New",
-  contacted: "Contacted",
-  qualified: "Qualified",
-  proposal: "Proposal",
-  negotiation: "Negotiation",
-  won: "Won",
-  lost: "Lost",
-}
 
 export const SOURCE_LABELS: Record<string, string> = {
   website: "Website",
@@ -122,20 +100,32 @@ export const getLeadById = cache(async (id: string, orgId: string) => {
 })
 
 export const getLeadStats = cache(async (orgId: string) => {
-  const leads = await prisma.lead.findMany({
-    where: { organizationId: orgId },
-    select: { stage: true, value: true },
-  })
+  const [leads, categories] = await Promise.all([
+    prisma.lead.findMany({
+      where: { organizationId: orgId },
+      select: { stage: true, value: true },
+    }),
+    prisma.category.findMany({
+      where: { organizationId: orgId, type: "sales" }
+    })
+  ])
 
   const total = leads.length
-  const open = leads.filter((l) => !["won", "lost"].includes(l.stage)).length
-  const won = leads.filter((l) => l.stage === "won").length
-  const lost = leads.filter((l) => l.stage === "lost").length
+  
+  // Dynamic resolution of special stages
+  const wonCodes = categories.filter(c => c.code?.includes("won") || c.name.toLowerCase().includes("won")).map(c => c.code)
+  const lostCodes = categories.filter(c => c.code?.includes("lost") || c.name.toLowerCase().includes("lost")).map(c => c.code)
+  
+  const won = leads.filter((l) => wonCodes.includes(l.stage)).length
+  const lost = leads.filter((l) => lostCodes.includes(l.stage)).length
+  const open = leads.filter((l) => !wonCodes.includes(l.stage) && !lostCodes.includes(l.stage)).length
+
   const pipelineValue = leads
-    .filter((l) => !["won", "lost"].includes(l.stage))
+    .filter((l) => !wonCodes.includes(l.stage) && !lostCodes.includes(l.stage))
     .reduce((sum, l) => sum + l.value, 0)
+    
   const wonValue = leads
-    .filter((l) => l.stage === "won")
+    .filter((l) => wonCodes.includes(l.stage))
     .reduce((sum, l) => sum + l.value, 0)
 
   return { total, open, won, lost, pipelineValue, wonValue }
@@ -146,6 +136,11 @@ export const getLeadStats = cache(async (orgId: string) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function createLead(orgId: string, data: LeadInput) {
+  const defaultStage = data.stage || (await prisma.category.findFirst({
+    where: { organizationId: orgId, type: "sales" },
+    orderBy: { name: "asc" }
+  }))?.code || "new"
+
   return prisma.lead.create({
     data: {
       organizationId: orgId,
@@ -154,7 +149,7 @@ export async function createLead(orgId: string, data: LeadInput) {
       email: data.email || null,
       phone: data.phone || null,
       company: data.company || null,
-      stage: data.stage || "new",
+      stage: defaultStage,
       source: data.source || null,
       value: data.value || 0,
       currency: data.currency || "INR",
@@ -184,12 +179,22 @@ export async function deleteLead(id: string, orgId: string) {
 
 export async function updateLeadStage(id: string, orgId: string, stage: string) {
   const data: any = { stage }
-  if (stage === "won") {
-    data.probability = 100
+  
+  // Dynamically resolve if the new stage is a winning or losing stage
+  const category = await prisma.category.findFirst({
+    where: { organizationId: orgId, type: "sales", code: stage }
+  })
+
+  if (category) {
+    const code = (category.code ?? "").toLowerCase()
+    const name = category.name.toLowerCase()
+    if (code.includes("won") || name.includes("won")) {
+      data.probability = 100
+    } else if (code.includes("lost") || name.includes("lost")) {
+      data.probability = 0
+    }
   }
-  if (stage === "lost") {
-    data.probability = 0
-  }
+
   return prisma.lead.update({
     where: { id, organizationId: orgId },
     data,
@@ -201,6 +206,18 @@ export async function convertLeadToContact(id: string, orgId: string) {
     where: { id, organizationId: orgId },
   })
   if (!lead) throw new Error("Lead not found")
+
+  // Find a "won" stage dynamically
+  const wonCategory = await prisma.category.findFirst({
+    where: { 
+      organizationId: orgId, 
+      type: "sales", 
+      OR: [
+        { code: { contains: "won", mode: "insensitive" } },
+        { name: { contains: "won", mode: "insensitive" } }
+      ]
+    }
+  })
 
   const contact = await prisma.contact.create({
     data: {
@@ -216,7 +233,7 @@ export async function convertLeadToContact(id: string, orgId: string) {
   await prisma.lead.update({
     where: { id },
     data: {
-      stage: "won",
+      stage: wonCategory?.code || lead.stage,
       probability: 100,
       contactId: contact.id,
       convertedAt: new Date(),

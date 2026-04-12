@@ -70,7 +70,7 @@ export function SignupForm() {
         {!isOtpSent && (
           <FormInput
             title="Full name"
-            placeholder="John Doe"
+            placeholder="Akshitha Kandikanti"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -81,7 +81,7 @@ export function SignupForm() {
         <FormInput
           title="Email"
           type="email"
-          placeholder="your@email.com"
+          placeholder="akshitha@mindtris.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required

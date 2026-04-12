@@ -14,6 +14,8 @@ import {
 } from "@/lib/services/social-posts"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { getSocialFilePath } from "@/lib/files"
+import { uploadAndCreateFile } from "@/lib/services/files"
 
 export async function createPostAction(_prevState: any, formData: FormData) {
   const user = await getCurrentUser()
@@ -40,6 +42,23 @@ export async function createPostAction(_prevState: any, formData: FormData) {
   const status = action === "schedule" || action === "publish_now" ? "queued" : "draft"
   const schedule = action === "publish_now" ? new Date() : scheduledAt ? new Date(scheduledAt) : null
 
+  const mediaFiles = formData.getAll("media") as File[]
+  const mediaUrls: string[] = []
+
+  for (const file of mediaFiles) {
+    if (file.size > 0) {
+      try {
+        const { randomUUID } = await import("crypto")
+        const relativePath = getSocialFilePath(randomUUID(), file.name)
+        const fileRecord = await uploadAndCreateFile(org.id, user.id, user.email, file, relativePath)
+        // Pass the download URL so social publishers can access the file
+        mediaUrls.push(`/files/download/${fileRecord.id}`)
+      } catch (e) {
+        console.error("Media upload failed:", e)
+      }
+    }
+  }
+
   const { group, posts } = await createMultiPlatformPost(
     org.id,
     user.id,
@@ -52,6 +71,7 @@ export async function createPostAction(_prevState: any, formData: FormData) {
       tags,
       status,
       scheduledAt: schedule,
+      mediaUrls,
     },
     accountIds
   )
@@ -96,14 +116,21 @@ export async function createPostAction(_prevState: any, formData: FormData) {
 
         await markPublished(post.id, result.externalPostId, result.externalUrl)
       } catch (err: any) {
-        await markError(post.id, err.message || "Publishing failed")
+        const errorMessage = err.message || "Publishing failed"
+        await markError(post.id, errorMessage)
+        console.error(`Post ${post.id} failed:`, errorMessage)
       }
     }
   }
 
   revalidatePath("/engage")
   revalidatePath("/engage/posts")
-  redirect("/engage/posts")
+  
+  if (action === "publish_now") {
+     return { success: true, message: "Post published (or queued for background publishing)" }
+  }
+  
+  return { success: true, message: action === "schedule" ? "Post scheduled" : "Post saved as draft" }
 }
 
 export async function updatePostAction(postId: string, _prevState: any, formData: FormData) {

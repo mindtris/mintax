@@ -42,6 +42,30 @@ export async function createQuicklink(orgId: string, data: QuicklinkInput) {
   })
 }
 
+export async function updateQuicklink(orgId: string, quicklinkId: string, data: Partial<QuicklinkInput>) {
+  // Verify ownership
+  const existing = await prisma.quicklink.findFirst({
+    where: { id: quicklinkId, organizationId: orgId }
+  })
+
+  if (!existing) throw new Error("Quicklink not found or unauthorized")
+
+  const updateData: any = {
+    title: data.title,
+    url: data.url,
+  }
+
+  if (data.category) {
+    const categoryRecord = await findOrCreateCategory(orgId, "quicklink", data.category)
+    updateData.categoryId = categoryRecord.id
+  }
+
+  return await prisma.quicklink.update({
+    where: { id: quicklinkId },
+    data: updateData,
+  })
+}
+
 export async function deleteQuicklink(orgId: string, quicklinkId: string) {
   // Verify ownership before deleting
   const link = await prisma.quicklink.findFirst({
@@ -52,7 +76,7 @@ export async function deleteQuicklink(orgId: string, quicklinkId: string) {
   })
 
   if (!link) {
-    throw new Error("Quicklink not found or unauthorized")
+    throw new Error("Quicklink not found")
   }
 
   return await prisma.quicklink.delete({

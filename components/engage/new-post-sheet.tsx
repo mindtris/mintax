@@ -8,9 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Loader2, Save, Send, Sparkles } from "lucide-react"
+import { Clock, Loader2, Save, Send, Sparkles, Trash2, Upload } from "lucide-react"
 import { useEffect, useActionState, useState } from "react"
 import { createPostAction } from "@/app/(app)/engage/posts/actions"
+import { toast } from "sonner"
+import { DatePicker } from "@/components/ui/date-picker"
 
 const PLATFORM_LIMITS: Record<string, number> = {
   twitter: 280,
@@ -28,11 +30,13 @@ export function NewPostSheet({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
   defaultDate,
+  categories,
 }: {
   children?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
   defaultDate?: string
+  categories?: any[]
 }) {
   const [internalOpen, setInternalOpen] = useState(false)
   const open = controlledOpen ?? internalOpen
@@ -40,7 +44,8 @@ export function NewPostSheet({
   const [state, formAction, pending] = useActionState(createPostAction, null)
   const [accounts, setAccounts] = useState<any[]>([])
   const [content, setContent] = useState("")
-  const [contentType, setContentType] = useState("post")
+  const [mediaFiles, setMediaFiles] = useState<File[]>([])
+  const [contentType, setContentType] = useState(categories?.[0]?.code || "post")
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([])
   const [generating, setGenerating] = useState(false)
   const [aiPrompt, setAiPrompt] = useState("")
@@ -59,9 +64,18 @@ export function NewPostSheet({
           setLlmPrompts(data.prompts || [])
           if (data.prompts?.length > 0) setSelectedPromptId(data.prompts[0].id)
         })
-        .catch(() => {})
+        .catch(() => {
+          toast.error("Failed to load AI prompts")
+        })
     }
   }, [open])
+
+  useEffect(() => {
+    if (state?.success && open) {
+      toast.success(state.message || "Post created successfully")
+      setOpen(false)
+    }
+  }, [state, open, setOpen])
 
   const activeLimit = selectedAccounts.reduce((min, id) => {
     const account = accounts.find((a: any) => a.id === id)
@@ -130,10 +144,18 @@ export function NewPostSheet({
               <Select name="contentType" value={contentType} onValueChange={setContentType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="post">Social Post</SelectItem>
-                  <SelectItem value="article">Blog Article</SelectItem>
-                  <SelectItem value="thread">Thread</SelectItem>
-                  <SelectItem value="newsletter">Newsletter</SelectItem>
+                  {categories && categories.length > 0 ? (
+                    categories.map(c => (
+                      <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                    ))
+                  ) : (
+                    <>
+                      <SelectItem value="post">Social Post</SelectItem>
+                      <SelectItem value="article">Blog Article</SelectItem>
+                      <SelectItem value="thread">Thread</SelectItem>
+                      <SelectItem value="newsletter">Newsletter</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -214,9 +236,46 @@ export function NewPostSheet({
               )}
             </div>
 
+            {/* Media upload */}
+            <div className="flex flex-col gap-2">
+              <Label>Media</Label>
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => { e.preventDefault(); setMediaFiles((prev) => [...prev, ...Array.from(e.dataTransfer.files)]) }}
+                className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary/40 transition-colors cursor-pointer"
+                onClick={() => document.getElementById("post-media-input")?.click()}
+              >
+                <Upload className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
+                <p className="text-xs text-muted-foreground">Drop images or videos here</p>
+                <input id="post-media-input" name="media" type="file" multiple className="hidden"
+                  accept="image/*,video/*,.gif"
+                  onChange={(e) => { if (e.target.files) setMediaFiles((prev) => [...prev, ...Array.from(e.target.files!)]) }}
+                />
+              </div>
+              {mediaFiles.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {mediaFiles.map((f, i) => (
+                    <div key={i} className="flex items-center gap-1.5 text-xs bg-muted/30 rounded px-2 py-1">
+                      <span className="truncate max-w-[120px]">{f.name}</span>
+                      <button type="button" onClick={() => setMediaFiles((prev) => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="flex flex-col gap-2">
               <Label htmlFor="tags">Tags</Label>
               <Input id="tags" name="tags" placeholder="marketing, launch" />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label>Media (Image/Video)</Label>
+              <div className="flex items-center gap-2 p-3 bg-white border border-black/10 rounded-xl">
+                 <Input name="media" type="file" accept="image/*,video/*" className="border-none p-0 h-auto focus-visible:ring-0 cursor-pointer text-xs" />
+              </div>
             </div>
 
             {/* Accounts */}
@@ -252,7 +311,12 @@ export function NewPostSheet({
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="scheduledAt">Schedule</Label>
-              <Input id="scheduledAt" name="scheduledAt" type="datetime-local" defaultValue={defaultDate ? `${defaultDate}T09:00` : undefined} />
+              <DatePicker 
+                id="scheduledAt" 
+                name="scheduledAt" 
+                defaultValue={defaultDate ? new Date(`${defaultDate}T09:00`) : undefined} 
+              />
+              <p className="text-[10px] text-muted-foreground italic">Leave empty to publish immediately if Publish is clicked.</p>
             </div>
 
             {state?.error && <p className="text-sm text-destructive">{state.error}</p>}

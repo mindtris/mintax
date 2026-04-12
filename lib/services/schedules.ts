@@ -161,7 +161,7 @@ export async function processDueSchedules(): Promise<{ processed: number; create
           await createScheduledReminder(schedule.organizationId, schedule.createdById, template)
           break
         case "social_post":
-          await createScheduledSocialPost(schedule.organizationId, template)
+          await createScheduledSocialPost(schedule.organizationId, schedule.createdById, template)
           break
       }
 
@@ -306,23 +306,27 @@ async function createScheduledReminder(orgId: string, userId: string, template: 
     recurrence: "one_time",
     emailNotify: template.emailNotify ?? true,
     emailNotifyMinutesBefore: template.emailNotifyMinutesBefore || 60,
-    assigneeIds: template.assigneeIds || [],
+    assigneeUserIds: template.assigneeIds || [],
   })
 }
 
-async function createScheduledSocialPost(orgId: string, template: Record<string, any>) {
+async function createScheduledSocialPost(orgId: string, userId: string, template: Record<string, any>) {
   const { createMultiPlatformPost } = await import("@/lib/services/social-posts")
 
-  await createMultiPlatformPost(orgId, {
-    content: template.content,
-    contentType: template.contentType || "post",
-    title: template.title,
-    tags: template.tags || [],
-    socialAccountIds: template.socialAccountIds || [],
-    status: "queued",
-    scheduledAt: new Date(),
-    settings: template.settings,
-  })
+  await createMultiPlatformPost(
+    orgId,
+    userId,
+    {
+      content: template.content,
+      contentType: template.contentType || "post",
+      title: template.title,
+      tags: template.tags || [],
+      status: "queued",
+      scheduledAt: new Date(),
+      settings: template.settings,
+    },
+    template.socialAccountIds || []
+  )
 }
 
 // ── Date calculation ────────────────────────────────────────────────────────

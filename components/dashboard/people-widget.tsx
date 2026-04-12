@@ -6,6 +6,7 @@ import { getOrgMembers } from "@/lib/services/organizations"
 import { prisma } from "@/lib/core/db"
 import { Crown, Plus, Shield, UserPlus, Users } from "lucide-react"
 import Link from "next/link"
+import { formatCurrency } from "@/lib/utils"
 
 const CARD = "border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden"
 
@@ -159,9 +160,7 @@ export async function PeopleWidget() {
                       </div>
                       {tx.total && (
                         <span className="text-sm font-medium shrink-0">
-                          {((tx.total || 0) / 100).toLocaleString("en-IN", {
-                            minimumFractionDigits: 2,
-                          })}
+                          {formatCurrency(tx.total, tx.currencyCode || "INR")}
                         </span>
                       )}
                     </div>

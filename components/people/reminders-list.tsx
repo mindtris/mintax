@@ -34,6 +34,7 @@ import { useRouter } from "next/navigation"
 import { useMemo, useState } from "react"
 import { completeReminderAction, deleteReminderAction } from "@/app/(app)/apps/reminders/actions"
 import { ReminderForm } from "@/app/(app)/apps/reminders/components/reminder-form"
+import { RemindersBulkActions } from "./reminders-bulk-actions"
 
 const PRIORITY_COLORS: Record<string, string> = {
   low: "bg-slate-100 text-slate-700",
@@ -69,6 +70,7 @@ export function RemindersList({ reminders, members, currentUserId, createOpen, s
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(["title", "category", "priority", "dueAt", "status"])
   const [editingReminder, setEditingReminder] = useState<any>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   const filtered = useMemo(() => {
     let result = reminders
@@ -192,10 +194,8 @@ export function RemindersList({ reminders, members, currentUserId, createOpen, s
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search reminders..."
-            defaultValue={search}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") setSearch((e.target as HTMLInputElement).value)
-            }}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 bg-background/50"
           />
         </div>
@@ -203,7 +203,7 @@ export function RemindersList({ reminders, members, currentUserId, createOpen, s
         <Button
           variant={activeFilterCount > 0 ? "default" : "outline"}
           onClick={() => setFilterSheetOpen(true)}
-          className="px-4 text-xs"
+          className="px-4 text-xs h-10"
         >
           <Filter className="h-3.5 w-3.5 mr-2" />
           Filters
@@ -219,7 +219,7 @@ export function RemindersList({ reminders, members, currentUserId, createOpen, s
             variant="ghost"
             size="icon"
             onClick={clearAll}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground h-10 w-10"
             title="Clear all filters"
           >
             <X className="h-4 w-4" />
@@ -228,7 +228,7 @@ export function RemindersList({ reminders, members, currentUserId, createOpen, s
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" title="Select table columns">
+            <Button variant="outline" size="icon" title="Select table columns" className="h-10 w-10">
               <ColumnsIcon className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -247,9 +247,8 @@ export function RemindersList({ reminders, members, currentUserId, createOpen, s
         </DropdownMenu>
       </div>
 
-      {/* Filter sheet */}
       <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
-        <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] w-[95vw] sm:max-w-md flex flex-col gap-0 p-0 overflow-hidden shadow-2xl">
+        <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] rounded-lg w-[95vw] sm:max-w-md flex flex-col gap-0 p-0 shadow-2xl overflow-hidden">
           <SheetHeader className="px-6 pt-6 pb-4 shrink-0 border-b">
             <SheetTitle>Filters</SheetTitle>
           </SheetHeader>
@@ -301,38 +300,44 @@ export function RemindersList({ reminders, members, currentUserId, createOpen, s
         </SheetContent>
       </Sheet>
 
-      {/* DataGrid */}
       <DataGrid
         data={filtered}
         columns={dynamicColumns}
         getRowId={(row: any) => row.id}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
         onRowClick={(row: any) => setEditingReminder(row)}
         renderDetailSheet={(row: any, onClose: () => void) => (
-          <div className="flex flex-col gap-4 p-1">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Edit reminder</h3>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {row.status !== "completed" && (
-                    <DropdownMenuItem onClick={async () => { await completeReminderAction(row.id); router.refresh(); onClose() }}>
-                      <Check className="h-4 w-4" /> Complete
+          <div className="flex flex-col h-full gap-0">
+            <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
+              <div className="flex items-center justify-between">
+                <SheetTitle className="text-lg font-semibold leading-none">Edit reminder</SheetTitle>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {row.status !== "completed" && (
+                      <DropdownMenuItem onClick={async () => { await completeReminderAction(row.id); router.refresh(); onClose() }}>
+                        <Check className="h-4 w-4" /> Complete
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem className="text-destructive" onClick={async () => { if (confirm("Delete this reminder?")) { await deleteReminderAction(row.id); router.refresh(); onClose() } }}>
+                      <Trash2 className="h-4 w-4" /> Delete
                     </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem className="text-destructive" onClick={async () => { if (confirm("Delete this reminder?")) { await deleteReminderAction(row.id); router.refresh(); onClose() } }}>
-                    <Trash2 className="h-4 w-4" /> Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </SheetHeader>
+            <div className="flex-1 overflow-y-auto px-6 py-6">
+              <ReminderForm
+                reminder={row}
+                members={members}
+                currentUserId={currentUserId}
+                onSuccess={() => { router.refresh(); onClose() }}
+              />
             </div>
-            <ReminderForm
-              reminder={row}
-              members={members}
-              currentUserId={currentUserId}
-              onSuccess={() => { router.refresh(); onClose() }}
-            />
           </div>
         )}
         emptyIcon={
@@ -342,16 +347,22 @@ export function RemindersList({ reminders, members, currentUserId, createOpen, s
         emptyDescription="No reminders found. Create one to stay on top of deadlines."
       />
 
-      {/* Create sheet */}
+      {selectedIds.length > 0 && (
+        <RemindersBulkActions 
+          selectedIds={selectedIds} 
+          onActionComplete={() => setSelectedIds([])} 
+        />
+      )}
+
       <Sheet open={createOpen} onOpenChange={setCreateOpen}>
         <SheetContent
           side="right"
-          className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] rounded-lg w-[95vw] sm:max-w-xl flex flex-col gap-0 p-0"
+          className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] rounded-lg w-[95vw] sm:max-w-xl flex flex-col gap-0 p-0 shadow-2xl overflow-hidden"
         >
-          <SheetHeader className="px-6 pt-6 pb-4 shrink-0">
+          <SheetHeader className="px-6 pt-6 pb-4 shrink-0 border-b">
             <SheetTitle>New reminder</SheetTitle>
           </SheetHeader>
-          <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="flex-1 overflow-y-auto px-6 py-6">
             <ReminderForm
               members={members}
               currentUserId={currentUserId}

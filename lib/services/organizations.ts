@@ -76,7 +76,7 @@ export async function createOrganization(userId: string, data: CreateOrgData) {
   })
 
   // Seed default data for the new org
-  await createOrgDefaults(org.id, org.type)
+  await createOrgDefaults(org.id, org.type, { baseCurrency: org.baseCurrency })
 
   return org
 }

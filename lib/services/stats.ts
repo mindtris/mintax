@@ -13,7 +13,7 @@ export type DashboardStats = {
 
 export const getDashboardStats = cache(
   async (orgId: string, filters: TransactionFilters = {}): Promise<DashboardStats> => {
-    const where: Prisma.TransactionWhereInput = {}
+    const where: Prisma.TransactionWhereInput = { organizationId: orgId }
 
     if (filters.dateFrom || filters.dateTo) {
       where.issuedAt = {
@@ -22,16 +22,38 @@ export const getDashboardStats = cache(
       }
     }
 
-    const transactions = await prisma.transaction.findMany({ where: { ...where, organizationId: orgId } })
-    const totalIncomePerCurrency = calcTotalPerCurrency(transactions.filter((t) => t.type === "income"))
-    const totalExpensesPerCurrency = calcTotalPerCurrency(transactions.filter((t) => t.type === "expense"))
+    const aggregations = await prisma.transaction.groupBy({
+      by: ["type", "currencyCode", "convertedCurrencyCode"],
+      where,
+      _sum: {
+        total: true,
+        convertedTotal: true,
+      },
+      _count: true,
+    })
+
+    const totalIncomePerCurrency: Record<string, number> = {}
+    const totalExpensesPerCurrency: Record<string, number> = {}
+    let invoicesProcessed = 0
+
+    for (const agg of aggregations) {
+      const currency = (agg.convertedCurrencyCode || agg.currencyCode || "UNKNOWN").toUpperCase()
+      const amount = agg.convertedCurrencyCode ? agg._sum.convertedTotal || 0 : agg._sum.total || 0
+
+      if (agg.type === "income") {
+        totalIncomePerCurrency[currency] = (totalIncomePerCurrency[currency] || 0) + amount
+      } else if (agg.type === "expense") {
+        totalExpensesPerCurrency[currency] = (totalExpensesPerCurrency[currency] || 0) + amount
+      }
+      invoicesProcessed += agg._count
+    }
+
     const profitPerCurrency = Object.fromEntries(
       Object.keys(totalIncomePerCurrency).map((currency) => [
         currency,
-        totalIncomePerCurrency[currency] - totalExpensesPerCurrency[currency],
+        totalIncomePerCurrency[currency] - (totalExpensesPerCurrency[currency] || 0),
       ])
     )
-    const invoicesProcessed = transactions.length
 
     return {
       totalIncomePerCurrency,
@@ -51,6 +73,7 @@ export type ProjectStats = {
 
 export const getProjectStats = cache(async (orgId: string, projectId: string, filters: TransactionFilters = {}) => {
   const where: Prisma.TransactionWhereInput = {
+    organizationId: orgId,
     projectCode: projectId,
   }
 
@@ -61,17 +84,39 @@ export const getProjectStats = cache(async (orgId: string, projectId: string, fi
     }
   }
 
-  const transactions = await prisma.transaction.findMany({ where: { ...where, organizationId: orgId } })
-  const totalIncomePerCurrency = calcTotalPerCurrency(transactions.filter((t) => t.type === "income"))
-  const totalExpensesPerCurrency = calcTotalPerCurrency(transactions.filter((t) => t.type === "expense"))
+  const aggregations = await prisma.transaction.groupBy({
+    by: ["type", "currencyCode", "convertedCurrencyCode"],
+    where,
+    _sum: {
+      total: true,
+      convertedTotal: true,
+    },
+    _count: true,
+  })
+
+  const totalIncomePerCurrency: Record<string, number> = {}
+  const totalExpensesPerCurrency: Record<string, number> = {}
+  let invoicesProcessed = 0
+
+  for (const agg of aggregations) {
+    const currency = (agg.convertedCurrencyCode || agg.currencyCode || "UNKNOWN").toUpperCase()
+    const amount = agg.convertedCurrencyCode ? agg._sum.convertedTotal || 0 : agg._sum.total || 0
+
+    if (agg.type === "income") {
+      totalIncomePerCurrency[currency] = (totalIncomePerCurrency[currency] || 0) + amount
+    } else if (agg.type === "expense") {
+      totalExpensesPerCurrency[currency] = (totalExpensesPerCurrency[currency] || 0) + amount
+    }
+    invoicesProcessed += agg._count
+  }
+
   const profitPerCurrency = Object.fromEntries(
     Object.keys(totalIncomePerCurrency).map((currency) => [
       currency,
-      totalIncomePerCurrency[currency] - totalExpensesPerCurrency[currency],
+      totalIncomePerCurrency[currency] - (totalExpensesPerCurrency[currency] || 0),
     ])
   )
 
-  const invoicesProcessed = transactions.length
   return {
     totalIncomePerCurrency,
     totalExpensesPerCurrency,
@@ -134,6 +179,14 @@ export const getTimeSeriesStats = cache(
 
     const transactions = await prisma.transaction.findMany({
       where,
+      select: {
+        issuedAt: true,
+        type: true,
+        total: true,
+        currencyCode: true,
+        convertedTotal: true,
+        convertedCurrencyCode: true,
+      },
       orderBy: { issuedAt: "asc" },
     })
 
@@ -211,8 +264,14 @@ export const getDetailedTimeSeriesStats = cache(
     const [transactions, categories] = await Promise.all([
       prisma.transaction.findMany({
         where,
-        include: {
-          category: true,
+        select: {
+          issuedAt: true,
+          type: true,
+          total: true,
+          currencyCode: true,
+          convertedTotal: true,
+          convertedCurrencyCode: true,
+          categoryCode: true,
         },
         orderBy: { issuedAt: "asc" },
       }),

@@ -75,3 +75,35 @@ export function isEnoughStorageToUploadFile(user: User, fileSize: number) {
   }
   return user.storageUsed + fileSize <= user.storageLimit
 }
+
+// ── Module-specific file paths ────────────────────────────────────────────
+
+/** Invoices: invoices/{YYYY}/{MM}/{fileUuid}{ext} */
+export function getInvoiceFilePath(fileUuid: string, filename: string, date?: Date) {
+  const ext = path.extname(filename)
+  return formatFilePath(`${fileUuid}${ext}`, date || new Date(), "invoices/{YYYY}/{MM}/{name}{ext}")
+}
+
+/** Bills: bills/{YYYY}/{MM}/{fileUuid}{ext} */
+export function getBillFilePath(fileUuid: string, filename: string, date?: Date) {
+  const ext = path.extname(filename)
+  return formatFilePath(`${fileUuid}${ext}`, date || new Date(), "bills/{YYYY}/{MM}/{name}{ext}")
+}
+
+/** Candidates: candidates/{fileUuid}{ext} */
+export function getCandidateFilePath(fileUuid: string, filename: string) {
+  const ext = path.extname(filename)
+  return safePathJoin("candidates", `${fileUuid}${ext}`)
+}
+
+/** Social posts: social/{fileUuid}{ext} */
+export function getSocialFilePath(fileUuid: string, filename: string) {
+  const ext = path.extname(filename)
+  return safePathJoin("social", `${fileUuid}${ext}`)
+}
+
+/** Leads: leads/{fileUuid}{ext} */
+export function getLeadFilePath(fileUuid: string, filename: string) {
+  const ext = path.extname(filename)
+  return safePathJoin("leads", `${fileUuid}${ext}`)
+}

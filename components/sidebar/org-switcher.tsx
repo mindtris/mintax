@@ -95,7 +95,7 @@ export function OrgSwitcher({
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="name">Organization name</Label>
-                <Input id="name" name="name" placeholder="e.g., My Company Pvt Ltd" required />
+                <Input id="name" name="name" placeholder="e.g., Mindtris" required />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

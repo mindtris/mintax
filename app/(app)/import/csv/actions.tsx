@@ -4,6 +4,8 @@ import { ActionState } from "@/lib/actions"
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { EXPORT_AND_IMPORT_FIELD_MAP } from "@/lib/services/export_and_import"
 import { createTransaction } from "@/lib/services/transactions"
+import { getCategories } from "@/lib/services/categories"
+import { getProjects } from "@/lib/services/projects"
 import { Transaction } from "@/lib/prisma/client"
 import { parse } from "@fast-csv/parse"
 import { revalidatePath } from "next/cache"
@@ -52,12 +54,19 @@ export async function saveTransactionsAction(
   try {
     const rows = JSON.parse(formData.get("rows") as string) as Record<string, unknown>[]
 
+    // Pre-fetch for N+1 elimination
+    const [categories, projects] = await Promise.all([
+      getCategories(org.id),
+      getProjects(org.id),
+    ])
+    const context = { categories, projects }
+
     for (const row of rows) {
       const transactionData: Record<string, unknown> = {}
       for (const [fieldCode, value] of Object.entries(row)) {
         const fieldDef = EXPORT_AND_IMPORT_FIELD_MAP[fieldCode]
         if (fieldDef?.import) {
-          transactionData[fieldCode] = await fieldDef.import(org.id, value as string)
+          transactionData[fieldCode] = await fieldDef.import(org.id, value as string, context)
         } else {
           transactionData[fieldCode] = value as string
         }

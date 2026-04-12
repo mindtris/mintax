@@ -11,7 +11,7 @@ import {
   safePathJoin,
 } from "@/lib/files"
 import { updateField } from "@/lib/services/fields"
-import { createFile, deleteFile } from "@/lib/services/files"
+import { createFile, deleteFile, attachFileToTransaction } from "@/lib/services/files"
 import {
   bulkDeleteTransactions,
   createTransaction,
@@ -174,6 +174,7 @@ export async function uploadTransactionFilesAction(formData: FormData): Promise<
           filename: file.name,
           path: relativeFilePath,
           mimetype: file.type,
+          size: file.size,
           isReviewed: true,
           metadata: {
             size: file.size,
@@ -185,7 +186,12 @@ export async function uploadTransactionFilesAction(formData: FormData): Promise<
       })
     )
 
-    // Update invoice with the new file ID
+    // Create join table entries
+    for (const fileRecord of fileRecords) {
+      await attachFileToTransaction(transactionId, fileRecord.id)
+    }
+
+    // Also update legacy JSON column for backwards compat
     await updateTransactionFiles(
       transactionId,
       org.id,

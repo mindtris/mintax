@@ -2,10 +2,10 @@ import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { fileExists, fullPathForFile } from "@/lib/files"
 import { EXPORT_AND_IMPORT_FIELD_MAP, ExportFields, ExportFilters } from "@/lib/services/export_and_import"
 import { getFields } from "@/lib/services/fields"
-import { getFilesByTransactionId } from "@/lib/services/files"
 import { updateProgress } from "@/lib/services/progress"
-import { getTransactions } from "@/lib/services/transactions"
+import { buildTransactionsWhere } from "@/lib/services/transactions"
 import { getStorage } from "@/lib/storage"
+import { prisma } from "@/lib/core/db"
 import { format } from "@fast-csv/format"
 import { formatDate } from "date-fns"
 import JSZip from "jszip"
@@ -26,7 +26,8 @@ export async function GET(request: Request) {
 
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
-  const { transactions } = await getTransactions(org.id, filters)
+  const { where, orderBy } = buildTransactionsWhere(org.id, filters)
+  const totalTransactions = await prisma.transaction.count({ where })
   const existingFields = await getFields(org.id)
   const storage = getStorage()
 
@@ -41,20 +42,22 @@ export async function GET(request: Request) {
     csvStream.write(headers)
 
     // Process transactions in chunks to avoid memory issues
-    for (let i = 0; i < transactions.length; i += TRANSACTIONS_CHUNK_SIZE) {
-      const chunk = transactions.slice(i, i + TRANSACTIONS_CHUNK_SIZE)
-      console.log(
-        `Processing transactions ${i + 1}-${Math.min(i + TRANSACTIONS_CHUNK_SIZE, transactions.length)} of ${transactions.length}`
-      )
+    for (let skip = 0; skip < totalTransactions; skip += TRANSACTIONS_CHUNK_SIZE) {
+      const transactions = await prisma.transaction.findMany({
+        where,
+        orderBy,
+        take: TRANSACTIONS_CHUNK_SIZE,
+        skip,
+      })
 
-      for (const transaction of chunk) {
+      for (const transaction of transactions) {
         const row: Record<string, unknown> = {}
         for (const field of existingFields) {
           let value
           if (field.isExtra) {
-            value = transaction.extra?.[field.code as keyof typeof transaction.extra] ?? ""
+            value = (transaction.extra as any)?.[field.code] ?? ""
           } else {
-            value = transaction[field.code as keyof typeof transaction] ?? ""
+            value = (transaction as any)[field.code] ?? ""
           }
 
           const exportFieldSettings = EXPORT_AND_IMPORT_FIELD_MAP[field.code]
@@ -102,10 +105,18 @@ export async function GET(request: Request) {
     let totalFilesToProcess = 0
     let lastProgressUpdate = Date.now()
 
-    // First count total files to process
-    for (const transaction of transactions) {
-      const transactionFiles = await getFilesByTransactionId(transaction.id, org.id)
-      totalFilesToProcess += transactionFiles.length
+    // First count total files to process using a more efficient way
+    for (let skip = 0; skip < totalTransactions; skip += TRANSACTIONS_CHUNK_SIZE) {
+      const transactions = await prisma.transaction.findMany({
+        where,
+        orderBy,
+        take: TRANSACTIONS_CHUNK_SIZE,
+        skip,
+        select: { files: true }
+      })
+      for (const t of transactions) {
+        totalFilesToProcess += (t.files as string[])?.length || 0
+      }
     }
 
     // Update progress with total files if progressId is provided
@@ -113,16 +124,22 @@ export async function GET(request: Request) {
       await updateProgress(org.id, progressId, { total: totalFilesToProcess })
     }
 
-    console.log(`Starting to process ${totalFilesToProcess} files in total`)
+    for (let skip = 0; skip < totalTransactions; skip += FILES_CHUNK_SIZE) {
+      const transactions = await prisma.transaction.findMany({
+        where,
+        orderBy,
+        take: FILES_CHUNK_SIZE,
+        skip,
+      })
 
-    for (let i = 0; i < transactions.length; i += FILES_CHUNK_SIZE) {
-      const chunk = transactions.slice(i, i + FILES_CHUNK_SIZE)
-      console.log(
-        `Processing files for transactions ${i + 1}-${Math.min(i + FILES_CHUNK_SIZE, transactions.length)} of ${transactions.length}`
-      )
+      for (const transaction of transactions) {
+        const fileIds = transaction.files as string[]
+        if (!fileIds?.length) continue
 
-      for (const transaction of chunk) {
-        const transactionFiles = await getFilesByTransactionId(transaction.id, org.id)
+        const transactionFiles = await prisma.file.findMany({
+          where: { id: { in: fileIds }, organizationId: org.id },
+          orderBy: { createdAt: "asc" }
+        })
 
         const transactionFolder = filesFolder.folder(
           path.join(
@@ -136,9 +153,6 @@ export async function GET(request: Request) {
         for (const file of transactionFiles) {
           const storagePath = fullPathForFile(user, file)
           if (await fileExists(storagePath)) {
-            console.log(
-              `Processing file ${++totalFilesProcessed}/${totalFilesToProcess}: ${file.filename} for transaction ${transaction.id}`
-            )
             const fileData = await storage.get(storagePath)
             const fileExtension = path.extname(file.path)
             transactionFolder.file(
@@ -148,14 +162,14 @@ export async function GET(request: Request) {
               fileData
             )
 
+            totalFilesProcessed++
+
             // Update progress every PROGRESS_UPDATE_INTERVAL_MS milliseconds
             const now = Date.now()
             if (progressId && now - lastProgressUpdate >= PROGRESS_UPDATE_INTERVAL_MS) {
               await updateProgress(org.id, progressId, { current: totalFilesProcessed })
               lastProgressUpdate = now
             }
-          } else {
-            console.log(`Skipping missing file: ${file.filename} for transaction ${transaction.id}`)
           }
         }
       }
@@ -165,8 +179,6 @@ export async function GET(request: Request) {
     if (progressId) {
       await updateProgress(org.id, progressId, { current: totalFilesToProcess })
     }
-
-    console.log(`Finished processing all ${totalFilesProcessed} files`)
 
     // Generate zip with progress tracking
     const zipContent = await zip.generateAsync({

@@ -6,24 +6,31 @@ import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { getBills, getBillStats, BillFilters } from "@/lib/services/bills"
 import { getItems } from "@/lib/services/items"
 import { getTaxes } from "@/lib/services/taxes"
+import { getSettings } from "@/lib/services/settings"
+import { getCurrencies } from "@/lib/services/currencies"
 import { Plus } from "lucide-react"
 
 function formatAmount(amount: number, currency: string) {
-  return (amount / 100).toLocaleString("en-IN", {
+  return (amount / 100).toLocaleString("en-US", {
     style: "currency",
     currency,
     minimumFractionDigits: 2,
   })
 }
 
-export async function BillsView({ searchParams }: { searchParams?: BillFilters }) {
+export async function BillsView({ searchParams }: { searchParams?: BillFilters & { page?: string } }) {
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
-  const [bills, items, taxes] = await Promise.all([
-    getBills(org.id, searchParams),
+  const currentPage = Math.max(1, parseInt(searchParams?.page || "1") || 1)
+  const pageSize = 50
+  const [billsResult, items, taxes, settings, currencies] = await Promise.all([
+    getBills(org.id, searchParams, { take: pageSize, skip: (currentPage - 1) * pageSize }),
     getItems(org.id),
     getTaxes(org.id),
+    getSettings(org.id),
+    getCurrencies(org.id),
   ])
+  const defaultDueDays = parseInt(settings.bill_default_due_days || "30") || 30
   const stats = await getBillStats(org.id).catch(() => ({
     outstanding: { total: 0, count: 0 },
     overdue: { total: 0, count: 0 },
@@ -36,11 +43,11 @@ export async function BillsView({ searchParams }: { searchParams?: BillFilters }
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold tracking-tighter text-foreground font-display">Bills</h1>
           <div className="bg-secondary text-xl px-2.5 py-0.5 rounded-md font-bold text-muted-foreground/70 tabular-nums border-black/[0.03] border shadow-sm">
-            {bills.length}
+            {billsResult.total}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <NewBillSheet baseCurrency={org.baseCurrency} items={items} taxes={taxes}>
+          <NewBillSheet baseCurrency={org.baseCurrency} items={items} taxes={taxes} defaultDueDays={defaultDueDays}>
             <Button className="text-white">
               <Plus className="h-4 w-4" />
               <span>Record bill</span>
@@ -79,7 +86,7 @@ export async function BillsView({ searchParams }: { searchParams?: BillFilters }
         </Card>
       </div>
 
-      <BillTable bills={bills} baseCurrency={org.baseCurrency} />
+      <BillTable bills={billsResult.items} baseCurrency={org.baseCurrency} items={items} taxes={taxes} defaultDueDays={defaultDueDays} />
     </div>
   )
 }

@@ -23,7 +23,7 @@ export async function resetLLMSettings(org: Organization) {
     })
   }
 
-  redirect("/settings/llm")
+  redirect("/settings?tab=llm")
 }
 
 export async function resetFieldsAndCategories(org: Organization) {
@@ -84,5 +84,5 @@ export async function resetFieldsAndCategories(org: Organization) {
   // Reset taxes
   await seedDefaultTaxes(org.id, org.baseCurrency)
 
-  redirect("/settings/fields")
+  redirect("/settings?tab=fields")
 }

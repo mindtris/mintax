@@ -1,4 +1,5 @@
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
+import { prisma } from "@/lib/core/db"
 import { getJobPostings } from "@/lib/services/jobs"
 import { getCandidatePipeline } from "@/lib/services/candidates"
 import { Badge } from "@/components/ui/badge"
@@ -15,30 +16,50 @@ export default async function PipelineOverviewPage() {
   const org = await getActiveOrg(user)
   const jobs = await getJobPostings(org.id)
 
+  const categories = await prisma.category.findMany({
+    where: { organizationId: org.id, type: "applicant_status" },
+    orderBy: { name: "asc" }
+  })
+
   // Aggregate pipeline stats across all jobs
-  let totalNew = 0, totalScreening = 0, totalInterview = 0, totalOffered = 0, totalHired = 0, totalRejected = 0
+  const statusCounts: Record<string, number> = {}
+  categories.forEach(c => { 
+    const code = (c.code as string) || "unprocessed"
+    statusCounts[code] = 0 
+  })
 
   const jobPipelines = await Promise.all(
     jobs.filter((j: any) => j.status === "open").map(async (job: any) => {
-      const pipeline = await getCandidatePipeline(job.id)
-      totalNew += pipeline.new.length
-      totalScreening += pipeline.screening.length
-      totalInterview += pipeline.interview.length
-      totalOffered += pipeline.offered.length
-      totalHired += pipeline.hired.length
-      totalRejected += pipeline.rejected.length
+      const pipeline = await getCandidatePipeline(org.id, job.id)
+      Object.keys(pipeline).forEach(code => {
+        if (statusCounts[code] !== undefined) {
+          statusCounts[code] += pipeline[code].length
+        }
+      })
       return { job, pipeline }
     })
   )
 
-  const stages = [
-    { name: "New", count: totalNew, icon: Clock, color: "text-blue-500 bg-blue-500/10" },
-    { name: "Screening", count: totalScreening, icon: TrendingUp, color: "text-purple-500 bg-purple-500/10" },
-    { name: "Interview", count: totalInterview, icon: Users, color: "text-pink-500 bg-pink-500/10" },
-    { name: "Offered", count: totalOffered, icon: Briefcase, color: "text-orange-500 bg-orange-500/10" },
-    { name: "Hired", count: totalHired, icon: CheckCircle2, color: "text-green-500 bg-green-500/10" },
-    { name: "Rejected", count: totalRejected, icon: XCircle, color: "text-red-500 bg-red-500/10" },
-  ]
+  const stageIcons: Record<string, any> = {
+    unprocessed: Clock,
+    screening: TrendingUp,
+    interview_internal: Users,
+    interview_client: Users,
+    offered: Briefcase,
+    hired: CheckCircle2,
+    rejected: XCircle,
+  }
+
+  const stages = categories.map(cat => {
+    const code = (cat.code as string) || "unprocessed"
+    return {
+      id: code,
+      name: cat.name,
+      count: statusCounts[code] || 0,
+      icon: stageIcons[code] || Briefcase,
+      color: cat.color ? `text-[${cat.color}] bg-[${cat.color}]/10` : "text-primary bg-primary/10"
+    }
+  })
 
   return (
     <div className="flex flex-col gap-8 pb-12">
@@ -80,9 +101,13 @@ export default async function PipelineOverviewPage() {
                     <p className="text-xs text-muted-foreground">{job.category?.name || "Uncategorized"} · {job.type}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant="outline" className="text-xs">{pipeline.new.length} new</Badge>
-                    <Badge variant="secondary" className="text-xs">{pipeline.screening.length + pipeline.interview.length} in progress</Badge>
-                    <Badge className="bg-green-100 text-green-700 text-xs">{pipeline.hired.length} hired</Badge>
+                    <Badge variant="outline" className="text-xs">{(pipeline.unprocessed?.length || 0)} new</Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      {(Object.keys(pipeline)
+                        .filter(k => !["hired", "rejected", "unprocessed"].includes(k))
+                        .reduce((sum, k) => sum + pipeline[k].length, 0))} in progress
+                    </Badge>
+                    <Badge className="bg-green-100 text-green-700 text-xs">{(pipeline.hired?.length || 0)} hired</Badge>
                   </div>
                 </CardContent>
               </Card>

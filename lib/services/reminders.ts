@@ -14,36 +14,45 @@ export type ReminderFilters = {
   dateTo?: string
 }
 
-export const getReminders = cache(async (orgId: string, filters?: ReminderFilters) => {
-  const where: any = { organizationId: orgId }
+export const getReminders = cache(
+  async (orgId: string, filters?: ReminderFilters, options?: { take?: number; skip?: number }) => {
+    const where: any = { organizationId: orgId }
 
-  if (filters?.status && filters.status !== "all") {
-    where.status = filters.status
-  }
-  if (filters?.category && filters.category !== "all") {
-    where.category = filters.category
-  }
-  if (filters?.priority && filters.priority !== "all") {
-    where.priority = filters.priority
-  }
-  if (filters?.search) {
-    where.OR = [
-      { title: { contains: filters.search, mode: "insensitive" } },
-      { description: { contains: filters.search, mode: "insensitive" } },
-    ]
-  }
-  if (filters?.dateFrom || filters?.dateTo) {
-    where.dueAt = {}
-    if (filters.dateFrom) where.dueAt.gte = new Date(filters.dateFrom)
-    if (filters?.dateTo) where.dueAt.lte = new Date(filters.dateTo)
-  }
+    if (filters?.status && filters.status !== "all") {
+      where.status = filters.status
+    }
+    if (filters?.category && filters.category !== "all") {
+      where.category = filters.category
+    }
+    if (filters?.priority && filters.priority !== "all") {
+      where.priority = filters.priority
+    }
+    if (filters?.search) {
+      where.OR = [
+        { title: { contains: filters.search, mode: "insensitive" } },
+        { description: { contains: filters.search, mode: "insensitive" } },
+      ]
+    }
+    if (filters?.dateFrom || filters?.dateTo) {
+      where.dueAt = {}
+      if (filters.dateFrom) where.dueAt.gte = new Date(filters.dateFrom)
+      if (filters?.dateTo) where.dueAt.lte = new Date(filters.dateTo)
+    }
 
-  return await prisma.reminder.findMany({
-    where,
-    include: { assignees: true },
-    orderBy: { dueAt: "asc" },
-  })
-})
+    const [items, total] = await Promise.all([
+      prisma.reminder.findMany({
+        where,
+        include: { assignees: true },
+        orderBy: { dueAt: "asc" },
+        take: options?.take,
+        skip: options?.skip,
+      }),
+      prisma.reminder.count({ where }),
+    ])
+
+    return { items, total }
+  }
+)
 
 export const getReminderById = cache(async (id: string, orgId: string) => {
   return await prisma.reminder.findFirst({

@@ -14,6 +14,8 @@ import {
 import { useActionState } from "react"
 import { createReminderAction, updateReminderAction } from "../actions"
 
+import { toast } from "sonner"
+
 type Props = {
   reminder?: any
   members: any[]
@@ -27,9 +29,14 @@ export function ReminderForm({ reminder, members, currentUserId, onSuccess }: Pr
 
   const [state, formAction, isPending] = useActionState(action, null)
 
-  if (state?.success && onSuccess) {
+  const handleSuccess = () => {
+    toast.success(isEdit ? "Reminder updated" : "Reminder created")
+    if (onSuccess) onSuccess()
+  }
+
+  if (state?.success) {
     // Defer to next tick to avoid React warning
-    setTimeout(onSuccess, 0)
+    setTimeout(handleSuccess, 0)
   }
 
   const categoryItems = REMINDER_CATEGORIES.map((c) => ({ code: c, name: CATEGORY_LABELS[c] }))
@@ -154,8 +161,8 @@ export function ReminderForm({ reminder, members, currentUserId, onSuccess }: Pr
         <p className="text-sm text-destructive">{state.error}</p>
       )}
 
-      <Button type="submit" disabled={isPending} className="w-full">
-        {isPending ? "Saving..." : isEdit ? "Update Reminder" : "Create Reminder"}
+      <Button type="submit" disabled={isPending} className="w-full h-11">
+        {isPending ? "Saving..." : isEdit ? "Update reminder" : "Create reminder"}
       </Button>
     </form>
   )

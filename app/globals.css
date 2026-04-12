@@ -100,6 +100,14 @@
 }
 
 @layer utilities {
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
   .custom-scrollbar::-webkit-scrollbar {
     width: 0px;
     background: transparent; /* make scrollbar invisible */

@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Textarea } from "@/components/ui/textarea"
 import { Loader2, Sparkles } from "lucide-react"
 import { useActionState, useEffect, useState } from "react"
+import { toast } from "sonner"
 
 export function NewJobSheet({
   children,
@@ -59,9 +60,12 @@ export function NewJobSheet({
     setGenerating(false)
   }
 
-  if (state?.success && open) {
-    setTimeout(() => setOpen(false), 0)
-  }
+  useEffect(() => {
+    if (state?.success && open) {
+      toast.success("Job posting created successfully")
+      setOpen(false)
+    }
+  }, [state, open])
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -192,6 +196,7 @@ export function NewJobSheet({
                     <SelectItem value="USD">USD</SelectItem>
                     <SelectItem value="EUR">EUR</SelectItem>
                     <SelectItem value="GBP">GBP</SelectItem>
+                    <SelectItem value="AED">AED</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -199,8 +204,15 @@ export function NewJobSheet({
 
             {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
 
-            <Button type="submit" disabled={pending} className="w-full mt-2">
-              {pending ? "Creating..." : "Post job"}
+            <Button type="submit" disabled={pending} className="w-full mt-2 shadow-lg shadow-primary/20">
+              {pending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating job...
+                </>
+              ) : (
+                "Post job"
+              )}
             </Button>
           </form>
         </div>

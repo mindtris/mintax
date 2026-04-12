@@ -482,7 +482,7 @@ export default function EmailTemplateSettingsForm({ settings, orgName }: Props) 
                   type="email"
                   value={globalForm.email_reply_to}
                   onChange={(e) => setGlobalForm((p) => ({ ...p, email_reply_to: e.target.value }))}
-                  placeholder="billing@yourcompany.com"
+                  placeholder="akshitha@mindtris.com"
                 />
                 <p className="text-[10px] text-muted-foreground">
                   Replies to your emails will be sent to this address.

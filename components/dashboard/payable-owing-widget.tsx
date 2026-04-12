@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface PayableOwingWidgetProps {
   stats: AgingReport
+  baseCurrency: string
 }
 
-export function PayableOwingWidget({ stats }: PayableOwingWidgetProps) {
+export function PayableOwingWidget({ stats, baseCurrency }: PayableOwingWidgetProps) {
   return (
     <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden h-full flex flex-col">
       <CardHeader className="px-6 py-4 border-b border-black/[0.03]">
@@ -30,7 +31,7 @@ export function PayableOwingWidget({ stats }: PayableOwingWidgetProps) {
                   <span className={cat.label.includes("overdue") && cat.amount > 0 ? "text-primary font-medium" : "text-muted-foreground"}>
                     {cat.label}
                   </span>
-                  <span className="font-semibold">{formatCurrency(cat.amount, "INR")}</span>
+                  <span className="font-semibold">{formatCurrency(cat.amount, baseCurrency)}</span>
                 </div>
               ))}
             </div>
@@ -50,7 +51,7 @@ export function PayableOwingWidget({ stats }: PayableOwingWidgetProps) {
                   <span className={cat.label.includes("overdue") && cat.amount > 0 ? "text-primary font-medium" : "text-muted-foreground"}>
                     {cat.label}
                   </span>
-                  <span className="font-semibold">{formatCurrency(cat.amount, "INR")}</span>
+                  <span className="font-semibold">{formatCurrency(cat.amount, baseCurrency)}</span>
                 </div>
               ))}
             </div>
@@ -65,7 +66,7 @@ export function PayableOwingWidget({ stats }: PayableOwingWidgetProps) {
                 className="text-lg font-semibold"
                 style={{ color: (stats.receivables.reduce((a, b) => a + b.amount, 0) - stats.payables.reduce((a, b) => a + b.amount, 0)) >= 0 ? "var(--chart-1)" : "var(--chart-5)" }}
               >
-                {formatCurrency(stats.receivables.reduce((a, b) => a + b.amount, 0) - stats.payables.reduce((a, b) => a + b.amount, 0), "INR")}
+                {formatCurrency(stats.receivables.reduce((a, b) => a + b.amount, 0) - stats.payables.reduce((a, b) => a + b.amount, 0), baseCurrency)}
               </span>
             </div>
             <div className="text-right">

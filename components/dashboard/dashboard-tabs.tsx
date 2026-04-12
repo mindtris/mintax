@@ -134,11 +134,11 @@ export function DashboardTabs({
 function PlaceholderTab({ label, description, title, btnLabel }: { label: string; description: string; title: string; btnLabel: string }) {
   return (
     <div className="flex flex-col gap-6 w-full">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h2 className="text-base sm:text-lg font-semibold tracking-tight">{title}</h2>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button>
+            <Button size="sm" className="sm:size-default">
               <Plus className="h-4 w-4 mr-2" /> {btnLabel}
             </Button>
           </DropdownMenuTrigger>

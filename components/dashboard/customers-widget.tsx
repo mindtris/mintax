@@ -6,6 +6,7 @@ import { listContacts } from "@/lib/services/contacts"
 import { prisma } from "@/lib/core/db"
 import { Building2, HandCoins, Plus, Users, UsersRound } from "lucide-react"
 import Link from "next/link"
+import { formatCurrency } from "@/lib/utils"
 
 const CARD = "border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden"
 
@@ -101,7 +102,7 @@ export async function CustomersWidget() {
               <span className="text-sm text-muted-foreground">Outstanding</span>
             </div>
             <div className="text-2xl font-bold mt-1">
-              {(outstanding / 100).toLocaleString("en-IN", { style: "currency", currency: org.baseCurrency })}
+              {formatCurrency(outstanding, org.baseCurrency)}
             </div>
           </CardContent>
         </Card>

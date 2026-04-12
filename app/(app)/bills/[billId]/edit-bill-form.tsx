@@ -93,7 +93,7 @@ export function EditBillForm({ bill, baseCurrency }: { bill: any; baseCurrency: 
             <Input
               value={vendorName}
               onChange={(e) => setVendorName(e.target.value)}
-              placeholder="Vendor name"
+              placeholder="Mindtris"
             />
           </div>
 
@@ -105,7 +105,7 @@ export function EditBillForm({ bill, baseCurrency }: { bill: any; baseCurrency: 
                 type="email"
                 value={vendorEmail}
                 onChange={(e) => setVendorEmail(e.target.value)}
-                placeholder="vendor@example.com"
+                placeholder="akshitha@mindtris.com"
               />
             </div>
             <div className="flex flex-col gap-2">

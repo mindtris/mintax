@@ -84,7 +84,7 @@ export async function StatsWidget({ filters }: { filters: TransactionFilters }) 
         <FiltersWidget defaultFilters={filters} defaultRange="last-12-months" />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total income"
           href="/transactions?type=income"

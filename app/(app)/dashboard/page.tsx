@@ -31,6 +31,7 @@ import { getTimeSeriesStats, getDetailedTimeSeriesStats, getProjectStats } from 
 import { getReport } from "@/lib/services/reporting"
 import { getBankAccounts } from "@/lib/services/bank-accounts"
 import { Metadata } from "next"
+import { formatCurrency } from "@/lib/utils"
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -120,17 +121,17 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           <div className="flex flex-col gap-6">
             <StatsWidget filters={filters} />
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-stretch">
               <CashFlowWidget data={timeSeriesData} />
               <ProfitLossWidget data={timeSeriesData} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-              <PayableOwingWidget stats={agingStats} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-stretch">
+              <PayableOwingWidget stats={agingStats} baseCurrency={org.baseCurrency} />
               <NetIncomeWidget data={fyComparison} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch">
               <div className="lg:col-span-2">
                 <ExpenseBreakdownWidget data={detailedTimeSeriesData} />
               </div>
@@ -145,7 +146,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                     <div key={account.id} className="flex items-center justify-between border-b border-black/[0.02] pb-2 last:border-0 last:pb-0">
                       <span className="text-sm font-medium">{account.name}</span>
                       <span className="text-sm font-semibold">
-                        {((account.currentBalance || 0) / 100).toLocaleString("en-IN", { style: "currency", currency: account.currency || "INR" })}
+                        {formatCurrency(account.currentBalance || 0, account.currency || org.baseCurrency)}
                       </span>
                     </div>
                   ))}
@@ -153,7 +154,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
               </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 items-stretch">
               <div className="lg:col-span-3">
                 <ProjectInsightCard 
                   projects={projects as any} 

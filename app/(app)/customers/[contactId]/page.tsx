@@ -41,7 +41,7 @@ function getInitials(name: string) {
 
 function formatDate(d: Date | string | null | undefined) {
   if (!d) return "—"
-  return new Date(d).toLocaleDateString("en-IN", {
+  return new Date(d).toLocaleDateString("en-US", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -49,7 +49,7 @@ function formatDate(d: Date | string | null | undefined) {
 }
 
 function formatCurrency(amount: number, currency = "INR") {
-  return new Intl.NumberFormat("en-IN", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
     maximumFractionDigits: 0,

@@ -5,17 +5,19 @@ import { EstimatesViewClient } from "./estimates-view-client"
 export async function EstimatesView({ searchParams }: { searchParams: any }) {
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
-  const { q, status, ordering } = searchParams
+  const { q, status, ordering, page } = searchParams
+  const currentPage = Math.max(1, parseInt(page) || 1)
+  const pageSize = 50
 
-  const [estimates, stats] = await Promise.all([
-    getInvoices(org.id, { type: "estimate", search: q, status }, { ordering }),
+  const [estimatesResult, stats] = await Promise.all([
+    getInvoices(org.id, { type: "estimate", search: q, status }, { ordering, take: pageSize, skip: (currentPage - 1) * pageSize }),
     getInvoiceStats(org.id, "estimate"),
   ])
 
   return (
     <EstimatesViewClient
-      estimates={estimates}
-      total={estimates.length}
+      estimates={estimatesResult.items}
+      total={estimatesResult.total}
       stats={stats}
     />
   )

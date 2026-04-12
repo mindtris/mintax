@@ -18,10 +18,12 @@ export function PostsViewClient({
   posts,
   total,
   stats,
+  categories,
 }: {
   posts: any[]
   total: number
   stats: any
+  categories: any[]
 }) {
   const [visibleColumns, setVisibleColumns] = useState(ALL_COLUMNS.map((c) => c.key))
 
@@ -41,7 +43,7 @@ export function PostsViewClient({
             {total}
           </div>
         </div>
-        <NewPostSheet>
+        <NewPostSheet categories={categories}>
           <Button>
             <Plus className="h-4 w-4" />
             <span className="hidden md:block">New post</span>
@@ -80,6 +82,7 @@ export function PostsViewClient({
         columns={ALL_COLUMNS}
         visibleColumns={visibleColumns}
         onToggleColumn={toggleColumn}
+        categories={categories}
       />
 
       <PostsTable posts={posts} visibleColumns={visibleColumns} />

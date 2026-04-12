@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { User } from "@/lib/prisma/client"
 import { useActionState, useEffect } from "react"
 import { toast } from "sonner"
-import { SubscriptionPlan } from "./subscription-plan"
 
 const COUNTRIES = [
   { code: "AF", name: "Afghanistan" },
@@ -271,8 +270,8 @@ export default function ProfileSettingsForm({ user }: { user: any }) {
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormInput title="First name" name="firstName" defaultValue={user.firstName || ""} placeholder="John" />
-            <FormInput title="Last name" name="lastName" defaultValue={user.lastName || ""} placeholder="Doe" />
+            <FormInput title="First name" name="firstName" defaultValue={user.firstName || ""} placeholder="Akshitha" />
+            <FormInput title="Last name" name="lastName" defaultValue={user.lastName || ""} placeholder="Kandikanti" />
           </div>
 
           <FormInput title="Phone number" name="phone" defaultValue={user.phone || ""} placeholder="+1 (555) 000-0000" />
@@ -311,9 +310,6 @@ export default function ProfileSettingsForm({ user }: { user: any }) {
         {saveState?.error && <FormError>{saveState.error}</FormError>}
       </form>
 
-      <div className="pt-10 border-t">
-        <SubscriptionPlan user={user} />
-      </div>
     </div>
   )
 }

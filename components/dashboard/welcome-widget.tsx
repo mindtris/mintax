@@ -73,17 +73,17 @@ export async function WelcomeWidget() {
             Settings
           </Link>
           <span className="mx-2">|</span>
-          <Link href="/settings/categories" className="text-primary hover:underline">
+          <Link href="/settings?tab=categories" className="text-primary hover:underline">
             Manage Categories
           </Link>
           <span className="mx-2">|</span>
-          <Link href="/settings/projects" className="text-primary hover:underline">
+          <Link href="/settings?tab=projects" className="text-primary hover:underline">
             Manage Projects
           </Link>
         </div>
         <div className="flex flex-wrap gap-2 mt-8">
           {settings.openai_api_key === "" && (
-            <Link href="/settings/llm">
+            <Link href="/settings?tab=llm">
               <Button>
                 <Key className="h-4 w-4" />
                 Please give your ChatGPT key here
@@ -96,19 +96,19 @@ export async function WelcomeWidget() {
               Default Currency: {settings.default_currency}
             </Button>
           </Link>
-          <Link href="/settings/categories">
+          <Link href="/settings?tab=categories">
             <Button variant="outline">
               <ChartBarStacked className="h-4 w-4" />
               Categories
             </Button>
           </Link>
-          <Link href="/settings/projects">
+          <Link href="/settings?tab=projects">
             <Button variant="outline">
               <FolderOpenDot className="h-4 w-4" />
               Projects
             </Button>
           </Link>
-          <Link href="/settings/fields">
+          <Link href="/settings?tab=fields">
             <Button variant="outline">
               <TextCursorInput className="h-4 w-4" />
               Custom Fields

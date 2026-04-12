@@ -29,37 +29,47 @@ export type BillFilters = {
   dateTo?: string
 }
 
-export const getBills = cache(async (orgId: string, filters?: BillFilters) => {
-  const where: Prisma.BillWhereInput = { organizationId: orgId }
+export const getBills = cache(
+  async (orgId: string, filters?: BillFilters, options?: { ordering?: string; take?: number; skip?: number }) => {
+    const where: Prisma.BillWhereInput = { organizationId: orgId }
 
-  if (filters) {
-    if (filters.search) {
-      where.OR = [
-        { billNumber: { contains: filters.search, mode: "insensitive" } },
-        { vendorName: { contains: filters.search, mode: "insensitive" } },
-        { vendorEmail: { contains: filters.search, mode: "insensitive" } },
-      ]
-    }
-    if (filters.status) where.status = filters.status
-    if (filters.dateFrom || filters.dateTo) {
-      where.issuedAt = {
-        gte: filters.dateFrom ? new Date(filters.dateFrom) : undefined,
-        lte: filters.dateTo ? new Date(filters.dateTo) : undefined,
+    if (filters) {
+      if (filters.search) {
+        where.OR = [
+          { billNumber: { contains: filters.search, mode: "insensitive" } },
+          { vendorName: { contains: filters.search, mode: "insensitive" } },
+          { vendorEmail: { contains: filters.search, mode: "insensitive" } },
+        ]
+      }
+      if (filters.status) where.status = filters.status
+      if (filters.dateFrom || filters.dateTo) {
+        where.issuedAt = {
+          gte: filters.dateFrom ? new Date(filters.dateFrom) : undefined,
+          lte: filters.dateTo ? new Date(filters.dateTo) : undefined,
+        }
       }
     }
+
+    const [bills, total] = await Promise.all([
+      prisma.bill.findMany({
+        where,
+        include: { billItems: true },
+        orderBy: { createdAt: "desc" },
+        take: options?.take,
+        skip: options?.skip,
+      }),
+      prisma.bill.count({ where }),
+    ])
+
+    return {
+      items: bills.map((bill: any) => ({
+        ...bill,
+        items: bill.billItems || [],
+      })),
+      total,
+    }
   }
-
-  const bills = await prisma.bill.findMany({
-    where,
-    include: { billItems: true },
-    orderBy: { createdAt: "desc" },
-  })
-
-  return bills.map((bill: any) => ({
-    ...bill,
-    items: bill.billItems || []
-  }))
-})
+)
 
 export const getBillById = cache(async (id: string, orgId: string) => {
   const bill: any = await prisma.bill.findFirst({

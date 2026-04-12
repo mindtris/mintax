@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { useActionState, useState } from "react"
+import { useActionState, useEffect, useState } from "react"
+import { toast } from "sonner"
+import { Loader2, Upload } from "lucide-react"
 
 export function NewCandidateSheet({ 
   children, 
@@ -20,9 +22,12 @@ export function NewCandidateSheet({
   const [open, setOpen] = useState(false)
   const [state, formAction, pending] = useActionState(createCandidateAction, null)
 
-  if (state?.success && open) {
-    setTimeout(() => setOpen(false), 0)
-  }
+  useEffect(() => {
+    if (state?.success && open) {
+      toast.success("Candidate added successfully")
+      setOpen(false)
+    }
+  }, [state, open])
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -65,17 +70,17 @@ export function NewCandidateSheet({
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <Label>First name *</Label>
-                <Input name="firstName" placeholder="John" required />
+                <Input name="firstName" placeholder="Akshitha" required />
               </div>
               <div className="flex flex-col gap-2">
                 <Label>Last name *</Label>
-                <Input name="lastName" placeholder="Doe" required />
+                <Input name="lastName" placeholder="Kandikanti" required />
               </div>
             </div>
 
             <div className="flex flex-col gap-2">
               <Label>Email *</Label>
-              <Input name="email" type="email" placeholder="john@example.com" required />
+              <Input name="email" type="email" placeholder="akshitha@mindtris.com" required />
             </div>
 
             <div className="flex flex-col gap-2">
@@ -125,6 +130,29 @@ export function NewCandidateSheet({
             </div>
 
             <div className="flex flex-col gap-2">
+              <Label>Resume / CV *</Label>
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  const input = document.getElementById("candidate-resume") as HTMLInputElement
+                  if (input && e.dataTransfer.files.length > 0) {
+                    const dt = new DataTransfer()
+                    dt.items.add(e.dataTransfer.files[0])
+                    input.files = dt.files
+                  }
+                }}
+                className="border-2 border-dashed border-border rounded-lg p-5 text-center hover:border-primary/40 transition-colors cursor-pointer"
+                onClick={() => document.getElementById("candidate-resume")?.click()}
+              >
+                <Upload className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
+                <p className="text-xs text-muted-foreground">Drop resume here or click to upload</p>
+                <p className="text-[10px] text-muted-foreground/60 mt-0.5">PDF, DOC, DOCX</p>
+                <input id="candidate-resume" name="resume" type="file" accept=".pdf,.doc,.docx" required className="hidden" />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
               <Label>Marketing bio / Summary</Label>
               <textarea 
                 name="marketingBio" 
@@ -136,8 +164,15 @@ export function NewCandidateSheet({
 
             {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
 
-            <Button type="submit" disabled={pending} className="w-full mt-2">
-              {pending ? "Adding..." : "Add candidate"}
+            <Button type="submit" disabled={pending} className="w-full mt-2 shadow-lg shadow-primary/20">
+              {pending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Adding talent...
+                </>
+              ) : (
+                "Add candidate"
+              )}
             </Button>
           </form>
         </div>

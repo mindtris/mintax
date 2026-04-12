@@ -7,6 +7,7 @@ import { DataGrid, DataGridColumn } from "@/components/ui/data-grid"
 import { SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet"
 import { formatDate } from "date-fns"
 import { CheckCircle, ExternalLink, Trash2 } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -20,7 +21,7 @@ const statusVariant: Record<string, "default" | "secondary" | "destructive" | "o
 }
 
 function formatAmount(amount: number, currency: string) {
-  return (amount / 100).toLocaleString("en-IN", {
+  return (amount / 100).toLocaleString("en-US", {
     style: "currency",
     currency,
     minimumFractionDigits: 2,
@@ -239,6 +240,9 @@ export function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
       renderDetailSheet={(invoice, onClose) => (
         <InvoiceDetailSheet invoice={invoice} onClose={onClose} />
       )}
+      emptyIcon={<Image src="/empty-state.svg" alt="No invoices" width={120} height={120} priority />}
+      emptyTitle="No invoices yet"
+      emptyDescription="Create your first invoice to start tracking revenue."
     />
   )
 }

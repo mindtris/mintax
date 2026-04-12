@@ -24,7 +24,7 @@ export const MODEL_BACKUP: BackupSetting[] = [
       name: json.name,
       description: json.description,
       value: json.value,
-      organization: { connect: { id: orgId } },
+      organizationId: orgId,
     }),
   },
   {
@@ -38,7 +38,7 @@ export const MODEL_BACKUP: BackupSetting[] = [
     restore: (orgId: string, _userId: string, json: any) => ({
       code: json.code,
       name: json.name,
-      organization: { connect: { id: orgId } },
+      organizationId: orgId,
     }),
   },
   {
@@ -58,7 +58,7 @@ export const MODEL_BACKUP: BackupSetting[] = [
       color: json.color,
       llm_prompt: json.llm_prompt,
       createdAt: json.createdAt,
-      organization: { connect: { id: orgId } },
+      organizationId: orgId,
     }),
   },
   {
@@ -78,7 +78,7 @@ export const MODEL_BACKUP: BackupSetting[] = [
       color: json.color,
       llm_prompt: json.llm_prompt,
       createdAt: json.createdAt,
-      organization: { connect: { id: orgId } },
+      organizationId: orgId,
     }),
   },
   {
@@ -106,7 +106,7 @@ export const MODEL_BACKUP: BackupSetting[] = [
       isVisibleInAnalysis: json.isVisibleInAnalysis,
       isRequired: json.isRequired,
       isExtra: json.isExtra,
-      organization: { connect: { id: orgId } },
+      organizationId: orgId,
     }),
   },
   {
@@ -160,23 +160,19 @@ export const MODEL_BACKUP: BackupSetting[] = [
       name: json.name,
       description: json.description,
       merchant: json.merchant,
-      total: json.total,
+      total: json.total || 0,
       currencyCode: json.currencyCode,
       convertedTotal: json.convertedTotal,
       convertedCurrencyCode: json.convertedCurrencyCode,
       type: json.type,
       note: json.note,
-      files: json.files,
-      extra: json.extra,
+      files: json.files || [],
+      extra: json.extra || {},
       issuedAt: json.issuedAt,
       organizationId: orgId,
       userId,
-      category: json.categoryCode
-        ? { connect: { organizationId_code: { organizationId: orgId, code: json.categoryCode } } }
-        : undefined,
-      project: json.projectCode
-        ? { connect: { organizationId_code: { organizationId: orgId, code: json.projectCode } } }
-        : undefined,
+      categoryCode: json.categoryCode,
+      projectCode: json.projectCode,
     }),
   },
 ]
@@ -204,28 +200,26 @@ export async function modelFromJSON(
   if (!jsonContent) return 0
 
   try {
-    const records = JSON.parse(jsonContent)
+    const rawRecords = JSON.parse(jsonContent)
 
-    if (!records || records.length === 0) {
+    if (!Array.isArray(rawRecords) || rawRecords.length === 0) {
       return 0
     }
 
-    let insertedCount = 0
-    for (const rawRecord of records) {
-      const record = preprocessRowData(rawRecord)
+    const records = rawRecords.map((r) => {
+      const processed = preprocessRowData(r)
+      return backupSettings.restore(orgId, userId, processed)
+    })
 
-      try {
-        const data = await backupSettings.restore(orgId, userId, record)
-        await backupSettings.model.create({ data })
-      } catch (error) {
-        console.error(`Error importing record:`, error)
-      }
-      insertedCount++
-    }
+    // Use createMany for bulk insertion (skipDuplicates true to avoid conflicts if IDs exist)
+    const result = await backupSettings.model.createMany({
+      data: records,
+      skipDuplicates: true,
+    })
 
-    return insertedCount
+    return result.count
   } catch (error) {
-    console.error(`Error parsing JSON content:`, error)
+    console.error(`Error importing records:`, error)
     return 0
   }
 }

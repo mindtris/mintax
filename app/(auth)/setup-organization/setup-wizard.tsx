@@ -106,7 +106,7 @@ export function SetupWizard() {
             <div className="flex flex-col gap-6">
               <FormInput
                 title="Company / member name"
-                placeholder="E.g. Mintax Solutions"
+                placeholder="E.g. Mindtris"
                 value={formData.name}
                 onChange={(e) => setFormData(s => ({ ...s, name: e.target.value }))}
                 required

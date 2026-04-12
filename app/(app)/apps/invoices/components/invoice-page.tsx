@@ -5,6 +5,7 @@ import { formatCurrency } from "@/lib/utils"
 import { Currency } from "@/lib/prisma/client"
 import { X } from "lucide-react"
 import { InputHTMLAttributes, memo, useCallback, useMemo } from "react"
+import { DatePicker } from "@/components/ui/date-picker"
 
 export interface InvoiceItem {
   name: string
@@ -361,12 +362,14 @@ export function InvoicePage({ invoiceData, dispatch, currencies }: InvoicePagePr
               onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "issueDateLabel", value: e.target.value })}
               className="text-xs sm:text-sm font-medium"
             />
-            <FormInput
-              type="date"
-              value={invoiceData.date}
-              onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "date", value: e.target.value })}
+            <DatePicker
+              value={invoiceData.date ? new Date(invoiceData.date) : undefined}
+              onChange={(date) => dispatch({
+                type: "UPDATE_FIELD",
+                field: "date",
+                value: date ? date.toISOString().split('T')[0] : ""
+              })}
               className="w-full border-b border-border py-1"
-              required
             />
           </div>
 
@@ -377,11 +380,13 @@ export function InvoicePage({ invoiceData, dispatch, currencies }: InvoicePagePr
               onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "dueDateLabel", value: e.target.value })}
               className="text-xs sm:text-sm font-medium"
             />
-            <FormInput
-              type="date"
-              value={invoiceData.dueDate}
-              onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "dueDate", value: e.target.value })}
-              required
+            <DatePicker
+              value={invoiceData.dueDate ? new Date(invoiceData.dueDate) : undefined}
+              onChange={(date) => dispatch({
+                type: "UPDATE_FIELD",
+                field: "dueDate",
+                value: date ? date.toISOString().split('T')[0] : ""
+              })}
             />
           </div>
         </div>

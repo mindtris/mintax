@@ -13,7 +13,7 @@ export type ExportImportFieldSettings = {
   code: string
   type: string
   export?: (orgId: string, value: any) => Promise<any>
-  import?: (orgId: string, value: any) => Promise<any>
+  import?: (orgId: string, value: any, context?: any) => Promise<any>
 }
 
 export const EXPORT_AND_IMPORT_FIELD_MAP: Record<string, ExportImportFieldSettings> = {
@@ -86,8 +86,8 @@ export const EXPORT_AND_IMPORT_FIELD_MAP: Record<string, ExportImportFieldSettin
       const category = await getCategoryByCode(orgId, value)
       return category?.name
     },
-    import: async function (orgId: string, value: string) {
-      const category = await importCategory(orgId, value)
+    import: async function (orgId: string, value: string, context?: any) {
+      const category = await importCategory(orgId, value, context?.categories)
       return category?.code
     },
   },
@@ -101,8 +101,8 @@ export const EXPORT_AND_IMPORT_FIELD_MAP: Record<string, ExportImportFieldSettin
       const project = await getProjectByCode(orgId, value)
       return project?.name
     },
-    import: async function (orgId: string, value: string) {
-      const project = await importProject(orgId, value)
+    import: async function (orgId: string, value: string, context?: any) {
+      const project = await importProject(orgId, value, context?.projects)
       return project?.code
     },
   },
@@ -130,8 +130,13 @@ export const EXPORT_AND_IMPORT_FIELD_MAP: Record<string, ExportImportFieldSettin
   },
 }
 
-export const importProject = async (orgId: string, name: string) => {
+export const importProject = async (orgId: string, name: string, cache?: any[]) => {
   const code = codeFromName(name)
+
+  if (cache) {
+    const cached = cache.find((p) => p.code === code || p.name.toLowerCase() === name.toLowerCase())
+    if (cached) return cached
+  }
 
   const existingProject = await prisma.project.findFirst({
     where: {
@@ -147,8 +152,13 @@ export const importProject = async (orgId: string, name: string) => {
   return await createProject(orgId, { code, name })
 }
 
-export const importCategory = async (orgId: string, name: string) => {
+export const importCategory = async (orgId: string, name: string, cache?: any[]) => {
   const code = codeFromName(name)
+
+  if (cache) {
+    const cached = cache.find((c) => c.code === code || c.name.toLowerCase() === name.toLowerCase())
+    if (cached) return cached
+  }
 
   const existingCategory = await prisma.category.findFirst({
     where: {

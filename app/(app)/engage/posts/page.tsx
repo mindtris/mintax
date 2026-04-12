@@ -22,11 +22,13 @@ const statusVariant: Record<string, "default" | "secondary" | "destructive" | "o
   error: "destructive",
 }
 
-export default async function PostsPage({ searchParams }: { searchParams: Promise<SocialPostFilters> }) {
+export default async function PostsPage({ searchParams }: { searchParams: Promise<SocialPostFilters & { page?: string }> }) {
   const filters = await searchParams
+  const currentPage = Math.max(1, parseInt(filters.page || "1") || 1)
+  const pageSize = 50
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
-  const posts = await getSocialPosts(org.id, filters)
+  const { items: posts, total: totalCount } = await getSocialPosts(org.id, filters, { take: pageSize, skip: (currentPage - 1) * pageSize })
   const stats = await getPostStats(org.id)
 
   return (
@@ -34,7 +36,7 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold tracking-tight">Posts</h1>
-          <span className="text-2xl tracking-tight text-muted-foreground">{posts.length}</span>
+          <span className="text-2xl tracking-tight text-muted-foreground">{totalCount}</span>
         </div>
         <NewPostSheet>
           <Button>

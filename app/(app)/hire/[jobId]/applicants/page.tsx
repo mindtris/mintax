@@ -1,4 +1,5 @@
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
+import { prisma } from "@/lib/core/db"
 import { getJobPosting } from "@/lib/services/jobs"
 import { getCandidatePipeline, getCandidates } from "@/lib/services/candidates"
 import { AddApplicantSheet } from "@/components/hire/add-applicant-sheet"
@@ -13,6 +14,7 @@ import {
   Briefcase,
   Plus,
   ExternalLink,
+  XCircle,
 } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -30,18 +32,35 @@ export default async function PipelinePage({ params }: { params: Promise<{ jobId
   const job = await getJobPosting(jobId)
   if (!job) notFound()
 
-  const [pipeline, candidates] = await Promise.all([
-    getCandidatePipeline(jobId),
+  const [pipeline, candidates, categories] = await Promise.all([
+    getCandidatePipeline(org.id, jobId),
     getCandidates(org.id, { group: "ATS" }),
+    prisma.category.findMany({
+      where: { organizationId: org.id, type: "applicant_status" },
+      orderBy: { name: "asc" }
+    })
   ])
 
-  const stages = [
-    { id: "new", name: "New", icon: Clock, count: pipeline.new.length, color: "text-blue-500 bg-blue-500/10" },
-    { id: "screening", name: "Screening", icon: TrendingUp, count: pipeline.screening.length, color: "text-purple-500 bg-purple-500/10" },
-    { id: "interview", name: "Interview", icon: Users, count: pipeline.interview.length, color: "text-pink-500 bg-pink-500/10" },
-    { id: "offered", name: "Offered", icon: Briefcase, count: pipeline.offered.length, color: "text-orange-500 bg-orange-500/10" },
-    { id: "hired", name: "Hired", icon: CheckCircle2, count: pipeline.hired.length, color: "text-green-500 bg-green-500/10" },
-  ]
+  const stageIcons: Record<string, any> = {
+    unprocessed: Clock,
+    screening: TrendingUp,
+    interview_internal: Users,
+    interview_client: Users,
+    offered: Briefcase,
+    hired: CheckCircle2,
+    rejected: XCircle,
+  }
+
+  const stages = categories.map(cat => {
+    const code = (cat.code as string) || "unprocessed"
+    return {
+      id: code,
+      name: cat.name,
+      icon: stageIcons[code] || Briefcase,
+      count: (pipeline[code] || []).length,
+      color: cat.color || "#c96442"
+    }
+  })
 
   return (
     <div className="flex flex-col gap-8 pb-12 overflow-hidden">

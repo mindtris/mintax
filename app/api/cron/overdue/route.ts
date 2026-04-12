@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/core/db"
 import { sendBillReminderEmail, sendInvoiceReminderEmail } from "@/lib/integrations/email"
-import { getSettings } from "@/lib/services/settings"
+import { getSettings, getSettingsBatch } from "@/lib/services/settings"
 import { format } from "date-fns"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -40,12 +40,23 @@ export async function GET(request: NextRequest) {
     if (overdueInvoices.count > 0) {
       const invoices = await prisma.invoice.findMany({
         where: { status: "overdue" },
-        include: { organization: { include: { members: { where: { role: { in: ["owner", "admin"] } }, include: { user: { select: { email: true } } } } } } },
+        include: {
+          organization: {
+            include: {
+              members: {
+                where: { role: { in: ["owner", "admin"] } },
+                include: { user: { select: { email: true } } },
+              },
+            },
+          },
+        },
       })
 
+      const invoiceOrgIds = Array.from(new Set(invoices.map((i) => i.organizationId)))
+      const allInvoiceSettings = await getSettingsBatch(invoiceOrgIds)
+
       for (const invoice of invoices) {
-        const orgId = invoice.organizationId
-        const emailSettings = await getSettings(orgId)
+        const emailSettings = allInvoiceSettings[invoice.organizationId] || {}
         const adminEmails = invoice.organization.members.map((m) => m.user.email)
 
         for (const adminEmail of adminEmails) {
@@ -96,12 +107,23 @@ export async function GET(request: NextRequest) {
     if (overdueBills.count > 0) {
       const bills = await prisma.bill.findMany({
         where: { status: "overdue" },
-        include: { organization: { include: { members: { where: { role: { in: ["owner", "admin"] } }, include: { user: { select: { email: true } } } } } } },
+        include: {
+          organization: {
+            include: {
+              members: {
+                where: { role: { in: ["owner", "admin"] } },
+                include: { user: { select: { email: true } } },
+              },
+            },
+          },
+        },
       })
 
+      const billOrgIds = Array.from(new Set(bills.map((b) => b.organizationId)))
+      const allBillSettings = await getSettingsBatch(billOrgIds)
+
       for (const bill of bills) {
-        const orgId = bill.organizationId
-        const emailSettings = await getSettings(orgId)
+        const emailSettings = allBillSettings[bill.organizationId] || {}
         const adminEmails = bill.organization.members.map((m) => m.user.email)
 
         for (const adminEmail of adminEmails) {

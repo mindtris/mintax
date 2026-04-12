@@ -22,10 +22,13 @@ export async function GET(request: NextRequest) {
     const status = url.searchParams.get("status") || undefined
     const provider = url.searchParams.get("provider") || undefined
     const contentType = url.searchParams.get("contentType") || undefined
+    const limit = Math.min(parseInt(url.searchParams.get("limit") || "50") || 50, 200)
+    const offset = parseInt(url.searchParams.get("offset") || "0") || 0
 
-    const posts = await getSocialPosts(org.id, { status, provider, contentType })
+    const { items: posts, total } = await getSocialPosts(org.id, { status, provider, contentType }, { take: limit, skip: offset })
 
     return NextResponse.json({
+      total,
       posts: posts.map((p) => ({
         id: p.id,
         group: p.group,

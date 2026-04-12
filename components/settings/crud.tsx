@@ -1,6 +1,7 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { DataGrid, DataGridColumn } from "@/components/ui/data-grid"
 import { Input } from "@/components/ui/input"
@@ -189,7 +190,7 @@ export function CrudTable<T extends { [key: string]: any }>({
       const id = row.code || row.id
       const result = await onDelete(id)
       if (!result.success) {
-        alert(result.error ?? "Failed to delete")
+        toast.error(result.error ?? "Failed to delete")
       }
     },
     [onDelete]

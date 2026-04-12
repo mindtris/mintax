@@ -10,7 +10,7 @@ export async function ContactsView({ searchParams }: { searchParams: any }) {
   const { q, country, ordering } = searchParams
 
   const [{ contacts, total }, currencies, countries] = await Promise.all([
-    listContacts(org.id, { type: "all", q, country }, { limit: 200 }, { ordering }),
+    listContacts(org.id, { type: "client", q, country }, { limit: 200 }, { ordering }),
     getCurrencies(org.id),
     getDistinctCountries(org.id),
   ])

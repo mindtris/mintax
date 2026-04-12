@@ -6,6 +6,7 @@ import { fetchAsBase64 } from "@/lib/utils"
 import { SettingsMap } from "@/lib/services/settings"
 import { Currency, Organization, User } from "@/lib/prisma/client"
 import { FileDown, Loader2, Save, TextSelect, X } from "lucide-react"
+import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { startTransition, useMemo, useReducer, useState } from "react"
 import {
@@ -14,7 +15,7 @@ import {
   generateInvoicePDF,
   saveInvoiceAsTransactionAction,
 } from "../actions"
-import defaultTemplates, { InvoiceTemplate } from "../default-templates"
+import defaultTemplates, { InvoiceTemplate, invoiceToFormData } from "../default-templates"
 import { InvoiceAppData } from "../page"
 import { InvoiceFormData, InvoicePage } from "./invoice-page"
 
@@ -69,18 +70,38 @@ function invoiceFormReducer(state: InvoiceFormData, action: any): InvoiceFormDat
   }
 }
 
+interface SavedInvoice {
+  id: string
+  invoiceNumber: string
+  clientName: string
+  clientEmail?: string | null
+  clientAddress?: string | null
+  clientTaxId?: string | null
+  total: number
+  subtotal: number
+  taxTotal: number
+  currency: string
+  status: string
+  issuedAt?: string | null
+  dueAt?: string | null
+  notes?: string | null
+  items?: any[]
+}
+
 export function InvoiceGenerator({
   user,
   org,
   settings,
   currencies,
   appData,
+  savedInvoices = [],
 }: {
   user: User
   org: Organization
   settings: SettingsMap
   currencies: Currency[]
   appData: InvoiceAppData | null
+  savedInvoices?: SavedInvoice[]
 }) {
   const templates: InvoiceTemplate[] = useMemo(
     () => [...defaultTemplates(org, settings), ...(appData?.templates || [])],
@@ -95,6 +116,13 @@ export function InvoiceGenerator({
   const [isSavingTransaction, setIsSavingTransaction] = useState(false)
 
   const router = useRouter()
+
+  // Load a saved invoice into the form for PDF preview/export
+  const handleLoadInvoice = (invoice: SavedInvoice) => {
+    const data = invoiceToFormData(invoice, org, settings)
+    dispatch({ type: "SET_FORM", payload: data })
+    setSelectedTemplate(`Invoice ${invoice.invoiceNumber}`)
+  }
 
   // Function to handle template selection
   const handleTemplateSelect = (templateName: string) => {
@@ -136,7 +164,7 @@ export function InvoiceGenerator({
       URL.revokeObjectURL(url)
     } catch (error) {
       console.error("Error generating PDF:", error)
-      alert("Failed to generate PDF. Please try again.")
+      toast.error("Failed to generate PDF. Please try again.")
     } finally {
       setIsPdfLoading(false)
     }
@@ -144,12 +172,12 @@ export function InvoiceGenerator({
 
   const handleSaveTemplate = async () => {
     if (!newTemplateName.trim()) {
-      alert("Please enter a template name")
+      toast.error("Please enter a template name")
       return
     }
 
     if (templates.some((t) => t.name === newTemplateName)) {
-      alert("A template with this name already exists")
+      toast.error("A template with this name already exists")
       return
     }
 
@@ -165,11 +193,11 @@ export function InvoiceGenerator({
         setNewTemplateName("")
         router.refresh()
       } else {
-        alert("Failed to save template. Please try again.")
+        toast.error("Failed to save template. Please try again.")
       }
     } catch (error) {
       console.error("Error saving template:", error)
-      alert("Failed to save template. Please try again.")
+      toast.error("Failed to save template. Please try again.")
     }
   }
 
@@ -184,7 +212,7 @@ export function InvoiceGenerator({
       }
     } catch (error) {
       console.error("Error deleting template:", error)
-      alert("Failed to delete template. Please try again.")
+      toast.error("Failed to delete template. Please try again.")
     }
   }
 
@@ -205,11 +233,11 @@ export function InvoiceGenerator({
           router.push(`/transactions/${result.data?.id}`)
         })
       } else {
-        alert(result.error || "Failed to save as transaction")
+        toast.error(result.error || "Failed to save as transaction")
       }
     } catch (error) {
       console.error("Error saving as transaction:", error)
-      alert("Failed to save as transaction. Please try again.")
+      toast.error("Failed to save as transaction. Please try again.")
     } finally {
       setIsSavingTransaction(false)
     }
@@ -217,6 +245,25 @@ export function InvoiceGenerator({
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Load from saved invoices */}
+      {savedInvoices.length > 0 && (
+        <div className="space-y-3">
+          <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Load from sales invoices</h4>
+          <div className="flex overflow-x-auto gap-2 pb-1">
+            {savedInvoices.slice(0, 10).map((inv) => (
+              <Button
+                key={inv.id}
+                variant="outline"
+                className="whitespace-nowrap text-xs shrink-0"
+                onClick={() => handleLoadInvoice(inv)}
+              >
+                {inv.invoiceNumber} — {inv.clientName} ({(inv.total / 100).toFixed(2)} {inv.currency})
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Templates Section */}
       <div className="py-4 flex overflow-x-auto gap-2">
         {templates.map((template) => (

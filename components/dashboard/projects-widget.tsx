@@ -76,7 +76,7 @@ export function ProjectsWidget({
 export function CreateProjectButton() {
   return (
     <Link
-      href="/settings/projects"
+      href="/settings?tab=projects"
       className="group flex flex-col items-center justify-center gap-4 border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl p-8 hover:border-primary/20 transition-all h-full min-h-[350px]"
     >
       <div className="h-14 w-14 rounded-full bg-black/[0.03] flex items-center justify-center group-hover:shadow-sm transition-all border border-transparent group-hover:border-black/[0.03]">

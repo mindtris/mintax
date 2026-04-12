@@ -11,10 +11,21 @@ import {
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { MoreVertical, Pencil, Trash2, UserCheck, Target } from "lucide-react"
-import { STAGE_LABELS, SOURCE_LABELS } from "@/lib/services/leads"
-import { deleteLeadAction, convertLeadAction } from "@/app/(app)/sales/actions"
+import { SOURCE_LABELS } from "@/lib/services/leads"
 import { NewLeadSheet } from "./new-lead-sheet"
+import { convertLeadAction, deleteLeadAction } from "@/app/(app)/sales/actions"
 import Image from "next/image"
+import { toast } from "sonner"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export type LeadRow = {
   id: string
@@ -42,11 +53,12 @@ const stageStyles: Record<string, string> = {
   lost: "bg-red-500/10 text-red-600 border-red-500/20",
 }
 
-export function LeadsTable({ leads, visibleColumns, currency }: { leads: LeadRow[]; visibleColumns?: string[]; currency?: string }) {
+export function LeadsTable({ leads, visibleColumns, currency, categories }: { leads: LeadRow[]; visibleColumns?: string[]; currency?: string; categories?: any[] }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [editingLead, setEditingLead] = useState<any>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   const [sorting, setSorting] = useState<SortState>(() => {
     const ordering = searchParams.get("ordering")
@@ -89,8 +101,8 @@ export function LeadsTable({ leads, visibleColumns, currency }: { leads: LeadRow
       label: "Stage",
       sortable: true,
       render: (row) => (
-        <Badge variant="outline" className={cn("text-[10px] font-medium capitalize", stageStyles[row.stage])}>
-          {STAGE_LABELS[row.stage] || row.stage}
+        <Badge variant="outline" className={cn("text-[10px] font-medium capitalize", stageStyles[row.stage] || "bg-secondary text-secondary-foreground border-border")}>
+          {categories?.find(c => c.code === row.stage)?.name || row.stage}
         </Badge>
       ),
     },
@@ -164,11 +176,25 @@ export function LeadsTable({ leads, visibleColumns, currency }: { leads: LeadRow
                     <Pencil className="h-4 w-4" /> Edit
                   </DropdownMenuItem>
                   {row.stage !== "won" && (
-                    <DropdownMenuItem onClick={async () => { await convertLeadAction(row.id); router.refresh(); onClose() }}>
+                    <DropdownMenuItem
+                      onClick={async () => {
+                        const res = await convertLeadAction(row.id)
+                        if (res.success) {
+                          toast.success("Lead converted to contact")
+                          router.refresh()
+                          onClose()
+                        } else {
+                          toast.error(res.error || "Failed to convert lead")
+                        }
+                      }}
+                    >
                       <UserCheck className="h-4 w-4" /> Convert to contact
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem className="text-destructive" onClick={async () => { if (confirm("Delete this lead?")) { await deleteLeadAction(row.id); router.refresh(); onClose() } }}>
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={() => setDeleteConfirmId(row.id)}
+                  >
                     <Trash2 className="h-4 w-4" /> Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -179,7 +205,7 @@ export function LeadsTable({ leads, visibleColumns, currency }: { leads: LeadRow
               <div><span className="text-muted-foreground">Company:</span> {row.company || "—"}</div>
               <div><span className="text-muted-foreground">Email:</span> {row.email || "—"}</div>
               <div><span className="text-muted-foreground">Phone:</span> {row.phone || "—"}</div>
-              <div><span className="text-muted-foreground">Stage:</span> {STAGE_LABELS[row.stage]}</div>
+              <div><span className="text-muted-foreground">Stage:</span> {categories?.find(c => c.code === row.stage)?.name || row.stage}</div>
               <div><span className="text-muted-foreground">Source:</span> {row.source ? SOURCE_LABELS[row.source] : "—"}</div>
               <div><span className="text-muted-foreground">Value:</span> {row.value > 0 ? (row.value / 100).toLocaleString(undefined, { minimumFractionDigits: 2, style: "currency", currency: row.currency }) : "—"}</div>
               <div><span className="text-muted-foreground">Probability:</span> {row.probability}%</div>
@@ -194,7 +220,39 @@ export function LeadsTable({ leads, visibleColumns, currency }: { leads: LeadRow
         emptyDescription="No leads yet. Create your first one to start tracking your sales pipeline."
       />
 
-      <NewLeadSheet lead={editingLead} currency={currency} open={!!editingLead} onOpenChange={(open) => { if (!open) setEditingLead(null) }} />
+      <NewLeadSheet lead={editingLead} currency={currency} categories={categories} open={!!editingLead} onOpenChange={(open) => { if (!open) setEditingLead(null) }} />
+
+      <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the lead
+              from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (deleteConfirmId) {
+                  const res = await deleteLeadAction(deleteConfirmId)
+                  if (res.success) {
+                    toast.success("Lead deleted successfully")
+                    router.refresh()
+                  } else {
+                    toast.error(res.error || "Failed to delete lead")
+                  }
+                  setDeleteConfirmId(null)
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

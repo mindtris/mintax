@@ -19,7 +19,7 @@ const ACCOUNT_TYPE_LABELS: Record<string, string> = {
 }
 
 function formatAmount(amount: number, currency: string) {
-  return (amount / 100).toLocaleString("en-IN", {
+  return (amount / 100).toLocaleString("en-US", {
     style: "currency",
     currency,
     minimumFractionDigits: 2,

@@ -4,11 +4,23 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from "@/components/ui/alert-dialog"
 import { CATEGORY_LABELS, PRIORITY_LABELS, RECURRENCE_LABELS } from "@/lib/schemas/reminders"
 import { cn } from "@/lib/utils"
 import { format, formatDistanceToNow, isPast } from "date-fns"
 import { Check, Clock, MoreVertical, Pencil, Repeat, Trash2, Users } from "lucide-react"
 import { completeReminderAction, deleteReminderAction } from "../actions"
+import { useState } from "react"
+import { toast } from "sonner"
 
 const PRIORITY_COLORS: Record<string, string> = {
   low: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
@@ -32,6 +44,7 @@ type Props = {
 }
 
 export function ReminderCard({ reminder, members, currentUserId, onEdit }: Props) {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const dueDate = new Date(reminder.dueAt)
   const isOverdue = isPast(dueDate) && reminder.status === "pending"
   const isCompleted = reminder.status === "completed"
@@ -49,8 +62,13 @@ export function ReminderCard({ reminder, members, currentUserId, onEdit }: Props
   }
 
   async function handleDelete() {
-    if (confirm("Are you sure you want to delete this reminder?")) {
+    try {
       await deleteReminderAction(reminder.id)
+      toast.success("Reminder deleted")
+    } catch (e) {
+      toast.error("Failed to delete reminder")
+    } finally {
+      setShowDeleteDialog(false)
     }
   }
 
@@ -145,12 +163,29 @@ export function ReminderCard({ reminder, members, currentUserId, onEdit }: Props
                 <Check className="h-4 w-4 mr-2" /> Complete
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+            <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-destructive">
               <Trash2 className="h-4 w-4 mr-2" /> Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </CardContent>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Reminder</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this reminder? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   )
 }

@@ -1,5 +1,10 @@
 "use client"
 
+import { useState, useMemo } from "react"
+import Image from "next/image"
+import { QuicklinkForm } from "@/components/quicklinks/quicklink-form"
+import { NewQuicklinkSheet } from "@/components/quicklinks/new-quicklink-sheet"
+import { QuicklinksBulkActions } from "./quicklinks-bulk-actions"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DataGrid } from "@/components/ui/data-grid"
@@ -8,10 +13,28 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ColumnsIcon, ExternalLink, Link as LinkIcon, Search, X } from "lucide-react"
-import { useMemo, useState } from "react"
+import { 
+  ColumnsIcon, 
+  ExternalLink, 
+  Link as LinkIcon, 
+  Search, 
+  X, 
+  MoreVertical, 
+  Trash2, 
+  Pencil 
+} from "lucide-react"
+import { useRouter } from "next/navigation"
+import { 
+  SheetHeader, 
+  SheetTitle,
+} from "@/components/ui/sheet"
+import { 
+  deleteQuicklinkAction 
+} from "@/app/(app)/people/actions"
+import { toast } from "sonner"
 
 type QuicklinkRow = {
   id: string
@@ -28,9 +51,16 @@ const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
   { key: "category", label: "Category" },
 ]
 
-export function QuicklinksList({ links }: { links: QuicklinkRow[] }) {
+export function QuicklinksList({ 
+  links, 
+  categories = [] 
+}: { 
+  links: QuicklinkRow[]
+  categories?: any[]
+}) {
   const [search, setSearch] = useState("")
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(["title", "url", "category"])
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   const filtered = useMemo(() => {
     if (!search) return links
@@ -42,6 +72,17 @@ export function QuicklinksList({ links }: { links: QuicklinkRow[] }) {
 
   const getDomain = (url: string) => {
     try { return new URL(url).hostname.replace("www.", "") } catch { return url }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this quicklink?")) return
+    try {
+      const res = await deleteQuicklinkAction(id)
+      if (!res.success) throw new Error(res.error || "Failed to delete")
+      toast.success("Quicklink deleted")
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete")
+    }
   }
 
   const allColumns = useMemo(() => [
@@ -73,7 +114,13 @@ export function QuicklinksList({ links }: { links: QuicklinkRow[] }) {
       key: "url",
       label: "URL",
       render: (row: QuicklinkRow) => (
-        <a href={row.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-primary hover:underline">
+        <a 
+          href={row.url} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center gap-1 text-sm text-primary hover:underline"
+        >
           <ExternalLink className="h-3 w-3" />
           <span className="truncate max-w-[200px]">{getDomain(row.url)}</span>
         </a>
@@ -109,21 +156,21 @@ export function QuicklinksList({ links }: { links: QuicklinkRow[] }) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search quicklinks..."
-            defaultValue={search}
-            onKeyDown={(e) => { if (e.key === "Enter") setSearch((e.target as HTMLInputElement).value) }}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 bg-background/50"
           />
         </div>
 
         {search && (
-          <Button variant="ghost" size="icon" onClick={() => setSearch("")} className="text-muted-foreground hover:text-foreground" title="Clear search">
+          <Button variant="ghost" size="icon" onClick={() => setSearch("")} className="text-muted-foreground hover:text-foreground h-10 w-10" title="Clear search">
             <X className="h-4 w-4" />
           </Button>
         )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" title="Select table columns">
+            <Button variant="outline" size="icon" title="Select table columns" className="h-10 w-10">
               <ColumnsIcon className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -145,10 +192,67 @@ export function QuicklinksList({ links }: { links: QuicklinkRow[] }) {
       <DataGrid
         data={filtered}
         columns={dynamicColumns}
-        onRowClick={(row) => window.open(row.url, "_blank")}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        renderDetailSheet={(row, onClose) => (
+          <div className="flex flex-col h-full gap-0">
+            <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <SheetTitle className="text-lg font-semibold leading-none mb-1">Quicklink details</SheetTitle>
+                  <p className="text-[11px] text-muted-foreground">Edit details or visit URL</p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <a 
+                    href={row.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent" 
+                    title="Visit website"
+                  >
+                    <ExternalLink className="h-4 w-4 text-primary" />
+                  </a>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem className="text-destructive" onClick={() => { handleDelete(row.id); onClose() }}>
+                        <Trash2 className="h-4 w-4" /> Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            </SheetHeader>
+            
+            <div className="flex-1 overflow-y-auto px-6 py-6">
+              <QuicklinkForm 
+                initialData={row} 
+                categories={categories} 
+                onSuccess={() => { onClose() }} 
+                onCancel={onClose} 
+              />
+            </div>
+          </div>
+        )}
+        emptyIcon={
+          <Image src="/empty-state.svg" alt="No quicklinks" width={120} height={120} priority />
+        }
         emptyTitle="Quicklinks"
         emptyDescription="No quicklinks added yet. Add your first link to get started."
+        emptyActions={
+          <NewQuicklinkSheet categories={categories} />
+        }
       />
+
+      {selectedIds.length > 0 && (
+        <QuicklinksBulkActions 
+          selectedIds={selectedIds} 
+          onActionComplete={() => setSelectedIds([])} 
+        />
+      )}
     </div>
   )
 }

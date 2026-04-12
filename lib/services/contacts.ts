@@ -164,23 +164,33 @@ export async function getContact(orgId: string, contactId: string) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function getContactStats(orgId: string, contactId: string) {
-  const invoices = await prisma.invoice.findMany({
+  const invoiceStats = await prisma.invoice.groupBy({
+    by: ["status"],
     where: { contactId, organizationId: orgId },
-    select: { status: true, total: true },
+    _sum: { total: true },
   })
 
-  const totalInvoiced = invoices.reduce((sum, inv) => sum + inv.total, 0)
-  const totalPaid = invoices
-    .filter((inv) => inv.status === "paid")
-    .reduce((sum, inv) => sum + inv.total, 0)
-  const totalOutstanding = invoices
-    .filter((inv) => ["draft", "sent", "overdue"].includes(inv.status))
-    .reduce((sum, inv) => sum + inv.total, 0)
-  const totalOverdue = invoices
-    .filter((inv) => inv.status === "overdue")
-    .reduce((sum, inv) => sum + inv.total, 0)
+  const stats = {
+    totalInvoiced: 0,
+    totalPaid: 0,
+    totalOutstanding: 0,
+    totalOverdue: 0,
+  }
 
-  return { totalInvoiced, totalPaid, totalOutstanding, totalOverdue }
+  for (const s of invoiceStats) {
+    const total = s._sum.total || 0
+    stats.totalInvoiced += total
+    if (s.status === "paid") {
+      stats.totalPaid += total
+    } else if (["draft", "sent", "overdue"].includes(s.status)) {
+      stats.totalOutstanding += total
+      if (s.status === "overdue") {
+        stats.totalOverdue += total
+      }
+    }
+  }
+
+  return stats
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

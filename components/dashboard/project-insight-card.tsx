@@ -200,10 +200,10 @@ export function ProjectInsightCard({ projects, statsPerProject, timeSeriesPerPro
       <CardContent className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-8">
           {/* Summary Stats */}
-          <div className="flex flex-col justify-center space-y-6 border-r border-black/[0.03] pr-8">
+          <div className="flex flex-col justify-center space-y-6 md:border-r border-black/[0.03] md:pr-8 pb-8 md:pb-0 border-b md:border-b-0">
             <div>
               <p className="text-[10px] uppercase font-semibold tracking-widest text-muted-foreground mb-1">Current net profit</p>
-              <p className={`text-3xl font-bold tracking-tight ${netProfit >= 0 ? "text-green-600" : "text-red-500"}`}>
+              <p className={`text-2xl sm:text-3xl font-bold tracking-tight ${netProfit >= 0 ? "text-green-600" : "text-red-500"}`}>
                 {formatCurrency(netProfit, "INR")}
               </p>
             </div>

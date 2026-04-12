@@ -3,6 +3,7 @@
 import { bulkDeleteTransactionsAction } from "@/app/(app)/transactions/actions"
 import { Button } from "@/components/ui/button"
 import { Trash2 } from "lucide-react"
+import { toast } from "sonner"
 import { useState } from "react"
 
 interface BulkActionsMenuProps {
@@ -27,7 +28,7 @@ export function BulkActionsMenu({ selectedIds, onActionComplete }: BulkActionsMe
       onActionComplete?.()
     } catch (error) {
       console.error("Failed to delete transactions:", error)
-      alert(`Failed to delete transactions: ${error}`)
+      toast.error(`Failed to delete transactions: ${error}`)
     } finally {
       setIsLoading(false)
     }

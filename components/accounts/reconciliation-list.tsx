@@ -54,7 +54,7 @@ export function ReconciliationList({ accounts }: { accounts: BankAccount[] }) {
       key: "currentBalance",
       label: "Balance",
       render: (account: BankAccount) => {
-        const amount = (account.currentBalance / 100).toLocaleString("en-IN", {
+        const amount = (account.currentBalance / 100).toLocaleString("en-US", {
           style: "currency",
           currency: account.currency,
           minimumFractionDigits: 2,

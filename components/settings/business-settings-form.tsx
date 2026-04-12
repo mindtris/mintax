@@ -2,9 +2,12 @@
 
 import { saveBusinessAction } from "@/app/(app)/settings/actions"
 import { FormError } from "@/components/forms/error"
+import { FormSelectCategory } from "@/components/forms/select-category"
+import { FormSelectCurrency } from "@/components/forms/select-currency"
+import { FormSelectType } from "@/components/forms/select-type"
 import { FormAvatar, FormInput, FormSelect, FormTextarea } from "@/components/forms/simple"
 import { Button } from "@/components/ui/button"
-import { Organization, User } from "@/lib/prisma/client"
+import { Category, Currency, Organization, User } from "@/lib/prisma/client"
 import { useActionState, useEffect } from "react"
 import { toast } from "sonner"
 
@@ -43,7 +46,7 @@ const CURRENCIES = [
   { code: "AED", name: "AED - UAE Dirham" },
 ]
 
-export default function BusinessSettingsForm({ org, user }: { org: any; user: User }) {
+export default function BusinessSettingsForm({ org, user, settings, currencies, categories }: { org: any; user: User; settings: Record<string, string>; currencies: Currency[]; categories: Category[] }) {
   const [saveState, saveAction, pending] = useActionState(saveBusinessAction, null)
 
   useEffect(() => {
@@ -66,7 +69,7 @@ export default function BusinessSettingsForm({ org, user }: { org: any; user: Us
               <FormInput
                 title="Business name"
                 name="name"
-                placeholder="Acme Corporation"
+                placeholder="Mindtris"
                 defaultValue={org.name ?? ""}
                 className="text-lg font-semibold"
               />
@@ -76,14 +79,14 @@ export default function BusinessSettingsForm({ org, user }: { org: any; user: Us
                   name="type"
                   defaultValue={org.type || "business"}
                   items={[
-                    { code: "business", name: "Business (Full ERP)" },
+                    { code: "business", name: "Business" },
                     { code: "personal", name: "Personal (Simplified)" },
                   ]}
                 />
                 <FormInput
                   title="Website"
                   name="website"
-                  placeholder="https://acme.com"
+                  placeholder="https://mindtris.com"
                   defaultValue={org.website ?? ""}
                 />
               </div>
@@ -168,6 +171,32 @@ export default function BusinessSettingsForm({ org, user }: { org: any; user: Us
               defaultValue={org.bankDetails ?? ""}
               rows={3}
             />
+          </div>
+
+          <div className="pt-6 border-t">
+            <h3 className="text-sm font-semibold mb-6 flex items-center gap-2">
+              <span className="w-1 h-4 bg-primary rounded-full"></span>
+              Transaction defaults
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormSelectCurrency
+                title="Default currency"
+                name="default_currency"
+                defaultValue={settings.default_currency}
+                currencies={currencies}
+              />
+              <FormSelectType
+                title="Default transaction type"
+                name="default_type"
+                defaultValue={settings.default_type}
+              />
+              <FormSelectCategory
+                title="Default transaction category"
+                name="default_category"
+                defaultValue={settings.default_category}
+                categories={categories}
+              />
+            </div>
           </div>
         </div>
 

@@ -1,5 +1,9 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
+    // Initialize Telemetry
+    const { TelemetryService } = await import('./lib/core/telemetry');
+    TelemetryService.ping();
+
     if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
       await import('./sentry.server.config');
     }

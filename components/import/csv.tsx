@@ -1,6 +1,7 @@
 "use client"
 
 import { parseCSVAction, saveTransactionsAction } from "@/app/(app)/import/csv/actions"
+import { toast } from "sonner"
 import { FormError } from "@/components/forms/error"
 import { Button } from "@/components/ui/button"
 import {
@@ -76,7 +77,7 @@ export function ImportCSVTable({ fields }: { fields: Field[] }) {
     if (csvData.length === 0) return
 
     if (!isAtLeastOneFieldMapped(columnMappings)) {
-      alert("Please map at least one column to a field")
+      toast.error("Please map at least one column to a field")
       return
     }
 

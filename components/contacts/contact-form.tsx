@@ -197,7 +197,7 @@ export function ContactForm({
           <FormInput
             name="name"
             title="Name"
-            placeholder="Acme Corp"
+            placeholder="Mindtris"
             defaultValue={defaultValues?.name}
             isRequired
             required
@@ -208,7 +208,7 @@ export function ContactForm({
             name="email"
             title="Email"
             type="email"
-            placeholder="billing@acme.com"
+            placeholder="akshitha@mindtris.com"
             defaultValue={defaultValues?.email ?? ""}
           />
           <FormInput
@@ -222,7 +222,7 @@ export function ContactForm({
         <FormInput
           name="website"
           title="Website"
-          placeholder="https://acme.com"
+          placeholder="https://mindtris.com"
           defaultValue={defaultValues?.website ?? ""}
         />
       </section>
@@ -352,7 +352,7 @@ export function ContactForm({
             <div className="grid grid-cols-2 gap-2">
               <FormInput
                 title="Name"
-                placeholder="Jane Doe"
+                placeholder="Akshitha Kandikanti"
                 value={person.name}
                 onChange={(e) => updatePerson(person.id, "name", e.target.value)}
                 required
@@ -369,7 +369,7 @@ export function ContactForm({
               <FormInput
                 title="Email"
                 type="email"
-                placeholder="jane@acme.com"
+                placeholder="akshitha@mindtris.com"
                 value={person.email}
                 onChange={(e) => updatePerson(person.id, "email", e.target.value)}
               />

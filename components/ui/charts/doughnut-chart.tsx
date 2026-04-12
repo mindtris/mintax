@@ -19,8 +19,8 @@ Chart.overrides.doughnut.cutout = '80%'
 
 interface DoughnutProps {
   data: ChartData
-  width: number
-  height: number
+  width?: number
+  height?: number
 }
 
 export default function DoughnutChart({
@@ -136,7 +136,7 @@ export default function DoughnutChart({
 
   return (
     <div className="grow flex flex-col justify-center">
-      <div>
+      <div className="relative w-full h-full min-h-[inherit]">
         <canvas ref={canvas} width={width} height={height}></canvas>
       </div>
       <div className="px-5 pt-2 pb-6">

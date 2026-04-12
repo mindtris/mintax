@@ -14,6 +14,8 @@ import {
 import { format } from "date-fns"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { getInvoiceFilePath } from "@/lib/files"
+import { uploadAndCreateFile, attachFileToInvoice } from "@/lib/services/files"
 
 export async function createInvoiceAction(_prevState: any, formData: FormData) {
   const user = await getCurrentUser()
@@ -32,14 +34,27 @@ export async function createInvoiceAction(_prevState: any, formData: FormData) {
   const issuedAt = formData.get("issuedAt") as string
   const dueAt = formData.get("dueAt") as string
   const notes = formData.get("notes") as string
+  const itemsJson = formData.get("itemsJson") as string
+  const files = formData.getAll("files") as File[]
 
   if (!clientName || clientName.trim().length < 1) {
     return { error: "Client name is required" }
   }
 
-  const invoiceNumber = await getNextInvoiceNumber(org.id, type || "sales")
+  // Handle items
+  let items = []
+  try {
+    if (itemsJson) {
+      items = JSON.parse(itemsJson)
+    }
+  } catch (e) {
+    console.error("Failed to parse itemsJson:", e)
+  }
 
-  await createInvoice(org.id, {
+  const invoiceNumber = await getNextInvoiceNumber(org.id, type || "sales")
+  const issuedDate = issuedAt ? new Date(issuedAt) : new Date()
+
+  const invoice = await createInvoice(org.id, {
     invoiceNumber,
     type: type || "sales",
     ...(contactId ? { contactId } : {}),
@@ -51,10 +66,25 @@ export async function createInvoiceAction(_prevState: any, formData: FormData) {
     taxTotal,
     total: total || subtotal + taxTotal,
     currency,
-    issuedAt: issuedAt ? new Date(issuedAt) : new Date(),
+    issuedAt: issuedDate,
     dueAt: dueAt ? new Date(dueAt) : undefined,
     notes: notes || undefined,
+    items,
   })
+
+  // Handle files via storage abstraction
+  for (const file of files) {
+    if (file && file.size > 0) {
+      try {
+        const { randomUUID } = await import("crypto")
+        const relativePath = getInvoiceFilePath(randomUUID(), file.name, issuedDate)
+        const fileRecord = await uploadAndCreateFile(org.id, user.id, user.email, file, relativePath)
+        await attachFileToInvoice(invoice.id, fileRecord.id)
+      } catch (err) {
+        console.error("Failed to upload file:", err)
+      }
+    }
+  }
 
   revalidatePath("/invoices")
   revalidatePath("/estimates")
