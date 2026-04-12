@@ -41,15 +41,40 @@ export function InvoiceTemplatePreview({
   )
 }
 
+// ── Shared branding footer ──────────────────────────────────────────────────
+
+function BrandingFooter({ accentColor }: { accentColor: string }) {
+  return (
+    <div className="px-3 pb-1.5 mt-auto">
+      <div className="border-t border-gray-100 pt-1 flex justify-between items-center">
+        <div className="text-[5px] text-gray-400">Thank you for your business.</div>
+        <div className="flex items-center gap-0.5">
+          <svg width="6" height="6" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill={accentColor} />
+            <path d="M10 28V12l10 8 10-8v16" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="text-[4px] text-gray-300">Powered by <span style={{ color: accentColor }} className="font-semibold">Mintax</span></span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Default Template ────────────────────────────────────────────────────────
 
 function DefaultTemplate({ accentColor, orgName }: { accentColor: string; orgName: string }) {
   return (
     <>
       <div className="p-3 flex justify-between items-start">
-        <div>
-          <div className="font-bold text-[8px]" style={{ color: accentColor }}>{orgName}</div>
-          <div className="text-[5px] text-gray-400 mt-0.5">123 Business St, City</div>
+        <div className="flex items-center gap-1">
+          <svg width="10" height="10" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill={accentColor} />
+            <path d="M10 28V12l10 8 10-8v16" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <div>
+            <div className="font-bold text-[8px]" style={{ color: accentColor }}>{orgName}</div>
+            <div className="text-[4px] text-gray-400">via Mintax by Mindtris</div>
+          </div>
         </div>
         <div className="text-right">
           <div className="font-bold text-[9px] text-gray-800">INVOICE</div>
@@ -102,9 +127,7 @@ function DefaultTemplate({ accentColor, orgName }: { accentColor: string; orgNam
           </div>
         </div>
       </div>
-      <div className="px-3 pb-2 mt-auto">
-        <div className="text-[5px] text-gray-400 border-t border-gray-100 pt-1">Thank you for your business.</div>
-      </div>
+      <BrandingFooter accentColor={accentColor} />
     </>
   )
 }
@@ -118,6 +141,7 @@ function ClassicTemplate({ accentColor, orgName }: { accentColor: string; orgNam
         <div className="text-center">
           <div className="font-bold text-[10px]" style={{ color: accentColor }}>{orgName}</div>
           <div className="text-[5px] text-gray-400">123 Business St, City | +1 234 567 890</div>
+          <div className="text-[4px] text-gray-300 mt-0.5">Powered by Mintax by Mindtris</div>
         </div>
       </div>
       <div className="px-3 pt-2 text-center">
@@ -170,9 +194,7 @@ function ClassicTemplate({ accentColor, orgName }: { accentColor: string; orgNam
           </div>
         </div>
       </div>
-      <div className="px-3 pb-2 mt-auto text-center">
-        <div className="text-[5px] text-gray-400 border-t border-gray-100 pt-1">Thank you for your business.</div>
-      </div>
+      <BrandingFooter accentColor={accentColor} />
     </>
   )
 }
@@ -184,10 +206,17 @@ function ModernTemplate({ accentColor, orgName }: { accentColor: string; orgName
     <>
       <div className="p-3 text-white" style={{ backgroundColor: accentColor }}>
         <div className="flex justify-between items-center">
-          <div className="font-bold text-[9px]">{orgName}</div>
+          <div className="flex items-center gap-1">
+            <svg width="10" height="10" viewBox="0 0 40 40" fill="none">
+              <rect width="40" height="40" rx="8" fill="rgba(255,255,255,0.2)" />
+              <path d="M10 28V12l10 8 10-8v16" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <div className="font-bold text-[9px]">{orgName}</div>
+          </div>
           <div className="text-[8px] font-light tracking-wider opacity-80">INVOICE</div>
         </div>
         <div className="text-[5px] opacity-70 mt-0.5">123 Business St, City | info@company.com</div>
+        <div className="text-[4px] opacity-50 mt-0.5">Powered by Mintax by Mindtris</div>
       </div>
       <div className="px-3 pt-2 flex justify-between">
         <div>
@@ -238,9 +267,7 @@ function ModernTemplate({ accentColor, orgName }: { accentColor: string; orgName
           </div>
         </div>
       </div>
-      <div className="px-3 pb-2 mt-auto">
-        <div className="text-[5px] text-gray-400 pt-1">Thank you for your business.</div>
-      </div>
+      <BrandingFooter accentColor={accentColor} />
     </>
   )
 }
