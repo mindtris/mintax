@@ -29,7 +29,7 @@ export default async function Home() {
             <Image src="/logo/logo.svg" alt="Mindtris" width={32} height={32} className="w-8 h-8 brightness-0 invert" />
           </Link>
           <nav className="flex items-center gap-4">
-            <Link href="/signin" className="text-sm text-white/70 hover:text-white transition-colors">
+            <Link href="/signin" className="text-sm text-white bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20 transition-colors font-medium backdrop-blur-sm border border-white/10">
               Sign in
             </Link>
             <Link
