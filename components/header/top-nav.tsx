@@ -60,6 +60,7 @@ import { usePathname, useSearchParams } from "next/navigation"
 import { useState } from "react"
 import { OrgSwitcher } from "../sidebar/org-switcher"
 import { BugReportSheet } from "./bug-report-sheet"
+import { ModeToggle } from "./mode-toggle"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -331,6 +332,8 @@ export function TopNav({
           >
             <Settings className="h-4 w-4" />
           </Link>
+
+          <ModeToggle />
 
           {/* User menu */}
           <DropdownMenu>

@@ -151,7 +151,7 @@ export async function GET(request: Request) {
         if (!transactionFolder) continue
 
         for (const file of transactionFiles) {
-          const storagePath = fullPathForFile(user, file)
+          const storagePath = fullPathForFile(file)
           if (await fileExists(storagePath)) {
             const fileData = await storage.get(storagePath)
             const fileExtension = path.extname(file.path)

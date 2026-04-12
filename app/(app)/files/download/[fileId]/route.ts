@@ -23,7 +23,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ file
     }
 
     // Check if file exists
-    const storagePath = fullPathForFile(user, file)
+    const storagePath = fullPathForFile(file)
     const isFileExists = await fileExists(storagePath)
     if (!isFileExists) {
       return new NextResponse(`File not found on disk: ${file.path}`, { status: 404 })

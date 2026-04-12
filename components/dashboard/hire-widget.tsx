@@ -5,7 +5,7 @@ import { getJobAnalytics, getJobPostings } from "@/lib/services/jobs"
 import { BriefcaseBusiness, Plus, UserCheck, Users, UserSearch } from "lucide-react"
 import Link from "next/link"
 
-const CARD = "border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden"
+const CARD = "border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden"
 
 export async function HireWidget() {
   const user = await getCurrentUser()

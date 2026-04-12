@@ -1,56 +1,113 @@
-import { File, Transaction, User } from "@/lib/prisma/client"
+import { File, User } from "@/lib/prisma/client"
 import path from "path"
 import config from "@/lib/core/config"
 import { getStorage } from "@/lib/storage"
 
-export const FILE_UNSORTED_DIRECTORY_NAME = "unsorted"
-export const FILE_PREVIEWS_DIRECTORY_NAME = "previews"
-export const FILE_STATIC_DIRECTORY_NAME = "static"
-export const FILE_IMPORT_CSV_DIRECTORY_NAME = "csv"
+// ── Module folder names ───────────────────────────────────────────────────
+//
+// All files are stored under {orgId}/{module}/... for true tenant isolation.
+// Modules with high volume (transactions, invoices, bills, candidates, leads, social)
+// are bucketed by {YYYY}/{MM} so individual folders never grow unbounded.
 
-/** Returns the relative storage path for a user's uploads root (e.g. "user@email.com") */
-export function getUserUploadsDirectory(user: User) {
-  return user.email
+export const MODULE_TRANSACTIONS = "transactions"
+export const MODULE_INVOICES = "invoices"
+export const MODULE_BILLS = "bills"
+export const MODULE_CANDIDATES = "candidates"
+export const MODULE_LEADS = "leads"
+export const MODULE_SOCIAL = "social"
+export const MODULE_UNSORTED = "unsorted"
+export const MODULE_PREVIEWS = "previews"
+export const MODULE_STATIC = "static"
+export const MODULE_CSV = "csv"
+
+// ── Org-scoped roots ──────────────────────────────────────────────────────
+
+/** Returns the org's storage root: {orgId} */
+export function getOrgRoot(orgId: string) {
+  return orgId
 }
 
-/** Returns the relative storage path for a user's static directory */
-export function getStaticDirectory(user: User) {
-  return safePathJoin(getUserUploadsDirectory(user), FILE_STATIC_DIRECTORY_NAME)
+/** Returns the org's previews directory: {orgId}/previews */
+export function getOrgPreviewsDirectory(orgId: string) {
+  return safePathJoin(orgId, MODULE_PREVIEWS)
 }
 
-/** Returns the relative storage path for a user's previews directory */
-export function getUserPreviewsDirectory(user: User) {
-  return safePathJoin(getUserUploadsDirectory(user), FILE_PREVIEWS_DIRECTORY_NAME)
+/** Returns the org's static directory: {orgId}/static */
+export function getOrgStaticDirectory(orgId: string) {
+  return safePathJoin(orgId, MODULE_STATIC)
 }
 
-export function unsortedFilePath(fileUuid: string, filename: string) {
-  const fileExtension = path.extname(filename)
-  return safePathJoin(FILE_UNSORTED_DIRECTORY_NAME, `${fileUuid}${fileExtension}`)
+// ── Per-module file path builders ─────────────────────────────────────────
+//
+// All builders return the FULL org-scoped path. This is what gets stored in
+// File.path and what gets passed to the storage provider — no joining at
+// access time, no separate user/org lookups, just store and read.
+
+/** Transactions: {orgId}/transactions/{YYYY}/{MM}/{uuid}{ext} */
+export function getTransactionFilePath(orgId: string, fileUuid: string, filename: string, date?: Date) {
+  return buildModulePath(orgId, MODULE_TRANSACTIONS, fileUuid, filename, date)
 }
 
-export function previewFilePath(fileUuid: string, page: number) {
-  return safePathJoin(FILE_PREVIEWS_DIRECTORY_NAME, `${fileUuid}.${page}.webp`)
+/** Invoices: {orgId}/invoices/{YYYY}/{MM}/{uuid}{ext} */
+export function getInvoiceFilePath(orgId: string, fileUuid: string, filename: string, date?: Date) {
+  return buildModulePath(orgId, MODULE_INVOICES, fileUuid, filename, date)
 }
 
-export function getTransactionFileUploadPath(fileUuid: string, filename: string, transaction: Transaction) {
-  const fileExtension = path.extname(filename)
-  const storedFileName = `${fileUuid}${fileExtension}`
-  return formatFilePath(storedFileName, transaction.issuedAt || new Date())
+/** Bills: {orgId}/bills/{YYYY}/{MM}/{uuid}{ext} */
+export function getBillFilePath(orgId: string, fileUuid: string, filename: string, date?: Date) {
+  return buildModulePath(orgId, MODULE_BILLS, fileUuid, filename, date)
 }
 
-/** Returns the full relative storage path for a file (user prefix + file.path) */
-export function fullPathForFile(user: User, file: File) {
-  const userUploadsDirectory = getUserUploadsDirectory(user)
-  return safePathJoin(userUploadsDirectory, file.path)
+/** Candidates (hire): {orgId}/candidates/{YYYY}/{MM}/{uuid}{ext} */
+export function getCandidateFilePath(orgId: string, fileUuid: string, filename: string, date?: Date) {
+  return buildModulePath(orgId, MODULE_CANDIDATES, fileUuid, filename, date)
 }
 
-function formatFilePath(filename: string, date: Date, format = "{YYYY}/{MM}/{name}{ext}") {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, "0")
+/** Leads (sales): {orgId}/leads/{YYYY}/{MM}/{uuid}{ext} */
+export function getLeadFilePath(orgId: string, fileUuid: string, filename: string, date?: Date) {
+  return buildModulePath(orgId, MODULE_LEADS, fileUuid, filename, date)
+}
+
+/** Social posts (engage): {orgId}/social/{YYYY}/{MM}/{uuid}{ext} */
+export function getSocialFilePath(orgId: string, fileUuid: string, filename: string, date?: Date) {
+  return buildModulePath(orgId, MODULE_SOCIAL, fileUuid, filename, date)
+}
+
+/** Unsorted uploads: {orgId}/unsorted/{uuid}{ext} (flat — short-lived) */
+export function getUnsortedFilePath(orgId: string, fileUuid: string, filename: string) {
   const ext = path.extname(filename)
-  const name = path.basename(filename, ext)
+  return safePathJoin(orgId, MODULE_UNSORTED, `${fileUuid}${ext}`)
+}
 
-  return format.replace("{YYYY}", String(year)).replace("{MM}", month).replace("{name}", name).replace("{ext}", ext)
+/** CSV imports: {orgId}/csv/{uuid}{ext} (flat — short-lived staging) */
+export function getCsvImportFilePath(orgId: string, fileUuid: string, filename: string) {
+  const ext = path.extname(filename)
+  return safePathJoin(orgId, MODULE_CSV, `${fileUuid}${ext}`)
+}
+
+/** Preview pages: {orgId}/previews/{uuid}.{page}.webp */
+export function getPreviewFilePath(orgId: string, fileUuid: string, page: number) {
+  return safePathJoin(orgId, MODULE_PREVIEWS, `${fileUuid}.${page}.webp`)
+}
+
+// ── Resolution ────────────────────────────────────────────────────────────
+
+/**
+ * Returns the full storage path for a file. Since File.path now stores the
+ * full org-scoped path, this is a no-op getter — kept for call-site clarity.
+ */
+export function fullPathForFile(file: File) {
+  return file.path
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+
+function buildModulePath(orgId: string, module: string, fileUuid: string, filename: string, date?: Date) {
+  const ext = path.extname(filename)
+  const d = date || new Date()
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, "0")
+  return safePathJoin(orgId, module, String(year), month, `${fileUuid}${ext}`)
 }
 
 export function safePathJoin(basePath: string, ...paths: string[]) {
@@ -69,41 +126,8 @@ export async function getDirectorySize(storagePath: string) {
   return getStorage().getDirectorySize(storagePath)
 }
 
+/** Storage limit check — keyed by user (TODO: move to org). */
 export function isEnoughStorageToUploadFile(user: User, fileSize: number) {
-  if (config.selfHosted.isEnabled || user.storageLimit < 0) {
-    return true
-  }
+  if (config.selfHosted.isEnabled || user.storageLimit < 0) return true
   return user.storageUsed + fileSize <= user.storageLimit
-}
-
-// ── Module-specific file paths ────────────────────────────────────────────
-
-/** Invoices: invoices/{YYYY}/{MM}/{fileUuid}{ext} */
-export function getInvoiceFilePath(fileUuid: string, filename: string, date?: Date) {
-  const ext = path.extname(filename)
-  return formatFilePath(`${fileUuid}${ext}`, date || new Date(), "invoices/{YYYY}/{MM}/{name}{ext}")
-}
-
-/** Bills: bills/{YYYY}/{MM}/{fileUuid}{ext} */
-export function getBillFilePath(fileUuid: string, filename: string, date?: Date) {
-  const ext = path.extname(filename)
-  return formatFilePath(`${fileUuid}${ext}`, date || new Date(), "bills/{YYYY}/{MM}/{name}{ext}")
-}
-
-/** Candidates: candidates/{fileUuid}{ext} */
-export function getCandidateFilePath(fileUuid: string, filename: string) {
-  const ext = path.extname(filename)
-  return safePathJoin("candidates", `${fileUuid}${ext}`)
-}
-
-/** Social posts: social/{fileUuid}{ext} */
-export function getSocialFilePath(fileUuid: string, filename: string) {
-  const ext = path.extname(filename)
-  return safePathJoin("social", `${fileUuid}${ext}`)
-}
-
-/** Leads: leads/{fileUuid}{ext} */
-export function getLeadFilePath(fileUuid: string, filename: string) {
-  const ext = path.extname(filename)
-  return safePathJoin("leads", `${fileUuid}${ext}`)
 }

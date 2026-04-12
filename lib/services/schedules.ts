@@ -231,6 +231,7 @@ async function createScheduledInvoice(orgId: string, template: Record<string, an
       const org = await prisma.organization.findUnique({ where: { id: orgId } })
 
       await sendInvoiceEmail({
+        orgId,
         email: template.clientEmail,
         invoiceNumber,
         clientName: template.clientName,

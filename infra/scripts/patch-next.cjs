@@ -2,7 +2,6 @@
  * Patches a known Next.js bug where `config.generateBuildId` can be `undefined`
  * but `generate-build-id.js` calls it as a function without checking.
  * This affects Next.js 15.x when using .ts config files.
- * See: https://github.com/vercel/next.js/issues
  */
 const fs = require("fs")
 const path = require("path")

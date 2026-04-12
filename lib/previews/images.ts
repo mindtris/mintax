@@ -1,14 +1,13 @@
 "use server"
 
-import { fileExists, getUserPreviewsDirectory, safePathJoin } from "@/lib/files"
+import { fileExists, getOrgPreviewsDirectory, safePathJoin } from "@/lib/files"
 import { getStorage } from "@/lib/storage"
-import { User } from "@/lib/prisma/client"
 import path from "path"
 import sharp from "sharp"
 import config from "@/lib/core/config"
 
 export async function resizeImage(
-  user: User,
+  orgId: string,
   origStoragePath: string,
   maxWidth: number = config.upload.images.maxWidth,
   maxHeight: number = config.upload.images.maxHeight,
@@ -16,10 +15,10 @@ export async function resizeImage(
 ): Promise<{ contentType: string; resizedPath: string }> {
   try {
     const storage = getStorage()
-    const userPreviewsDirectory = getUserPreviewsDirectory(user)
+    const orgPreviewsDirectory = getOrgPreviewsDirectory(orgId)
 
     const basename = path.basename(origStoragePath, path.extname(origStoragePath))
-    const outputStoragePath = safePathJoin(userPreviewsDirectory, `${basename}.webp`)
+    const outputStoragePath = safePathJoin(orgPreviewsDirectory, `${basename}.webp`)
 
     if (await fileExists(outputStoragePath)) {
       // Read cached preview to get metadata

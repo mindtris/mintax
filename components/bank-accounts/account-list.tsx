@@ -42,14 +42,14 @@ export function AccountList({ accounts }: { accounts: BankAccount[] }) {
       render: (account: BankAccount) => {
         const num = account.accountNumber
         if (!num) return <span className="text-muted-foreground italic text-xs">Not set</span>
-        return <code className="text-[11px] bg-muted/50 px-1.5 py-0.5 rounded border border-black/[0.03]">****{num.slice(-4)}</code>
+        return <code className="text-[11px] bg-muted/50 px-1.5 py-0.5 rounded border border-border/50">****{num.slice(-4)}</code>
       },
     },
     {
       key: "accountType",
       label: "Type",
       render: (account: BankAccount) => (
-        <Badge variant="outline" className="capitalize text-[10px] font-medium border-black/[0.08] bg-black/[0.02]">
+        <Badge variant="outline" className="capitalize text-[10px] font-medium border-border bg-black/[0.02]">
           {ACCOUNT_TYPE_LABELS[account.accountType] || account.accountType}
         </Badge>
       ),

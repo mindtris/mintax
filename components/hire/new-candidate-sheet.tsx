@@ -158,7 +158,7 @@ export function NewCandidateSheet({
                 name="marketingBio" 
                 rows={3} 
                 placeholder="Key skills, years of experience, and value proposition..."
-                className="w-full bg-white border border-black/10 rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 font-medium"
+                className="w-full bg-background border border-input rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 font-medium"
               />
             </div>
 

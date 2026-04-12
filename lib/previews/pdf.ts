@@ -1,24 +1,23 @@
 "use server"
 
-import { fileExists, getUserPreviewsDirectory, safePathJoin } from "@/lib/files"
+import { fileExists, getOrgPreviewsDirectory, safePathJoin } from "@/lib/files"
 import { getStorage } from "@/lib/storage"
-import { User } from "@/lib/prisma/client"
 import fs from "fs/promises"
 import os from "os"
 import path from "path"
 import { randomUUID } from "crypto"
 import config from "@/lib/core/config"
 
-export async function pdfToImages(user: User, origStoragePath: string): Promise<{ contentType: string; pages: string[] }> {
+export async function pdfToImages(orgId: string, origStoragePath: string): Promise<{ contentType: string; pages: string[] }> {
   const storage = getStorage()
-  const userPreviewsDirectory = getUserPreviewsDirectory(user)
+  const orgPreviewsDirectory = getOrgPreviewsDirectory(orgId)
 
   const basename = path.basename(origStoragePath, path.extname(origStoragePath))
 
   // Check if converted pages already exist in storage
   const existingPages: string[] = []
   for (let i = 1; i <= config.upload.pdfs.maxPages; i++) {
-    const convertedStoragePath = safePathJoin(userPreviewsDirectory, `${basename}.${i}.webp`)
+    const convertedStoragePath = safePathJoin(orgPreviewsDirectory, `${basename}.${i}.webp`)
     if (await fileExists(convertedStoragePath)) {
       existingPages.push(convertedStoragePath)
     } else {
@@ -67,7 +66,7 @@ export async function pdfToImages(user: User, origStoragePath: string): Promise<
 
       // Upload converted page to storage
       const pageFilename = path.basename(result.path)
-      const pageStoragePath = safePathJoin(userPreviewsDirectory, pageFilename)
+      const pageStoragePath = safePathJoin(orgPreviewsDirectory, pageFilename)
       const pageBuffer = await fs.readFile(result.path)
       await storage.put(pageStoragePath, pageBuffer)
       storagePaths.push(pageStoragePath)

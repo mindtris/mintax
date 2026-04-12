@@ -70,7 +70,7 @@ export function UnsortedFileTable({
       key: "type",
       label: "Type",
       render: (file: File) => (
-        <Badge variant="outline" className="text-[10px] font-bold border-black/[0.08] bg-black/[0.02] uppercase tracking-wider">
+        <Badge variant="outline" className="text-[10px] font-bold border-border bg-black/[0.02] uppercase tracking-wider">
           {file.mimetype?.split("/")[1] || "File"}
         </Badge>
       ),

@@ -60,7 +60,7 @@ export function NewLeadSheet({
         side="right"
         className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] rounded-lg w-[95vw] sm:max-w-xl flex flex-col gap-0 p-0"
       >
-        <SheetHeader className="px-8 pt-8 pb-6 shrink-0 bg-muted/5 border-b border-black/[0.03]">
+        <SheetHeader className="px-8 pt-8 pb-6 shrink-0 bg-muted/5 border-b border-border/50">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-md">
               <Target className="h-5 w-5 text-primary" />
@@ -129,7 +129,7 @@ export function NewLeadSheet({
               <div className="p-4 bg-red-50 border border-red-100 rounded-md text-sm text-red-600 font-medium">{state.error}</div>
             )}
 
-            <div className="pt-2 sticky bottom-0 bg-white">
+            <div className="pt-2 sticky bottom-0 bg-background">
               <Button type="submit" disabled={pending} className="w-full h-12 text-md font-semibold shadow-lg shadow-primary/20 text-white leading-none">
                 {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {pending ? (isEdit ? "Saving..." : "Creating...") : (isEdit ? "Save changes" : "Create lead")}

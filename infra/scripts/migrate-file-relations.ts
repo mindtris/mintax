@@ -6,7 +6,7 @@
  * Safe to run multiple times — uses upsert to avoid duplicates.
  */
 
-import { PrismaClient } from "../lib/prisma/client"
+import { PrismaClient } from "../../lib/prisma/client"
 
 const prisma = new PrismaClient()
 

@@ -10,11 +10,11 @@ import { SocialAnalyticsChart } from "./social-analytics-chart"
 
 function MetricCard({ icon: Icon, label, value }: { icon: any; label: string; value: number }) {
   return (
-    <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
+    <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
       <CardContent className="pt-6">
         <div className="flex items-center gap-2 mb-1">
-          <Icon className="h-4 w-4 text-[#141413]" />
-          <span className="text-sm font-medium text-[#141413]">{label}</span>
+          <Icon className="h-4 w-4 text-card-foreground" />
+          <span className="text-sm font-medium text-card-foreground">{label}</span>
         </div>
         <div className="text-2xl font-bold">{value.toLocaleString()}</div>
       </CardContent>
@@ -47,8 +47,8 @@ export async function AnalyticsView() {
         <MetricCard icon={Users} label="Reach" value={totals.reach} />
       </div>
 
-      <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
-        <CardHeader className="px-6 py-4 border-b border-black/[0.03]">
+      <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
+        <CardHeader className="px-6 py-4 border-b border-border/50">
           <CardTitle className="text-sm font-medium">By account</CardTitle>
         </CardHeader>
         <CardContent className="p-6">
@@ -62,7 +62,7 @@ export async function AnalyticsView() {
                     )}
                     <div>
                       <div className="text-sm font-medium">{account.name}</div>
-                      <div className="text-xs text-[#141413] capitalize">{account.provider}</div>
+                      <div className="text-xs text-card-foreground capitalize">{account.provider}</div>
                     </div>
                   </div>
                   <Badge variant="outline" className="text-[10px] font-medium">
@@ -78,8 +78,8 @@ export async function AnalyticsView() {
       </Card>
 
       {recentPosts.length > 0 && (
-        <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
-          <CardHeader className="px-6 py-4 border-b border-black/[0.03]">
+        <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
+          <CardHeader className="px-6 py-4 border-b border-border/50">
             <CardTitle className="text-sm font-medium">Recent published</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -88,7 +88,7 @@ export async function AnalyticsView() {
                 <div key={post.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                   <div className="flex-1 min-w-0 mr-4">
                     <div className="text-sm truncate">{post.title || post.content.slice(0, 80)}</div>
-                    <div className="text-xs text-[#141413] capitalize">
+                    <div className="text-xs text-card-foreground capitalize">
                       {post.socialAccount.provider} · {post.publishedAt && formatDate(new Date(post.publishedAt), "MMM dd")}
                     </div>
                   </div>

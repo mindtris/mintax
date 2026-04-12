@@ -42,7 +42,7 @@ export default function LLMSettingsForm({
         {saveState?.error && <FormError>{saveState.error}</FormError>}
       </form>
 
-      <div className="bg-white border border-black/[0.05] rounded-xl flex flex-col gap-4 p-6 shadow-sm max-w-2xl">
+      <div className="bg-card border border-border rounded-xl flex flex-col gap-4 p-6 shadow-sm max-w-2xl">
         <div className="flex flex-row justify-between items-center gap-2">
           <span className="text-sm font-semibold tracking-tight">
             Current JSON Schema
@@ -54,7 +54,7 @@ export default function LLMSettingsForm({
             <Edit className="w-4 h-4" /> Edit fields
           </Link>
         </div>
-        <div className="bg-black/[0.02] p-4 rounded-lg border border-black/[0.03]">
+        <div className="bg-black/[0.02] p-4 rounded-lg border border-border/50">
           <pre className="text-xs font-mono text-muted-foreground overflow-x-auto">
             {JSON.stringify(fieldsToJsonSchema(fields), null, 2)}
           </pre>

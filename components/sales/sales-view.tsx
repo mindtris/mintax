@@ -35,12 +35,12 @@ export function SalesView({
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold tracking-tighter text-foreground font-display uppercase">Sales</h1>
-          <Badge variant="secondary" className="text-xl px-2.5 py-0.5 rounded-md font-bold text-muted-foreground/70 tabular-nums border-black/[0.03]">
+          <Badge variant="secondary" className="text-xl px-2.5 py-0.5 rounded-md font-bold text-muted-foreground/70 tabular-nums border-border/50">
             {total}
           </Badge>
         </div>
         <div className="flex items-center gap-2">
-            <Button asChild variant="outline" className="font-bold uppercase tracking-tight h-10 border-black/10">
+            <Button asChild variant="outline" className="font-bold uppercase tracking-tight h-10 border-input">
                 <Link href="/import/csv">
                     Import
                 </Link>
@@ -81,7 +81,7 @@ export function SalesView({
 
       {/* Control Bar (Tabs + Search) */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between border-b border-black/[0.05] pb-px">
+        <div className="flex items-center justify-between border-b border-border pb-px">
           <div className="flex gap-6">
             {tabs.map((t) => {
               const isActive = tab === t.id
@@ -114,7 +114,7 @@ export function SalesView({
       </div>
 
       {/* Data Grid Section */}
-      <main className="bg-card border border-black/[0.05] rounded-2xl overflow-hidden shadow-sm">
+      <main className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
         {tab === "invoices" ? (
           <InvoicesTable invoices={data} />
         ) : (
@@ -127,7 +127,7 @@ export function SalesView({
 
 function AnalyticsCard({ title, amount, subtitle, icon: Icon, color }: any) {
   return (
-    <div className="bg-card rounded-2xl border border-black/[0.05] shadow-sm p-6 flex flex-col gap-4 hover:border-black/10 transition-colors group">
+    <div className="bg-card rounded-2xl border border-border shadow-sm p-6 flex flex-col gap-4 hover:border-input transition-colors group">
       <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105", color)}>
         <Icon className="w-6 h-6" />
       </div>

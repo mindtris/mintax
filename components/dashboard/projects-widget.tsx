@@ -19,7 +19,7 @@ export function ProjectsWidget({
     <div className="grid gap-4 md:grid-cols-2">
       {projects.map((project) => (
         <Link key={project.code} href={`/transactions?projectCode=${project.code}`}>
-          <Card className="border border-black/[0.03] shadow-lg shadow-black/[0.02] bg-white rounded-2xl overflow-hidden transition-all hover:shadow-md cursor-pointer flex flex-col p-5 min-h-[280px]">
+          <Card className="border border-border/50 shadow-lg shadow-black/[0.02] bg-card rounded-2xl overflow-hidden transition-all hover:shadow-md cursor-pointer flex flex-col p-5 min-h-[280px]">
             <div className="flex items-center justify-between mb-4">
               <Badge
                 className="text-xs font-semibold"
@@ -77,14 +77,14 @@ export function CreateProjectButton() {
   return (
     <Link
       href="/settings?tab=projects"
-      className="group flex flex-col items-center justify-center gap-4 border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl p-8 hover:border-primary/20 transition-all h-full min-h-[350px]"
+      className="group flex flex-col items-center justify-center gap-4 border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl p-8 hover:border-primary/20 transition-all h-full min-h-[350px]"
     >
-      <div className="h-14 w-14 rounded-full bg-black/[0.03] flex items-center justify-center group-hover:shadow-sm transition-all border border-transparent group-hover:border-black/[0.03]">
-        <Plus className="h-6 w-6 text-[#141413] group-hover:text-primary transition-colors" />
+      <div className="h-14 w-14 rounded-full bg-black/[0.03] flex items-center justify-center group-hover:shadow-sm transition-all border border-transparent group-hover:border-border/50">
+        <Plus className="h-6 w-6 text-card-foreground group-hover:text-primary transition-colors" />
       </div>
       <div className="text-center">
         <span className="font-semibold text-sm block mb-1">Create new project</span>
-        <p className="text-xs text-[#141413] font-medium">Add new business vertical</p>
+        <p className="text-xs text-card-foreground font-medium">Add new business vertical</p>
       </div>
     </Link>
   )

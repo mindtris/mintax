@@ -174,8 +174,8 @@ export function ProjectInsightCard({ projects, statsPerProject, timeSeriesPerPro
   }, [currentData, selectedProjectCode, darkMode, textColor, gridColor, tooltipBodyColor, tooltipBgColor, tooltipBorderColor])
 
   return (
-    <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden min-h-[350px] flex flex-col">
-      <CardHeader className="px-6 py-4 border-b border-black/[0.03]">
+    <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden min-h-[350px] flex flex-col">
+      <CardHeader className="px-6 py-4 border-b border-border/50">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-sm font-medium">Project insights</CardTitle>
@@ -200,7 +200,7 @@ export function ProjectInsightCard({ projects, statsPerProject, timeSeriesPerPro
       <CardContent className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-8">
           {/* Summary Stats */}
-          <div className="flex flex-col justify-center space-y-6 md:border-r border-black/[0.03] md:pr-8 pb-8 md:pb-0 border-b md:border-b-0">
+          <div className="flex flex-col justify-center space-y-6 md:border-r border-border/50 md:pr-8 pb-8 md:pb-0 border-b md:border-b-0">
             <div>
               <p className="text-[10px] uppercase font-semibold tracking-widest text-muted-foreground mb-1">Current net profit</p>
               <p className={`text-2xl sm:text-3xl font-bold tracking-tight ${netProfit >= 0 ? "text-green-600" : "text-red-500"}`}>

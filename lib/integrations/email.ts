@@ -8,6 +8,8 @@ import { NewsletterWelcomeEmail } from "@/components/emails/newsletter-welcome-e
 import { OTPEmail } from "@/components/emails/otp-email"
 import { PaymentReceiptEmail } from "@/components/emails/payment-receipt-email"
 import { ReminderEmail } from "@/components/emails/reminder-email"
+import { GenericEmail } from "@/components/emails/generic-email"
+import { getEmailTemplate, interpolate } from "@/lib/services/email-templates"
 import React from "react"
 import { Resend } from "resend"
 import nodemailer from "nodemailer"
@@ -44,16 +46,18 @@ function getSmtpTransporter(): nodemailer.Transporter {
   return _transporter
 }
 
-async function sendEmail({
+export async function sendEmail({
   to,
   subject,
   react,
   replyTo,
+  attachments,
 }: {
   to: string
   subject: string
   react: React.ReactElement
   replyTo?: string
+  attachments?: { filename: string; content: Buffer | Uint8Array; contentType: string }[]
 }) {
   console.log(`[EMAIL] Sending "${subject}" to ${to} via ${config.email.driver}`)
 
@@ -67,6 +71,11 @@ async function sendEmail({
         to,
         subject,
         html,
+        attachments: attachments?.map(a => ({
+          filename: a.filename,
+          content: Buffer.from(a.content),
+          contentType: a.contentType,
+        })),
         ...(replyTo ? { replyTo } : {}),
       })
       console.log(`[EMAIL] SMTP result: ${result.messageId}`)
@@ -78,6 +87,10 @@ async function sendEmail({
         to,
         subject,
         react,
+        attachments: attachments?.map(a => ({
+          filename: a.filename,
+          content: Buffer.from(a.content),
+        })),
         ...(replyTo ? { reply_to: replyTo } : {}),
       })
       console.log(`[EMAIL] Resend result:`, JSON.stringify(result))
@@ -87,17 +100,6 @@ async function sendEmail({
     console.error(`[EMAIL] Failed:`, error)
     throw error
   }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Template variable interpolation helper
-// ─────────────────────────────────────────────────────────────────────────────
-
-function interpolate(template: string, vars: Record<string, string>): string {
-  return Object.entries(vars).reduce(
-    (result, [key, value]) => result.replace(new RegExp(`\\{${key}\\}`, "g"), value),
-    template
-  )
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -129,6 +131,7 @@ export async function sendOTPCodeEmail({
 
 /** New Invoice Template (sent to customer) */
 export async function sendInvoiceEmail({
+  orgId,
   email,
   invoiceNumber,
   clientName,
@@ -138,7 +141,9 @@ export async function sendInvoiceEmail({
   orgName,
   notes,
   emailSettings,
+  pdfAttachment,
 }: {
+  orgId: string
   email: string
   invoiceNumber: string
   clientName: string
@@ -148,8 +153,35 @@ export async function sendInvoiceEmail({
   orgName: string
   notes?: string | null
   emailSettings?: SettingsMap
+  pdfAttachment?: { filename: string; content: Buffer | Uint8Array; contentType: string }
 }) {
-  const vars = { invoiceNumber, orgName, clientName }
+  const vars = { invoiceNumber, orgName, clientName, total, currency, dueDate }
+  
+  // Try to get dynamic template
+  const template = await getEmailTemplate(orgId, "invoice", "sent")
+
+  if (template) {
+    const subject = interpolate(template.subject, vars)
+    const greeting = interpolate(template.greeting, vars)
+    const body = interpolate(template.body, vars)
+    const footer = interpolate(template.footer, vars)
+
+    return sendEmail({
+      to: email,
+      subject,
+      react: React.createElement(GenericEmail, {
+        subject,
+        greeting,
+        body,
+        footer,
+        globalFooterText: emailSettings?.email_footer_text,
+      }),
+      replyTo: emailSettings?.email_reply_to || undefined,
+      attachments: pdfAttachment ? [pdfAttachment] : undefined,
+    })
+  }
+
+  // Fallback to legacy
   const subject = emailSettings?.email_invoice_subject
     ? interpolate(emailSettings.email_invoice_subject, vars)
     : `Invoice ${invoiceNumber} from ${orgName}`
@@ -171,11 +203,101 @@ export async function sendInvoiceEmail({
       customFooterText: emailSettings?.email_footer_text || null,
     }),
     replyTo: emailSettings?.email_reply_to || undefined,
+    attachments: pdfAttachment ? [pdfAttachment] : undefined,
+  })
+}
+
+/** Bill Template (sent to vendor with PDF attachment) */
+export async function sendBillEmail({
+  orgId,
+  email,
+  billNumber,
+  vendorName,
+  total,
+  currency,
+  dueDate,
+  orgName,
+  notes,
+  emailSettings,
+  pdfAttachment,
+}: {
+  orgId: string
+  email: string
+  billNumber: string
+  vendorName: string
+  total: string
+  currency: string
+  dueDate: string
+  orgName: string
+  notes?: string | null
+  emailSettings?: SettingsMap
+  pdfAttachment?: { filename: string; content: Buffer | Uint8Array; contentType: string }
+}) {
+  // Expose both bill-native and invoice-compatible names so templates can use either.
+  const vars = {
+    billNumber,
+    invoiceNumber: billNumber,
+    orgName,
+    vendorName,
+    clientName: vendorName,
+    total,
+    currency,
+    dueDate,
+  }
+
+  // Try dynamic bill template first
+  const template = await getEmailTemplate(orgId, "bill", "sent")
+
+  if (template) {
+    const subject = interpolate(template.subject, vars)
+    const greeting = interpolate(template.greeting, vars)
+    const body = interpolate(template.body, vars)
+    const footer = interpolate(template.footer, vars)
+
+    return sendEmail({
+      to: email,
+      subject,
+      react: React.createElement(GenericEmail, {
+        subject,
+        greeting,
+        body,
+        footer,
+        globalFooterText: emailSettings?.email_footer_text,
+      }),
+      replyTo: emailSettings?.email_reply_to || undefined,
+      attachments: pdfAttachment ? [pdfAttachment] : undefined,
+    })
+  }
+
+  // Fallback: reuse InvoiceEmail layout with bill vocabulary mapped in
+  const subject = emailSettings?.email_bill_subject
+    ? interpolate(emailSettings.email_bill_subject, vars)
+    : `Bill ${billNumber} from ${orgName}`
+
+  return sendEmail({
+    to: email,
+    subject,
+    react: React.createElement(InvoiceEmail, {
+      invoiceNumber: billNumber,
+      clientName: vendorName,
+      total,
+      currency,
+      dueDate,
+      orgName,
+      notes,
+      appUrl: config.app.baseURL,
+      customGreeting: emailSettings?.email_bill_greeting || null,
+      customFooterNote: emailSettings?.email_bill_footer_note || null,
+      customFooterText: emailSettings?.email_footer_text || null,
+    }),
+    replyTo: emailSettings?.email_reply_to || undefined,
+    attachments: pdfAttachment ? [pdfAttachment] : undefined,
   })
 }
 
 /** Invoice Reminder Template (sent to customer or admin) */
 export async function sendInvoiceReminderEmail({
+  orgId,
   email,
   invoiceNumber,
   clientName,
@@ -187,6 +309,7 @@ export async function sendInvoiceReminderEmail({
   recipient,
   emailSettings,
 }: {
+  orgId: string
   email: string
   invoiceNumber: string
   clientName: string
@@ -198,7 +321,31 @@ export async function sendInvoiceReminderEmail({
   recipient: "customer" | "admin"
   emailSettings?: SettingsMap
 }) {
-  const vars = { invoiceNumber, orgName, clientName, status }
+  const vars = { invoiceNumber, orgName, clientName, status, total, currency, dueDate }
+  
+  const template = await getEmailTemplate(orgId, "invoice", "reminder")
+
+  if (template) {
+    const subject = interpolate(template.subject, vars)
+    const greeting = interpolate(template.greeting, vars)
+    const body = interpolate(template.body, vars)
+    const footer = interpolate(template.footer, vars)
+
+    return sendEmail({
+      to: email,
+      subject,
+      react: React.createElement(GenericEmail, {
+        subject,
+        greeting,
+        body,
+        footer,
+        globalFooterText: emailSettings?.email_footer_text,
+      }),
+      replyTo: emailSettings?.email_reply_to || undefined,
+    })
+  }
+
+  // Fallback
   const settingsKey = recipient === "customer" ? "email_invoice_reminder_customer_subject" : "email_invoice_reminder_admin_subject"
   const subject = emailSettings?.[settingsKey]
     ? interpolate(emailSettings[settingsKey], vars)
@@ -364,6 +511,7 @@ export async function sendInvoicePaymentReceivedEmail({
 
 /** Bill Reminder Template (sent to admin) */
 export async function sendBillReminderEmail({
+  orgId,
   email,
   billNumber,
   vendorName,
@@ -374,6 +522,7 @@ export async function sendBillReminderEmail({
   status,
   emailSettings,
 }: {
+  orgId: string
   email: string
   billNumber: string
   vendorName: string
@@ -384,7 +533,31 @@ export async function sendBillReminderEmail({
   status: string
   emailSettings?: SettingsMap
 }) {
-  const vars = { billNumber, vendorName, orgName, status }
+  const vars = { billNumber, vendorName, orgName, status, total, currency, dueDate }
+  
+  const template = await getEmailTemplate(orgId, "bill", "reminder")
+
+  if (template) {
+    const subject = interpolate(template.subject, vars)
+    const greeting = interpolate(template.greeting, vars)
+    const body = interpolate(template.body, vars)
+    const footer = interpolate(template.footer, vars)
+
+    return sendEmail({
+      to: email,
+      subject,
+      react: React.createElement(GenericEmail, {
+        subject,
+        greeting,
+        body,
+        footer,
+        globalFooterText: emailSettings?.email_footer_text,
+      }),
+      replyTo: emailSettings?.email_reply_to || undefined,
+    })
+  }
+
+  // Fallback
   const subject = emailSettings?.email_bill_reminder_subject
     ? interpolate(emailSettings.email_bill_reminder_subject, vars)
     : `Bill ${billNumber} from ${vendorName} is ${status}`
@@ -600,6 +773,230 @@ export async function sendNewsletterWelcomeEmail(
       customGreeting: emailSettings?.email_newsletter_greeting || null,
     }),
     replyTo: emailSettings?.email_reply_to || undefined,
+  })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Estimates
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function sendEstimateEmail({
+  orgId,
+  email,
+  estimateNumber,
+  clientName,
+  total,
+  currency,
+  orgName,
+  emailSettings,
+}: {
+  orgId: string
+  email: string
+  estimateNumber: string
+  clientName: string
+  total: string
+  currency: string
+  orgName: string
+  emailSettings?: SettingsMap
+}) {
+  const vars = { estimateNumber, orgName, clientName, total, currency }
+  const template = await getEmailTemplate(orgId, "estimate", "sent")
+
+  if (template) {
+    const subject = interpolate(template.subject, vars)
+    const greeting = interpolate(template.greeting, vars)
+    const body = interpolate(template.body, vars)
+    const footer = interpolate(template.footer, vars)
+
+    return sendEmail({
+      to: email,
+      subject,
+      react: React.createElement(GenericEmail, {
+        subject,
+        greeting,
+        body,
+        footer,
+        globalFooterText: emailSettings?.email_footer_text,
+      }),
+      replyTo: emailSettings?.email_reply_to || undefined,
+    })
+  }
+
+  // Fallback (Estimate uses same layout as Invoice for now)
+  return sendEmail({
+    to: email,
+    subject: `Estimate ${estimateNumber} from ${orgName}`,
+    react: React.createElement(InvoiceEmail, {
+      invoiceNumber: estimateNumber,
+      clientName,
+      total,
+      currency,
+      dueDate: "",
+      orgName,
+      appUrl: config.app.baseURL,
+    } as any),
+  })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Leads & Pipeline
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function sendLeadAssignmentEmail({
+  orgId,
+  email,
+  leadName,
+  source,
+  assigneeName,
+  orgName,
+  emailSettings,
+}: {
+  orgId: string
+  email: string
+  leadName: string
+  source: string
+  assigneeName: string
+  orgName: string
+  emailSettings?: SettingsMap
+}) {
+  const vars = { leadName, source, assigneeName, orgName }
+  const template = await getEmailTemplate(orgId, "lead", "assigned")
+
+  if (template) {
+    const subject = interpolate(template.subject, vars)
+    const greeting = interpolate(template.greeting, vars)
+    const body = interpolate(template.body, vars)
+    const footer = interpolate(template.footer, vars)
+
+    return sendEmail({
+      to: email,
+      subject,
+      react: React.createElement(GenericEmail, {
+        subject,
+        greeting,
+        body,
+        footer,
+        globalFooterText: emailSettings?.email_footer_text,
+      }),
+      replyTo: emailSettings?.email_reply_to || undefined,
+    })
+  }
+
+  return sendEmail({
+    to: email,
+    subject: `New Lead Assigned: ${leadName}`,
+    react: React.createElement(GenericEmail, {
+      subject: `New Lead Assigned: ${leadName}`,
+      greeting: `Hello ${assigneeName},`,
+      body: `A new lead '${leadName}' from ${source} has been assigned to you.`,
+      globalFooterText: emailSettings?.email_footer_text,
+    }),
+  })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Hire & HR
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function sendHireApplicationConfirmationEmail({
+  orgId,
+  email,
+  applicantName,
+  jobTitle,
+  orgName,
+  emailSettings,
+}: {
+  orgId: string
+  email: string
+  applicantName: string
+  jobTitle: string
+  orgName: string
+  emailSettings?: SettingsMap
+}) {
+  const vars = { applicantName, jobTitle, orgName }
+  const template = await getEmailTemplate(orgId, "hire", "application_received")
+
+  if (template) {
+    const subject = interpolate(template.subject, vars)
+    const greeting = interpolate(template.greeting, vars)
+    const body = interpolate(template.body, vars)
+    const footer = interpolate(template.footer, vars)
+
+    return sendEmail({
+      to: email,
+      subject,
+      react: React.createElement(GenericEmail, {
+        subject,
+        greeting,
+        body,
+        footer,
+        globalFooterText: emailSettings?.email_footer_text,
+      }),
+      replyTo: emailSettings?.email_reply_to || undefined,
+    })
+  }
+
+  return sendEmail({
+    to: email,
+    subject: `Application received: ${jobTitle} at ${orgName}`,
+    react: React.createElement(GenericEmail, {
+      subject: `Application received: ${jobTitle} at ${orgName}`,
+      greeting: `Hi ${applicantName},`,
+      body: `Thank you for applying for the ${jobTitle} position. We have received your application and will review it shortly.`,
+      globalFooterText: emailSettings?.email_footer_text,
+    }),
+  })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Team & Organization
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function sendTeamInvitationEmail({
+  orgId,
+  email,
+  inviterName,
+  orgName,
+  emailSettings,
+}: {
+  orgId: string
+  email: string
+  inviterName: string
+  orgName: string
+  emailSettings?: SettingsMap
+}) {
+  const vars = { inviterName, orgName }
+  const template = await getEmailTemplate(orgId, "team", "invite")
+
+  if (template) {
+    const subject = interpolate(template.subject, vars)
+    const greeting = interpolate(template.greeting, vars)
+    const body = interpolate(template.body, vars)
+    const footer = interpolate(template.footer, vars)
+
+    return sendEmail({
+      to: email,
+      subject,
+      react: React.createElement(GenericEmail, {
+        subject,
+        greeting,
+        body,
+        footer,
+        globalFooterText: emailSettings?.email_footer_text,
+      }),
+      replyTo: emailSettings?.email_reply_to || undefined,
+    })
+  }
+
+  return sendEmail({
+    to: email,
+    subject: `Invitation to join ${orgName} on Mintax`,
+    react: React.createElement(GenericEmail, {
+      subject: `Invitation to join ${orgName} on Mintax`,
+      greeting: `Hi there!`,
+      body: `${inviterName} has invited you to join the ${orgName} team on Mintax.`,
+      globalFooterText: emailSettings?.email_footer_text,
+    }),
   })
 }
 

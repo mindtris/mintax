@@ -139,11 +139,11 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             </div>
 
             {bankAccounts.length > 0 && (
-              <div className="bg-[#f5f4ef] text-[#141413] rounded-2xl border border-black/[0.03] shadow-sm shadow-black/[0.02] p-6">
+              <div className="bg-muted/10 text-foreground rounded-2xl border border-border shadow-sm p-6">
                 <h2 className="text-xl font-semibold tracking-tight mb-4">Bank accounts</h2>
                 <div className="flex flex-col gap-3">
                   {bankAccounts.map((account) => (
-                    <div key={account.id} className="flex items-center justify-between border-b border-black/[0.02] pb-2 last:border-0 last:pb-0">
+                    <div key={account.id} className="flex items-center justify-between border-b border-border/50 pb-2 last:border-0 last:pb-0">
                       <span className="text-sm font-medium">{account.name}</span>
                       <span className="text-sm font-semibold">
                         {formatCurrency(account.currentBalance || 0, account.currency || org.baseCurrency)}

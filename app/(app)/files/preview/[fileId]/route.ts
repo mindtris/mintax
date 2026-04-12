@@ -28,14 +28,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ file
     }
 
     // Check if file exists in storage
-    const storagePath = fullPathForFile(user, file)
+    const storagePath = fullPathForFile(file)
     const isFileExists = await fileExists(storagePath)
     if (!isFileExists) {
       return new NextResponse(`File not found on disk: ${file.path}`, { status: 404 })
     }
 
     // Generate previews (works with storage-relative paths)
-    const { contentType, previews } = await generateFilePreviews(user, storagePath, file.mimetype)
+    const { contentType, previews } = await generateFilePreviews(org.id, storagePath, file.mimetype)
     if (page > previews.length) {
       return new NextResponse("Page not found", { status: 404 })
     }

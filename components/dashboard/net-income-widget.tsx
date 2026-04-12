@@ -16,15 +16,15 @@ export function NetIncomeWidget({ data }: NetIncomeWidgetProps) {
   ]
 
   return (
-    <Card className="bg-[#f5f4ef] text-[#141413] rounded-2xl border border-black/[0.03] shadow-sm shadow-black/[0.02] overflow-hidden h-full flex flex-col">
-      <CardHeader className="px-6 py-4 border-b border-black/[0.03]">
+    <Card className="bg-card text-card-foreground rounded-2xl border border-border/50 shadow-sm shadow-black/[0.02] overflow-hidden h-full flex flex-col">
+      <CardHeader className="px-6 py-4 border-b border-border/50">
         <CardTitle className="text-sm font-medium">Net income comparison</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-black/[0.03]">
+              <tr className="border-b border-border/50">
                 <th className="text-left py-2 font-medium text-muted-foreground w-1/3">Type</th>
                 <th className="text-right py-2 font-medium text-muted-foreground w-1/3">{data.previous.label}</th>
                 <th className="text-right py-2 font-medium text-muted-foreground w-1/3 text-primary">{data.current.label}</th>
@@ -49,7 +49,7 @@ export function NetIncomeWidget({ data }: NetIncomeWidgetProps) {
           </table>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-black/[0.03] flex justify-between items-center">
+        <div className="mt-4 pt-4 border-t border-border/50 flex justify-between items-center">
           <span className="text-[10px] uppercase font-semibold tracking-widest text-muted-foreground italic">
             Based on organization fiscal year settings
           </span>

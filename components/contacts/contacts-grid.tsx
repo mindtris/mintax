@@ -63,9 +63,9 @@ export function ContactsGrid({ contacts, activeTab }: { contacts: ContactRow[], 
       sortable: true,
       render: (row) => (
         <div className="flex items-center gap-3 py-1">
-          <Avatar className="h-8 w-8 border border-black/[0.05]">
+          <Avatar className="h-8 w-8 border border-border">
             {row.avatar && <AvatarImage src={row.avatar} alt={row.name} />}
-            <AvatarFallback className="text-[10px] font-bold bg-[#c96442]/10 text-[#c96442]">
+            <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">
               {row.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
             </AvatarFallback>
           </Avatar>

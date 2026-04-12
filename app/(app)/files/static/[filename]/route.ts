@@ -1,5 +1,5 @@
-import { getCurrentUser } from "@/lib/core/auth"
-import { fileExists, getStaticDirectory, safePathJoin } from "@/lib/files"
+import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
+import { fileExists, getOrgStaticDirectory, safePathJoin } from "@/lib/files"
 import { getStorage } from "@/lib/storage"
 import lookup from "mime-types"
 import { NextResponse } from "next/server"
@@ -7,12 +7,13 @@ import { NextResponse } from "next/server"
 export async function GET(request: Request, { params }: { params: Promise<{ filename: string }> }) {
   const { filename } = await params
   const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
 
   if (!filename) {
     return new NextResponse("No filename provided", { status: 400 })
   }
 
-  const staticFilesDirectory = getStaticDirectory(user)
+  const staticFilesDirectory = getOrgStaticDirectory(org.id)
 
   try {
     const storagePath = safePathJoin(staticFilesDirectory, filename)

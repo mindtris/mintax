@@ -14,8 +14,6 @@ import {
 } from "@/lib/services/social-posts"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { getSocialFilePath } from "@/lib/files"
-import { uploadAndCreateFile } from "@/lib/services/files"
 
 export async function createPostAction(_prevState: any, formData: FormData) {
   const user = await getCurrentUser()

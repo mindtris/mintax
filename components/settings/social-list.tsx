@@ -112,7 +112,7 @@ export function SocialAccountsList({ accounts }: { accounts: AccountRow[] }) {
       key: "provider",
       label: "Platform",
       render: (row: AccountRow) => (
-        <Badge variant="outline" className="text-[10px] font-medium capitalize border-black/[0.08] bg-black/[0.02]">
+        <Badge variant="outline" className="text-[10px] font-medium capitalize border-border bg-black/[0.02]">
           {row.provider}
         </Badge>
       ),

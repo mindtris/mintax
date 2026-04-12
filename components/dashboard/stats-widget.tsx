@@ -27,9 +27,9 @@ function StatCard({
 }) {
   return (
     <Link href={href}>
-      <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden transition-all hover:shadow-md cursor-pointer h-full flex flex-col">
+      <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden transition-all hover:shadow-md cursor-pointer h-full flex flex-col">
         <div className="p-5 pb-2 flex-1">
-          <p className="text-sm font-medium text-[#141413] mb-1">{title}</p>
+          <p className="text-sm font-medium text-card-foreground mb-1">{title}</p>
           <div className="text-2xl font-semibold tracking-tight">{value}</div>
         </div>
         <div className="px-0 pb-0 mt-auto">

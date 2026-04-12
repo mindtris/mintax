@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils"
 
 interface InvoiceTemplatePreviewProps {
   template: "default" | "classic" | "modern"
+  customName?: string
   accentColor: string
   orgName: string
   selected?: boolean
@@ -12,6 +13,7 @@ interface InvoiceTemplatePreviewProps {
 
 export function InvoiceTemplatePreview({
   template,
+  customName,
   accentColor,
   orgName,
   selected,
@@ -36,7 +38,9 @@ export function InvoiceTemplatePreview({
         {template === "classic" && <ClassicTemplate accentColor={accentColor} orgName={orgName} />}
         {template === "modern" && <ModernTemplate accentColor={accentColor} orgName={orgName} />}
       </div>
-      <p className="text-xs font-medium text-center mt-2 mb-1 capitalize">{template}</p>
+      <p className="text-xs font-medium text-center mt-2 mb-1 capitalize">
+        {customName || template}
+      </p>
     </button>
   )
 }

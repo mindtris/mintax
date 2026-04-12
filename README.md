@@ -1,137 +1,147 @@
 <p align="center">
   <a href="https://github.com/mindtris/mintax">
-    <img src="public/logo/logo.svg" width="480" alt="Mintax Enterprise Logo" />
+    <img src="public/logo/logo.svg" width="120" alt="Mintax by Mindtris" />
   </a>
 </p>
 
-<h1 align="center">Mintax Enterprise</h1>
+<h1 align="center">Mintax</h1>
 
 <p align="center">
-  <strong>The Intelligent Business Operating System for Modern Enterprises.</strong>
+  <strong>The intelligent business operating system for modern enterprises.</strong><br/>
+  <sub>An open source platform by <a href="https://www.mindtris.com">Mindtris</a></sub>
 </p>
 
 <p align="center">
-  <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmindtris%2Fmintax&env=DATABASE_URL,BETTER_AUTH_SECRET,NEXT_PUBLIC_APP_URL&project-name=mintax-enterprise&repository-name=mintax-enterprise">
+  <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmindtris%2Fmintax&env=DATABASE_URL,BETTER_AUTH_SECRET,NEXT_PUBLIC_APP_URL&project-name=mintax&repository-name=mintax">
     <img src="https://vercel.com/button" alt="Deploy with Vercel" />
   </a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/mindtris/mintax/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-c96442?style=flat-square" alt="License" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-AGPL_3.0-c96442?style=flat-square" alt="License" /></a>
   <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js_15-141413?style=flat-square&logo=next.js" alt="Next.js" /></a>
-  <a href="https://www.prisma.io"><img src="https://img.shields.io/badge/Prisma_ORM-c96442?style=flat-square&logo=prisma" alt="Prisma" /></a>
-  <a href="https://langchain.com"><img src="https://img.shields.io/badge/AI_Powered-141413?style=flat-square" alt="AI Powered" /></a>
+  <a href="https://www.prisma.io"><img src="https://img.shields.io/badge/Prisma-c96442?style=flat-square&logo=prisma" alt="Prisma" /></a>
+  <a href="https://github.com/mindtris/mintax/discussions"><img src="https://img.shields.io/badge/community-discussions-141413?style=flat-square&logo=github" alt="Discussions" /></a>
 </p>
 
 ---
 
 ## Overview
 
-**Mintax** is a comprehensive, multi-tenant bookkeeping and business operating system designed for modern enterprises. It provides a unified platform to manage financial operations, talent acquisition, customer relationships, and digital engagement—all powered by an extensible AI engine and secured by enterprise-grade infrastructure.
+**Mintax** is a comprehensive, multi-tenant business operating system for modern companies. It unifies accounting, sales, hiring, social engagement, and team operations in one open source platform — secured by enterprise-grade infrastructure and extended by a configurable AI engine.
 
-Built for **sovereignty** and **scalability**, Mintax can be self-hosted on your own infrastructure, ensuring you maintain complete control over your business data while benefiting from state-of-the-art AI capabilities.
+Built for **sovereignty** and **scalability**, Mintax can be self-hosted on your own infrastructure, giving you complete control over your business data.
 
-## Core Modules
+## Core modules
 
-### Accounts & Finance
-*   **Intelligent Reconciliation**: Automated bank matching with AI categorization.
-*   **Global Operations**: Native support for 170+ currencies and multi-entity taxation.
-*   **Financial Reporting**: Real-time balance sheets, P&L, and cash flow tracking.
-*   **Payables & Receivables**: Full-cycle transaction management.
+| Module | What it does |
+|--------|--------------|
+| **Accounts** | Transactions, bills, bank reconciliation, multi-currency, financial reports |
+| **Sales** | Invoices, estimates, leads, customers, pipeline tracking |
+| **Hire** | Job postings, candidate pipeline, bench management, career portals |
+| **Engage** | Multi-platform social posting across 28+ networks with scheduling and analytics |
+| **People** | Team directory, quicklinks, reminders, role management |
+| **Apps** | Invoice PDF generator, reminders, Outlook integration |
+| **Settings** | Email templates, invoice templates, schedules, LLM providers, social accounts |
 
-### Sales & CRM
-*   **Invoicing & Estimates**: Professional, multi-currency invoicing with payment integration.
-*   **Client Management**: 360-degree view of customer interactions and history.
-*   **Cycle Tracking**: Manage the end-to-end sales pipeline from lead to settlement.
+## Documentation
 
-### Hire & Talent
-*   **ATS Capabilities**: End-to-end talent acquisition workflow.
-*   **AI Writing Assistant**: Generate optimized job descriptions and screening questions.
-*   **Pipeline Management**: Visualize candidate stages with rich collaboration tools.
+All project documentation lives in [`/docs`](./docs):
 
-### Engage & Social
-*   **Social Orchestration**: Multi-channel scheduling (Twitter, LinkedIn, Facebook).
-*   **Content Planner**: Visual calendar for content strategy.
-*   **AI Content Engine**: Generate platform-specific posts and imagery.
+| Document | Purpose |
+|----------|---------|
+| [Open Source](./docs/OPENSOURCE.md) | Why Mintax is open source, license, contributors, credits |
+| [Roadmap](./docs/ROADMAP.md) | What we're building next and what contributors can pick up |
+| [Contributing](./docs/CONTRIBUTING.md) | How to contribute code, docs, tests, and ideas |
+| [Code of Conduct](./docs/CODE_OF_CONDUCT.md) | Community standards |
+| [AI Architecture](./docs/AI.md) | How the LLM layer is designed |
 
-## AI Engine & Infrastructure
+## AI engine
 
-Mintax features a highly configurable AI assistance layer (via **LangChain**) that supports:
-- **Cloud Providers**: OpenAI, Google Gemini, Mistral AI.
-- **Local Sovereignty**: Integration with **Ollama** for running models on your own servers.
-- **Prompt Engineering**: Module-specific logic for high-precision business tasks.
+Mintax features a configurable AI assistance layer (via **LangChain**) supporting:
 
-## Tech Stack
+- **Cloud providers** — OpenAI, Google Gemini, Mistral AI
+- **Local sovereignty** — Ollama integration for on-prem models
+- **Module-specific prompts** — tailored logic per business task
+
+Configure via `/settings?tab=llm`.
+
+## Tech stack
 
 | Layer | System |
-| :--- | :--- |
+|-------|--------|
 | **Framework** | Next.js 15 (App Router), React 19, TypeScript |
-| **Persistence** | PostgreSQL, Prisma ORM |
-| **Auth & Security** | Better-Auth with Multi-layered sessions |
-| **Orchestration** | LangChain Core |
-| **UI/UX** | Tailwind CSS 3.4, Radix UI, Lucide Icons |
-| **Services** | Stripe (Payments), Resend (Email), S3/Vercel (Storage) |
+| **Database** | PostgreSQL, Prisma ORM |
+| **Auth** | Better Auth with multi-layered sessions |
+| **AI** | LangChain Core |
+| **UI** | Tailwind CSS, Radix UI, Lucide icons, shadcn/ui |
+| **Services** | Stripe (payments), Resend (email), S3/Vercel Blob (storage) |
 
-## Quick Start
+## Quick start
 
 ### Prerequisites
+
 - Node.js 18+ and `pnpm`
-- PostgreSQL instance
-- API keys for your preferred LLM provider (optional for local models)
+- PostgreSQL (Neon, Supabase, or local)
+- API keys for your preferred LLM provider (optional — Ollama works too)
 
-### Local Setup
-1. **Clone & Install**
-   ```bash
-   git clone https://github.com/mindtris/mintax.git
-   cd mintax
-   pnpm install
-   ```
+### Local setup
 
-2. **Configuration**
-   ```bash
-   cp .env.example .env
-   # Update DATABASE_URL and BETTER_AUTH_SECRET in .env
-   ```
+```bash
+# 1. Clone
+git clone https://github.com/mindtris/mintax.git
+cd mintax
 
-3. **Database Setup**
-   ```bash
-   pnpm db:push
-   pnpm db:generate
-   ```
+# 2. Install
+pnpm install
 
-4. **Run Development Server**
-   ```bash
-   pnpm dev
-   ```
-   Access the dashboard at `http://localhost:7331`.
+# 3. Configure
+cp .env.example .env
+# Fill in DATABASE_URL and BETTER_AUTH_SECRET at minimum
+
+# 4. Push schema
+pnpm prisma db push --schema=lib/prisma/schema.prisma
+
+# 5. Start
+pnpm dev
+```
+
+Open `http://localhost:8080`.
 
 ## Deployment
 
-Deploy to production with a single click or use our standard CI/CD workflow.
+Deploy to production with one click:
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmindtris%2Fmintax&env=DATABASE_URL,BETTER_AUTH_SECRET,NEXT_PUBLIC_APP_URL)
 
-### Essential Environment Variables
+### Essential environment variables
 
 | Variable | Description |
-| :--- | :--- |
+|----------|-------------|
 | `DATABASE_URL` | PostgreSQL connection string |
-| `BETTER_AUTH_SECRET` | Secret key for session encryption |
-| `NEXT_PUBLIC_APP_URL` | The public URL of your deployment |
-| `UPLOAD_PATH` | Path for local file storage (default: `./data/uploads`) |
+| `BETTER_AUTH_SECRET` | Secret key for session encryption (min 16 chars) |
+| `NEXT_PUBLIC_APP_URL` | Public URL of your deployment |
 
-## Contributing & Support
+See [`.env.example`](./.env.example) for the full list of environment variables.
 
-We welcome contributions from the community! Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting pull requests.
+## Community
 
-For enterprise inquiries, custom integrations, or dedicated support, contact us at [support@mindtris.com](mailto:support@mindtris.com).
+- [Discussions](https://github.com/mindtris/mintax/discussions) — ask questions, share ideas
+- [Issues](https://github.com/mindtris/mintax/issues) — report bugs, request features
+- [Roadmap](./docs/ROADMAP.md) — see what's coming and pick something to build
+- [support@mindtris.com](mailto:support@mindtris.com) — commercial inquiries
+
+## License
+
+Mintax is licensed under the [GNU AGPL v3.0](./LICENSE).
+
+You can use, modify, and distribute it freely. If you host a modified version as a network service, you must share your changes under the same license.
+
+For commercial licensing (proprietary deployments, white-labeling, embedded use), contact [support@mindtris.com](mailto:support@mindtris.com).
 
 ---
 
 <p align="center">
-  Built with ❤️ by <strong><a href="https://mindtris.com">Mindtris</a></strong>
-</p>
-
-<p align="center">
-  Licensed under the <a href="LICENSE">Apache License, Version 2.0</a>.
+  <strong>Powered by <a href="https://www.mindtris.com">Mindtris</a> (Mintax)</strong><br/>
+  <sub>Made with care, shared with everyone.</sub>
 </p>

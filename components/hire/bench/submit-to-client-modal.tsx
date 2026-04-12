@@ -213,7 +213,7 @@ export function SubmitToClientModal({
           </div>
         </div>
 
-        <DialogFooter className="p-6 bg-black/[0.02] border-t border-black/[0.03]">
+        <DialogFooter className="p-6 bg-black/[0.02] border-t border-border/50">
           <Button variant="ghost" onClick={() => setOpen(false)} disabled={loading}>Cancel</Button>
             <Button 
             disabled={!selectedContactId || loading || success} 

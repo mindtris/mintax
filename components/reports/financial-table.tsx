@@ -21,11 +21,11 @@ export function FinancialTable({
   const total = rows.reduce((acc, row) => acc + row.balance, 0)
 
   return (
-    <div className="flex flex-col h-full border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
-      <div className="px-5 py-3 border-b border-black/[0.03]">
+    <div className="flex flex-col h-full border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
+      <div className="px-5 py-3 border-b border-border/50">
         <h3 className={cn(
           "text-sm font-medium",
-          type === "revenue" ? "text-green-600" : type === "expense" ? "text-red-600" : "text-[#141413]"
+          type === "revenue" ? "text-green-600" : type === "expense" ? "text-red-600" : "text-card-foreground"
         )}>
           {title}
         </h3>
@@ -34,7 +34,7 @@ export function FinancialTable({
       <div className="flex-1 overflow-auto">
         <table className="w-full text-sm border-collapse">
           <thead>
-            <tr className="border-b border-black/[0.02] bg-black/[0.01] text-xs font-medium text-[#141413]">
+            <tr className="border-b border-black/[0.02] bg-black/[0.01] text-xs font-medium text-card-foreground">
               <th className="px-5 py-2 text-left w-20">Code</th>
               <th className="px-5 py-2 text-left">Account Name</th>
               <th className="px-5 py-2 text-right">Balance</th>
@@ -62,8 +62,8 @@ export function FinancialTable({
         </table>
       </div>
 
-      <div className="px-5 py-3 border-t border-black/[0.03] flex justify-between items-center">
-        <span className="text-xs font-medium text-[#141413]">Total {title}</span>
+      <div className="px-5 py-3 border-t border-border/50 flex justify-between items-center">
+        <span className="text-xs font-medium text-card-foreground">Total {title}</span>
         <span className={cn(
           "text-sm font-bold font-mono tracking-tight",
           type === "revenue" ? "text-green-600" : type === "expense" ? "text-red-600" : "text-foreground"

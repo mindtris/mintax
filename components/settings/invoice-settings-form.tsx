@@ -1,6 +1,6 @@
 "use client"
 
-import { saveInvoiceSettingsAction } from "@/app/(app)/settings/actions"
+import { saveInvoiceSettingsAction, deleteInvoiceTemplateAction } from "@/app/(app)/settings/actions"
 import { FormError } from "@/components/forms/error"
 import { InvoiceTemplatePreview } from "@/components/settings/invoice-template-preview"
 import { Button } from "@/components/ui/button"
@@ -8,16 +8,20 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { useActionState, useEffect, useState } from "react"
+import { Trash2 } from "lucide-react"
+import { useActionState, useEffect, useState, useTransition } from "react"
 import { toast } from "sonner"
+import { InvoiceTemplate } from "../invoices/types"
 
 interface Props {
   settings: Record<string, string>
   orgName: string
+  templates: InvoiceTemplate[]
 }
 
-export default function InvoiceSettingsForm({ settings, orgName }: Props) {
+export default function InvoiceSettingsForm({ settings, orgName, templates }: Props) {
   const [saveState, saveAction, pending] = useActionState(saveInvoiceSettingsAction, null)
+  const [isDeleting, startDeleting] = useTransition()
   const [selectedTemplate, setSelectedTemplate] = useState(settings.invoice_template || "default")
   const [accentColor, setAccentColor] = useState(settings.invoice_color || "#c96442")
 
@@ -25,6 +29,19 @@ export default function InvoiceSettingsForm({ settings, orgName }: Props) {
     if (saveState?.success) toast.success("Invoice settings saved")
     if (saveState?.error) toast.error(saveState.error)
   }, [saveState])
+
+  async function handleDeleteTemplate(id: string) {
+    if (!confirm("Are you sure you want to delete this template?")) return
+    startDeleting(async () => {
+      const result = await deleteInvoiceTemplateAction(id)
+      if (result.success) {
+        toast.success("Template deleted")
+        if (selectedTemplate === id) setSelectedTemplate("default")
+      } else {
+        toast.error("Failed to delete template")
+      }
+    })
+  }
 
   return (
     <form action={saveAction} className="space-y-10">
@@ -37,16 +54,40 @@ export default function InvoiceSettingsForm({ settings, orgName }: Props) {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
           {(["default", "classic", "modern"] as const).map((tpl) => (
-            <InvoiceTemplatePreview
-              key={tpl}
-              template={tpl}
-              accentColor={accentColor}
-              orgName={orgName}
-              selected={selectedTemplate === tpl}
-              onClick={() => setSelectedTemplate(tpl)}
-            />
+            <div key={tpl} className="space-y-2">
+              <InvoiceTemplatePreview
+                template={tpl}
+                accentColor={accentColor}
+                orgName={orgName}
+                selected={selectedTemplate === tpl}
+                onClick={() => setSelectedTemplate(tpl)}
+              />
+            </div>
+          ))}
+
+          {templates.map((tpl) => (
+            <div key={tpl.id} className="space-y-2 relative group">
+              <InvoiceTemplatePreview
+                template="default" // Fallback preview for custom
+                customName={tpl.name}
+                accentColor={accentColor}
+                orgName={orgName}
+                selected={selectedTemplate === tpl.id}
+                onClick={() => setSelectedTemplate(tpl.id || "default")}
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => tpl.id && handleDeleteTemplate(tpl.id)}
+                disabled={isDeleting}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
           ))}
         </div>
         <input type="hidden" name="invoice_template" value={selectedTemplate} />

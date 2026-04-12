@@ -63,6 +63,7 @@ export async function saveProfileAction(
   formData: FormData
 ): Promise<ActionState<User>> {
   const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
   const validatedForm = userFormSchema.safeParse(Object.fromEntries(formData))
 
   if (!validatedForm.success) {
@@ -74,7 +75,7 @@ export async function saveProfileAction(
   const avatarFile = formData.get("avatar") as File | null
   if (avatarFile instanceof File && avatarFile.size > 0) {
     try {
-      const uploadedAvatarPath = await uploadStaticImage(user, avatarFile, "avatar.webp", 500, 500)
+      const uploadedAvatarPath = await uploadStaticImage(user, org.id, avatarFile, "avatar.webp", 500, 500)
       avatarUrl = `/files/static/${path.basename(uploadedAvatarPath)}`
     } catch (error) {
       return { success: false, error: "Failed to upload avatar: " + error }
@@ -116,7 +117,7 @@ export async function saveBusinessAction(
   const logoFile = formData.get("logo") as File | null
   if (logoFile instanceof File && logoFile.size > 0) {
     try {
-      const uploadedLogoPath = await uploadStaticImage(user, logoFile, "businessLogo.png", 500, 500)
+      const uploadedLogoPath = await uploadStaticImage(user, org.id, logoFile, "businessLogo.png", 500, 500)
       logoUrl = `/files/static/${path.basename(uploadedLogoPath)}`
     } catch (error) {
       return { success: false, error: "Failed to upload logo: " + error }
@@ -476,6 +477,73 @@ export async function saveEmailTemplateSettingsAction(
   return { success: true }
 }
 
+export async function addEmailTemplateAction(orgId: string, data: any) {
+  const { emailTemplateFormSchema } = await import("@/lib/schemas/settings")
+  const validatedForm = emailTemplateFormSchema.safeParse(data)
+
+  if (!validatedForm.success) {
+    return { success: false, error: validatedForm.error.message }
+  }
+
+  const { upsertEmailTemplate } = await import("@/lib/services/email-templates")
+  await upsertEmailTemplate(orgId, validatedForm.data)
+  revalidatePath("/settings")
+  return { success: true }
+}
+
+export async function editEmailTemplateAction(orgId: string, id: string, data: any) {
+  const { emailTemplateFormSchema } = await import("@/lib/schemas/settings")
+  const validatedForm = emailTemplateFormSchema.safeParse({ ...data, id })
+
+  if (!validatedForm.success) {
+    return { success: false, error: validatedForm.error.message }
+  }
+
+  const { upsertEmailTemplate } = await import("@/lib/services/email-templates")
+  await upsertEmailTemplate(orgId, validatedForm.data)
+  revalidatePath("/settings")
+  return { success: true }
+}
+
+export async function deleteEmailTemplateAction(orgId: string, id: string) {
+  const { deleteEmailTemplate } = await import("@/lib/services/email-templates")
+  await deleteEmailTemplate(id, orgId)
+  revalidatePath("/settings")
+  return { success: true }
+}
+
+export async function sendTestEmailAction(orgId: string, data: { subject: string; greeting?: string; body: string; footer?: string; variables?: Record<string, any> }) {
+  const user = await getCurrentUser()
+  const { GenericEmail } = await import("@/components/emails/generic-email")
+  const { interpolate } = await import("@/lib/services/email-templates")
+  const { sendEmail } = await import("@/lib/integrations/email")
+  const { getSettings } = await import("@/lib/services/settings")
+  const React = await import("react")
+
+  const emailSettings = await getSettings(orgId)
+  const vars = data.variables || {}
+
+  const subject = interpolate(data.subject, vars)
+  const greeting = interpolate(data.greeting || "", vars)
+  const body = interpolate(data.body, vars)
+  const footer = interpolate(data.footer || "", vars)
+
+  await (sendEmail as any)({
+    to: user.email,
+    subject: `[TEST] ${subject}`,
+    react: React.createElement(GenericEmail, {
+      subject,
+      greeting,
+      body,
+      footer,
+      globalFooterText: emailSettings.email_footer_text,
+    }),
+    replyTo: emailSettings.email_reply_to || undefined,
+  })
+
+  return { success: true }
+}
+
 // --- Invoice Settings Actions ---
 
 export async function saveInvoiceSettingsAction(
@@ -497,6 +565,56 @@ export async function saveInvoiceSettingsAction(
     }
   }
 
+  revalidatePath("/settings")
+  return { success: true }
+}
+
+export async function addInvoiceTemplateAction(data: any) {
+  const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
+  const { getAppData, setAppData } = await import("@/lib/services/apps")
+  const appData = (await getAppData(org.id, "invoices")) as any || { templates: [] }
+  const templates = appData.templates || []
+  
+  const { randomUUID } = await import("crypto")
+  const newTemplate = {
+    id: randomUUID(),
+    name: data.name || "New Template",
+    formData: data.formData,
+  }
+
+  await setAppData(org.id, "invoices", { ...appData, templates: [...templates, newTemplate] })
+  revalidatePath("/settings")
+  return { success: true, template: newTemplate }
+}
+
+export async function editInvoiceTemplateAction(id: string, data: any) {
+  const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
+  const { getAppData, setAppData } = await import("@/lib/services/apps")
+  const appData = (await getAppData(org.id, "invoices")) as any || { templates: [] }
+  const templates = appData.templates || []
+
+  const updatedTemplates = templates.map((t: any) => 
+    t.id === id ? { ...t, name: data.name, formData: data.formData } : t
+  )
+
+  await setAppData(org.id, "invoices", { ...appData, templates: updatedTemplates })
+  revalidatePath("/settings")
+  return { success: true }
+}
+
+export async function deleteInvoiceTemplateAction(id: string) {
+  const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
+  const { getAppData, setAppData } = await import("@/lib/services/apps")
+  const appData = (await getAppData(org.id, "invoices")) as any || { templates: [] }
+  const templates = appData.templates || []
+
+  await setAppData(org.id, "invoices", { 
+    ...appData, 
+    templates: templates.filter((t: any) => t.id !== id) 
+  })
   revalidatePath("/settings")
   return { success: true }
 }

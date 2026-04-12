@@ -170,14 +170,14 @@ export function KanbanBoard({ initialData, stages }: KanbanBoardProps) {
 function KanbanColumn({ id, title, icon: Icon, items, color }: any) {
   return (
     <div className="min-w-[240px] w-[240px] flex flex-col gap-3">
-      <div className="px-4 py-3 rounded-2xl border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] flex items-center justify-between">
+      <div className="px-4 py-3 rounded-2xl border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${color}15`, color }}>
             {Icon && <Icon className="w-4 h-4" />}
           </div>
           <div>
             <h3 className="text-sm font-semibold">{title}</h3>
-            <p className="text-[11px] text-[#141413]">{items.length} candidates</p>
+            <p className="text-[11px] text-card-foreground">{items.length} candidates</p>
           </div>
         </div>
       </div>
@@ -185,7 +185,7 @@ function KanbanColumn({ id, title, icon: Icon, items, color }: any) {
       <SortableContext id={id} items={items.map((i: any) => i.id)} strategy={verticalListSortingStrategy}>
         <div className="flex flex-col gap-2 min-h-[150px]">
           {items.length === 0 ? (
-            <div className="py-10 flex flex-col items-center justify-center border border-dashed border-black/[0.08] rounded-2xl">
+            <div className="py-10 flex flex-col items-center justify-center border border-dashed border-border rounded-2xl">
               <p className="text-xs text-muted-foreground">Drop here</p>
             </div>
           ) : (
@@ -226,21 +226,21 @@ function CandidateCard({ candidate, isOverlay, dragListeners }: any) {
   if (!candidate) return null;
   
   return (
-    <div className={`p-4 bg-[#f5f4ef] text-[#141413] rounded-2xl border border-black/[0.03] shadow-sm shadow-black/[0.02] transition-all group flex flex-col gap-3 ${isOverlay ? 'shadow-md cursor-grabbing' : 'hover:shadow-md'}`}>
+    <div className={`p-4 bg-card text-card-foreground rounded-2xl border border-border/50 shadow-sm shadow-black/[0.02] transition-all group flex flex-col gap-3 ${isOverlay ? 'shadow-md cursor-grabbing' : 'hover:shadow-md'}`}>
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div
             {...dragListeners}
             className="cursor-grab p-1 hover:bg-black/[0.04] rounded-md active:cursor-grabbing"
           >
-            <GripVertical className="w-4 h-4 text-[#141413]" />
+            <GripVertical className="w-4 h-4 text-card-foreground" />
           </div>
-          <div className="w-8 h-8 rounded-full bg-[#c96442]/10 flex items-center justify-center text-[#c96442] font-bold text-[10px]">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">
             {candidate.firstName[0]}{candidate.lastName[0]}
           </div>
           <div>
             <h4 className="text-xs font-semibold">{candidate.firstName} {candidate.lastName}</h4>
-            <span className="text-[11px] text-[#141413]">{candidate.sourcedFrom || "Direct"}</span>
+            <span className="text-[11px] text-card-foreground">{candidate.sourcedFrom || "Direct"}</span>
           </div>
         </div>
         {candidate.linkedinUrl && (
@@ -253,8 +253,8 @@ function CandidateCard({ candidate, isOverlay, dragListeners }: any) {
       </div>
 
       {candidate.notes && (
-        <div className="p-3 bg-black/[0.02] rounded-xl border border-black/[0.03]">
-          <p className="text-xs text-[#141413] line-clamp-2 leading-relaxed italic">&ldquo;{candidate.notes}&rdquo;</p>
+        <div className="p-3 bg-black/[0.02] rounded-xl border border-border/50">
+          <p className="text-xs text-card-foreground line-clamp-2 leading-relaxed italic">&ldquo;{candidate.notes}&rdquo;</p>
         </div>
       )}
     </div>

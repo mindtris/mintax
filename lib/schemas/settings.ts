@@ -43,7 +43,7 @@ export const categoryFormSchema = z.object({
 })
 
 export const invoiceSettingsSchema = z.object({
-  invoice_template: z.string().max(20).optional(),
+  invoice_template: z.string().max(64).optional(),
   invoice_number_prefix: z.string().max(10).optional(),
   invoice_number_digits: z.string().optional(),
   invoice_payment_terms: z.string().optional(),
@@ -115,6 +115,19 @@ export const emailTemplateSettingsSchema = z.object({
   email_otp_subject: z.string().max(256).optional(),
   email_newsletter_subject: z.string().max(256).optional(),
   email_newsletter_greeting: z.string().max(512).optional(),
+})
+
+export const emailTemplateFormSchema = z.object({
+  id: z.string().uuid().optional(),
+  module: z.string().min(1, "Module is required"),
+  event: z.string().min(1, "Event is required"),
+  name: z.string().min(1, "Name is required"),
+  subject: z.string().min(1, "Subject is required"),
+  greeting: z.string().nullable().optional(),
+  body: z.string().min(1, "Body is required"),
+  footer: z.string().nullable().optional(),
+  isDefault: z.boolean().default(false),
+  isActive: z.boolean().default(true),
 })
 
 export const fieldFormSchema = z.object({

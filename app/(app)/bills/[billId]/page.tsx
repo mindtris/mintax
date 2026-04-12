@@ -1,5 +1,6 @@
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { getBillById } from "@/lib/services/bills"
+import { getFilesByBillId } from "@/lib/services/files"
 import { notFound } from "next/navigation"
 import { EditBillForm } from "./edit-bill-form"
 
@@ -7,7 +8,10 @@ export default async function EditBillPage({ params }: { params: Promise<{ billI
   const { billId } = await params
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
-  const bill = await getBillById(billId, org.id)
+  const [bill, files] = await Promise.all([
+    getBillById(billId, org.id),
+    getFilesByBillId(billId, org.id),
+  ])
 
   if (!bill) notFound()
 
@@ -20,7 +24,7 @@ export default async function EditBillPage({ params }: { params: Promise<{ billI
         </p>
       </header>
 
-      <EditBillForm bill={bill} baseCurrency={org.baseCurrency} />
+      <EditBillForm bill={bill} files={files} baseCurrency={org.baseCurrency} />
     </div>
   )
 }

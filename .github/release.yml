@@ -1,0 +1,26 @@
+# Auto-generated release notes config
+# Used when creating a release via GitHub UI or `gh release create`
+
+changelog:
+  exclude:
+    labels:
+      - meta:wontfix
+      - meta:duplicate
+    authors:
+      - dependabot
+  categories:
+    - title: New Features
+      labels:
+        - enhancement
+    - title: Bug Fixes
+      labels:
+        - bug
+    - title: Documentation
+      labels:
+        - documentation
+    - title: Refactoring
+      labels:
+        - refactor
+    - title: Other Changes
+      labels:
+        - "*"

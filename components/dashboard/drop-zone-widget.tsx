@@ -40,7 +40,7 @@ export default function DashboardDropZoneWidget({ orgName }: { orgName: string }
 
   return (
     <div className="flex w-full h-full">
-      <label className="relative w-full h-full border border-dashed rounded-2xl bg-[#f5f4ef] text-[#141413] transition-colors hover:border-primary cursor-pointer">
+      <label className="relative w-full h-full border border-dashed rounded-2xl bg-card text-card-foreground transition-colors hover:border-primary cursor-pointer">
         <input
           type="file"
           id="fileInput"

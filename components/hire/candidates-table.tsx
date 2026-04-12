@@ -59,8 +59,8 @@ export function CandidatesTable({ candidates, tab, visibleColumns }: { candidate
       sortable: true,
       render: (row) => (
         <div className="flex items-center gap-3 py-1">
-          <Avatar className="h-8 w-8 border border-black/[0.05]">
-            <AvatarFallback className="text-[10px] font-bold bg-[#c96442]/10 text-[#c96442]">
+          <Avatar className="h-8 w-8 border border-border">
+            <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">
               {row.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
             </AvatarFallback>
           </Avatar>

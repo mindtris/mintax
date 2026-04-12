@@ -33,11 +33,11 @@ export function ReportsDashboard({
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
+        <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-[#141413]">Total income</span>
+              <span className="text-sm font-medium text-card-foreground">Total income</span>
             </div>
             <div className="text-2xl font-bold text-green-600 mt-2 font-mono tracking-tighter">
               {Object.entries(stats.totalIncomePerCurrency || {}).map(([currency, amount]: [string, any]) => (
@@ -49,11 +49,11 @@ export function ReportsDashboard({
             </div>
           </CardContent>
         </Card>
-        <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
+        <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <TrendingDown className="h-4 w-4 text-red-600" />
-              <span className="text-sm font-medium text-[#141413]">Total expenses</span>
+              <span className="text-sm font-medium text-card-foreground">Total expenses</span>
             </div>
             <div className="text-2xl font-bold text-red-600 mt-2 font-mono tracking-tighter">
               {Object.entries(stats.totalExpensesPerCurrency || {}).map(([currency, amount]: [string, any]) => (
@@ -65,11 +65,11 @@ export function ReportsDashboard({
             </div>
           </CardContent>
         </Card>
-        <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
+        <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <Wallet className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-[#141413]">Net profit</span>
+              <span className="text-sm font-medium text-card-foreground">Net profit</span>
             </div>
             <div className="text-2xl font-bold mt-2 font-mono tracking-tighter">
               {Object.entries(stats.profitPerCurrency || {}).map(([currency, amount]: [string, any]) => (
@@ -81,11 +81,11 @@ export function ReportsDashboard({
             </div>
           </CardContent>
         </Card>
-        <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
+        <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-[#141413]">Transactions</span>
+              <span className="text-sm font-medium text-card-foreground">Transactions</span>
             </div>
             <div className="text-2xl font-bold mt-2 font-mono tracking-tighter">{stats.invoicesProcessed}</div>
           </CardContent>

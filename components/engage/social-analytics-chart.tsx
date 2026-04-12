@@ -45,7 +45,7 @@ export function SocialAnalyticsChart() {
 
   if (loading) {
     return (
-      <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden min-h-[300px] flex items-center justify-center">
+      <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden min-h-[300px] flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </Card>
     )
@@ -53,7 +53,7 @@ export function SocialAnalyticsChart() {
 
   if (!data || data.labels.length === 0) {
     return (
-      <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden min-h-[300px] flex flex-col items-center justify-center p-6 text-center">
+      <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden min-h-[300px] flex flex-col items-center justify-center p-6 text-center">
         <p className="text-sm text-muted-foreground">No analytics data available for the last 30 days.</p>
         <p className="text-xs text-muted-foreground mt-1">Metrics will appear here once your posts gain visibility.</p>
       </Card>
@@ -61,8 +61,8 @@ export function SocialAnalyticsChart() {
   }
 
   return (
-    <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
-      <CardHeader className="px-6 py-4 border-b border-black/[0.03]">
+    <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
+      <CardHeader className="px-6 py-4 border-b border-border/50">
         <CardTitle className="text-sm font-medium">Performance Trends (30 Days)</CardTitle>
       </CardHeader>
       <CardContent className="p-0">

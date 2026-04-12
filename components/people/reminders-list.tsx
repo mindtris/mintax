@@ -121,7 +121,7 @@ export function RemindersList({ reminders, members, currentUserId, createOpen, s
       key: "category",
       label: "Category",
       render: (row: any) => (
-        <Badge variant="outline" className="text-[10px] font-medium border-black/[0.08] bg-black/[0.02]">
+        <Badge variant="outline" className="text-[10px] font-medium border-border bg-black/[0.02]">
           {CATEGORY_LABELS[row.category] || row.category}
         </Badge>
       ),

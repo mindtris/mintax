@@ -62,6 +62,7 @@ export async function GET(request: NextRequest) {
         for (const adminEmail of adminEmails) {
           try {
             await sendInvoiceReminderEmail({
+              orgId: invoice.organizationId,
               email: adminEmail,
               invoiceNumber: invoice.invoiceNumber,
               clientName: invoice.clientName,
@@ -83,6 +84,7 @@ export async function GET(request: NextRequest) {
         if (invoice.clientEmail) {
           try {
             await sendInvoiceReminderEmail({
+              orgId: invoice.organizationId,
               email: invoice.clientEmail,
               invoiceNumber: invoice.invoiceNumber,
               clientName: invoice.clientName,
@@ -129,6 +131,7 @@ export async function GET(request: NextRequest) {
         for (const adminEmail of adminEmails) {
           try {
             await sendBillReminderEmail({
+              orgId: bill.organizationId,
               email: adminEmail,
               billNumber: bill.billNumber,
               vendorName: bill.vendorName,

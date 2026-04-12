@@ -4,10 +4,9 @@ import { ActionState } from "@/lib/actions"
 import { getActiveOrg, getCurrentUser, isSubscriptionExpired } from "@/lib/core/auth"
 import {
   getDirectorySize,
-  getUserUploadsDirectory,
+  getOrgRoot,
+  getUnsortedFilePath,
   isEnoughStorageToUploadFile,
-  safePathJoin,
-  unsortedFilePath,
 } from "@/lib/files"
 import { createFile } from "@/lib/services/files"
 import { updateUser } from "@/lib/services/users"
@@ -20,8 +19,6 @@ export async function uploadFilesAction(formData: FormData): Promise<ActionState
   const org = await getActiveOrg(user)
   const files = formData.getAll("files") as File[]
   const storage = getStorage()
-
-  const userUploadsDirectory = getUserUploadsDirectory(user)
 
   // Check limits
   const totalFileSize = files.reduce((acc, file) => acc + file.size, 0)
@@ -45,18 +42,17 @@ export async function uploadFilesAction(formData: FormData): Promise<ActionState
 
       // Save file to storage
       const fileUuid = randomUUID()
-      const relativeFilePath = unsortedFilePath(fileUuid, file.name)
+      const storagePath = getUnsortedFilePath(org.id, fileUuid, file.name)
       const arrayBuffer = await file.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
 
-      const fullStoragePath = safePathJoin(userUploadsDirectory, relativeFilePath)
-      await storage.put(fullStoragePath, buffer)
+      await storage.put(storagePath, buffer)
 
       // Create file record in database
       const fileRecord = await createFile(org.id, user.id, {
         id: fileUuid,
         filename: file.name,
-        path: relativeFilePath,
+        path: storagePath,
         mimetype: file.type,
         metadata: {
           size: file.size,
@@ -68,7 +64,7 @@ export async function uploadFilesAction(formData: FormData): Promise<ActionState
     })
   )
 
-  const storageUsed = await getDirectorySize(getUserUploadsDirectory(user))
+  const storageUsed = await getDirectorySize(getOrgRoot(org.id))
   await updateUser(user.id, { storageUsed })
 
   console.log("uploadedFiles", uploadedFiles)

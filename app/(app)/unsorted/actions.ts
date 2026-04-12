@@ -9,10 +9,9 @@ import { ActionState } from "@/lib/actions"
 import { getActiveOrg, getCurrentUser, isAiBalanceExhausted, isSubscriptionExpired } from "@/lib/core/auth"
 import {
   getDirectorySize,
-  getTransactionFileUploadPath,
-  getUserUploadsDirectory,
-  safePathJoin,
-  unsortedFilePath,
+  getOrgRoot,
+  getTransactionFilePath,
+  getUnsortedFilePath,
 } from "@/lib/files"
 import { autoAssignCOA, isHighConfidenceResult } from "@/lib/services/automation"
 import { DEFAULT_PROMPT_ANALYSE_NEW_FILE } from "@/lib/services/defaults"
@@ -55,7 +54,7 @@ export async function analyzeFileAction(
 
   let attachments: AnalyzeAttachment[] = []
   try {
-    attachments = await loadAttachmentsForAI(user, file)
+    attachments = await loadAttachmentsForAI(org.id, file)
   } catch (error) {
     console.error("Failed to retrieve files:", error)
     return { success: false, error: "Failed to retrieve files: " + error }
@@ -122,17 +121,14 @@ export async function saveFileAsTransactionAction(
 
     // Move file to processed location
     const storage = getStorage()
-    const userUploadsDirectory = getUserUploadsDirectory(user)
     const originalFileName = path.basename(file.path)
-    const newRelativeFilePath = getTransactionFileUploadPath(file.id, originalFileName, transaction)
+    const newStoragePath = getTransactionFilePath(org.id, file.id, originalFileName, transaction.issuedAt || undefined)
 
-    const oldStoragePath = safePathJoin(userUploadsDirectory, file.path)
-    const newStoragePath = safePathJoin(userUploadsDirectory, newRelativeFilePath)
-    await storage.move(oldStoragePath, newStoragePath)
+    await storage.move(file.path, newStoragePath)
 
     // Update file record
     await updateFile(file.id, org.id, {
-      path: newRelativeFilePath,
+      path: newStoragePath,
       isReviewed: true,
     })
 
@@ -185,25 +181,22 @@ export async function splitFileIntoItemsAction(
 
     // Get the original file's content from storage
     const storage = getStorage()
-    const userUploadsDirectory = getUserUploadsDirectory(user)
-    const originalStoragePath = safePathJoin(userUploadsDirectory, originalFile.path)
-    const fileContent = await storage.get(originalStoragePath)
+    const fileContent = await storage.get(originalFile.path)
 
     // Create a new file for each item
     for (const item of items) {
       const fileUuid = randomUUID()
       const fileName = `${originalFile.filename}-part-${item.name}`
-      const relativeFilePath = unsortedFilePath(fileUuid, fileName)
-      const fullStoragePath = safePathJoin(userUploadsDirectory, relativeFilePath)
+      const storagePath = getUnsortedFilePath(org.id, fileUuid, fileName)
 
       // Copy the original file content
-      await storage.put(fullStoragePath, fileContent)
+      await storage.put(storagePath, fileContent)
 
       // Create file record in database with the item data cached
       await createFile(org.id, user.id, {
         id: fileUuid,
         filename: fileName,
-        path: relativeFilePath,
+        path: storagePath,
         mimetype: originalFile.mimetype,
         metadata: originalFile.metadata,
         isSplitted: true,
@@ -226,8 +219,8 @@ export async function splitFileIntoItemsAction(
     // Delete the original file
     await deleteFile(fileId, org.id)
 
-    // Update user storage used
-    const storageUsed = await getDirectorySize(getUserUploadsDirectory(user))
+    // Update user storage used (computed from org root)
+    const storageUsed = await getDirectorySize(getOrgRoot(org.id))
     await updateUser(user.id, { storageUsed })
 
     revalidatePath("/accounts")
@@ -274,16 +267,13 @@ export async function acceptAISuggestionsAction(fileId: string): Promise<ActionS
 
     // Move file to transaction location
     const storage = getStorage()
-    const userUploadsDirectory = getUserUploadsDirectory(user)
     const originalFileName = path.basename(file.path)
-    const newRelativeFilePath = getTransactionFileUploadPath(file.id, originalFileName, transaction)
+    const newStoragePath = getTransactionFilePath(org.id, file.id, originalFileName, transaction.issuedAt || undefined)
 
-    const oldStoragePath = safePathJoin(userUploadsDirectory, file.path)
-    const newStoragePath = safePathJoin(userUploadsDirectory, newRelativeFilePath)
-    await storage.move(oldStoragePath, newStoragePath)
+    await storage.move(file.path, newStoragePath)
 
     await updateFile(file.id, org.id, {
-      path: newRelativeFilePath,
+      path: newStoragePath,
       isReviewed: true,
     })
 

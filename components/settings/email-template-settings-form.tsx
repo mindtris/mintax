@@ -1,6 +1,12 @@
 "use client"
 
-import { saveEmailTemplateSettingsAction } from "@/app/(app)/settings/actions"
+import { 
+  addEmailTemplateAction, 
+  editEmailTemplateAction, 
+  deleteEmailTemplateAction,
+  saveEmailTemplateSettingsAction,
+  sendTestEmailAction
+} from "@/app/(app)/settings/actions"
 import { Button } from "@/components/ui/button"
 import { DataGrid, DataGridColumn } from "@/components/ui/data-grid"
 import { Input } from "@/components/ui/input"
@@ -13,508 +19,421 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useActionState, useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
+import { Eye, Send, Loader2, Trash2, CheckCircle2 } from "lucide-react"
+import { EmailTemplate as DbTemplate } from "@/lib/prisma/client"
 
-// ─── Email template definitions ─────────────────────────────────────────────
+// ─── Email Template Registry ─────────────────────────────────────────────
 
-interface EmailTemplate {
-  id: string
-  name: string
-  category: string
+interface RegistryTemplate {
   module: string
-  sentTo: string
-  subjectKey: string
+  event: string
+  name: string
+  category: "Accounting" | "Pipeline" | "Hire" | "Others"
+  sentTo: "Customer" | "Admin" | "Vendor" | "Applicant" | "Team" | "Subscriber"
   subjectDefault: string
-  subjectVars: string
-  fields: {
-    key: string
-    label: string
-    type: "input" | "textarea"
-    placeholder: string
-    vars?: string
-  }[]
+  greetingDefault: string
+  bodyDefault: string
+  variables: string[]
 }
 
-const EMAIL_TEMPLATES: EmailTemplate[] = [
-  // ── Bills ──
+const TEMPLATE_REGISTRY: RegistryTemplate[] = [
   {
-    id: "bill_reminder",
-    name: "Bill reminder",
-    category: "Bills",
-    module: "Accounting",
-    sentTo: "Admin",
-    subjectKey: "email_bill_reminder_subject",
-    subjectDefault: "Bill {billNumber} from {vendorName} is {status}",
-    subjectVars: "{billNumber}, {vendorName}, {orgName}, {status}",
-    fields: [
-      { key: "email_bill_reminder_footer", label: "Footer note", type: "textarea", placeholder: "This is an automated reminder from {orgName}." },
-    ],
-  },
-  {
-    id: "bill_recurring",
-    name: "Bill recurring",
-    category: "Bills",
-    module: "Accounting",
-    sentTo: "Admin",
-    subjectKey: "email_bill_recurring_subject",
-    subjectDefault: "Recurring expense processed: {billName}",
-    subjectVars: "{billName}, {orgName}, {recurrence}",
-    fields: [
-      { key: "email_bill_recurring_footer", label: "Footer note", type: "textarea", placeholder: "This is an automated notification from {orgName}." },
-    ],
-  },
-  // ── Invoices ──
-  {
-    id: "invoice_new",
+    module: "invoice",
+    event: "sent",
     name: "New invoice",
-    category: "Invoices",
-    module: "Accounting",
+    category: "Accounting",
     sentTo: "Customer",
-    subjectKey: "email_invoice_subject",
     subjectDefault: "Invoice {invoiceNumber} from {orgName}",
-    subjectVars: "{invoiceNumber}, {orgName}, {clientName}",
-    fields: [
-      { key: "email_invoice_greeting", label: "Greeting message", type: "textarea", placeholder: "A new invoice has been generated for your recent project with {orgName}.", vars: "{clientName}, {orgName}, {invoiceNumber}" },
-      { key: "email_invoice_footer_note", label: "Footer note", type: "textarea", placeholder: "Thank you for your business." },
-    ],
+    greetingDefault: "Hi {clientName},",
+    bodyDefault: "A new invoice has been generated for your recent project with {orgName}.\n\nYou can view the details below or download the attached PDF.",
+    variables: ["invoiceNumber", "clientName", "orgName", "total", "dueDate"],
   },
   {
-    id: "invoice_reminder_customer",
+    module: "invoice",
+    event: "reminder",
     name: "Invoice reminder",
-    category: "Invoices",
-    module: "Accounting",
+    category: "Accounting",
     sentTo: "Customer",
-    subjectKey: "email_invoice_reminder_customer_subject",
-    subjectDefault: "Invoice {invoiceNumber} is {status}",
-    subjectVars: "{invoiceNumber}, {orgName}, {clientName}, {status}",
-    fields: [
-      { key: "email_invoice_reminder_customer_footer", label: "Footer note", type: "textarea", placeholder: "If you have already sent the payment, please disregard this reminder." },
-    ],
+    subjectDefault: "Reminder: Invoice {invoiceNumber} is {status}",
+    greetingDefault: "Hi {clientName},",
+    bodyDefault: "This is a friendly reminder that invoice {invoiceNumber} for {total} is currently {status}.\n\nIf you have already sent the payment, please disregard this message.",
+    variables: ["invoiceNumber", "clientName", "orgName", "total", "status", "dueDate"],
   },
   {
-    id: "invoice_reminder_admin",
-    name: "Invoice reminder",
-    category: "Invoices",
-    module: "Accounting",
+    module: "bill",
+    event: "reminder",
+    name: "Bill reminder",
+    category: "Accounting",
     sentTo: "Admin",
-    subjectKey: "email_invoice_reminder_admin_subject",
-    subjectDefault: "Invoice {invoiceNumber} is {status}",
-    subjectVars: "{invoiceNumber}, {orgName}, {clientName}, {status}",
-    fields: [
-      { key: "email_invoice_reminder_admin_footer", label: "Footer note", type: "textarea", placeholder: "This is an automated reminder from {orgName}." },
-    ],
+    subjectDefault: "Bill {billNumber} from {vendorName} is {status}",
+    greetingDefault: "Hello Team,",
+    bodyDefault: "The bill {billNumber} from {vendorName} is currently {status}.\n\nPlease ensure payment is processed by {dueDate}.",
+    variables: ["billNumber", "vendorName", "orgName", "total", "status", "dueDate"],
   },
   {
-    id: "invoice_recurring_customer",
-    name: "Invoice recurring",
-    category: "Invoices",
-    module: "Accounting",
+    module: "estimate",
+    event: "sent",
+    name: "New estimate",
+    category: "Accounting",
     sentTo: "Customer",
-    subjectKey: "email_invoice_recurring_customer_subject",
-    subjectDefault: "Recurring invoice {invoiceNumber} generated",
-    subjectVars: "{invoiceNumber}, {orgName}, {clientName}, {recurrence}",
-    fields: [
-      { key: "email_invoice_recurring_customer_footer", label: "Footer note", type: "textarea", placeholder: "Thank you for your continued business." },
-    ],
+    subjectDefault: "Estimate {estimateNumber} from {orgName}",
+    greetingDefault: "Hi {clientName},",
+    bodyDefault: "We have prepared an estimate for your consideration. Please review the attached document and let us know if you would like to proceed.",
+    variables: ["estimateNumber", "clientName", "orgName", "total"],
   },
   {
-    id: "invoice_recurring_admin",
-    name: "Invoice recurring",
-    category: "Invoices",
-    module: "Accounting",
+    module: "lead",
+    event: "assigned",
+    name: "Lead assignment",
+    category: "Pipeline",
     sentTo: "Admin",
-    subjectKey: "email_invoice_recurring_admin_subject",
-    subjectDefault: "Recurring invoice {invoiceNumber} generated",
-    subjectVars: "{invoiceNumber}, {orgName}, {clientName}, {recurrence}",
-    fields: [
-      { key: "email_invoice_recurring_admin_footer", label: "Footer note", type: "textarea", placeholder: "This is an automated notification from {orgName}." },
-    ],
+    subjectDefault: "New Lead Assigned: {leadName}",
+    greetingDefault: "Hello {assigneeName},",
+    bodyDefault: "A new lead '{leadName}' from {source} has been assigned to you. \n\nPlease follow up as soon as possible.",
+    variables: ["leadName", "source", "assigneeName", "orgName"],
   },
   {
-    id: "invoice_payment_receipt",
-    name: "Invoice payment receipt",
-    category: "Invoices",
-    module: "Accounting",
-    sentTo: "Customer",
-    subjectKey: "email_invoice_payment_receipt_subject",
-    subjectDefault: "Payment receipt for invoice {invoiceNumber}",
-    subjectVars: "{invoiceNumber}, {orgName}, {clientName}",
-    fields: [
-      { key: "email_invoice_payment_receipt_footer", label: "Footer note", type: "textarea", placeholder: "This email serves as your payment receipt." },
-    ],
-  },
-  {
-    id: "invoice_payment_received",
-    name: "Invoice payment received",
-    category: "Invoices",
-    module: "Accounting",
-    sentTo: "Admin",
-    subjectKey: "email_invoice_payment_received_subject",
-    subjectDefault: "Payment received for invoice {invoiceNumber}",
-    subjectVars: "{invoiceNumber}, {orgName}, {clientName}",
-    fields: [
-      { key: "email_invoice_payment_received_footer", label: "Footer note", type: "textarea", placeholder: "This is an automated notification from {orgName}." },
-    ],
-  },
-  // ── Payments ──
-  {
-    id: "payment_receipt",
-    name: "Payment receipt",
-    category: "Payments",
-    module: "Accounting",
-    sentTo: "Customer",
-    subjectKey: "email_payment_receipt_subject",
-    subjectDefault: "Payment receipt from {orgName}",
-    subjectVars: "{referenceNumber}, {recipientName}, {orgName}",
-    fields: [
-      { key: "email_payment_receipt_footer", label: "Footer note", type: "textarea", placeholder: "This email serves as your payment confirmation." },
-    ],
-  },
-  {
-    id: "payment_made",
-    name: "Payment made",
-    category: "Payments",
-    module: "Accounting",
-    sentTo: "Vendor",
-    subjectKey: "email_payment_made_subject",
-    subjectDefault: "Payment sent to {vendorName}",
-    subjectVars: "{referenceNumber}, {vendorName}, {orgName}",
-    fields: [
-      { key: "email_payment_made_footer", label: "Footer note", type: "textarea", placeholder: "This email serves as your payment confirmation." },
-    ],
-  },
-  // ── Others ──
-  {
-    id: "reminder",
-    name: "Reminder notification",
-    category: "Others",
-    module: "Pipeline",
-    sentTo: "Assignee",
-    subjectKey: "email_reminder_subject",
-    subjectDefault: "Reminder: {reminderTitle}",
-    subjectVars: "{reminderTitle}, {orgName}, {category}",
-    fields: [
-      { key: "email_reminder_footer_note", label: "Footer note", type: "textarea", placeholder: "Custom message shown below the reminder details." },
-    ],
-  },
-  {
-    id: "otp",
-    name: "Verification code",
-    category: "Others",
-    module: "Authentication",
-    sentTo: "User",
-    subjectKey: "email_otp_subject",
-    subjectDefault: "Your Mintax verification code",
-    subjectVars: "",
-    fields: [],
-  },
-  {
-    id: "newsletter",
-    name: "Newsletter welcome",
-    category: "Others",
-    module: "Engage",
+    module: "hire",
+    event: "application_received",
+    name: "Application confirmation",
+    category: "Hire",
     sentTo: "Subscriber",
-    subjectKey: "email_newsletter_subject",
-    subjectDefault: "Welcome to Mintax Newsletter!",
-    subjectVars: "",
-    fields: [
-      { key: "email_newsletter_greeting", label: "Greeting message", type: "textarea", placeholder: "Thank you for subscribing to our updates." },
-    ],
+    subjectDefault: "Application received: {jobTitle} at {orgName}",
+    greetingDefault: "Hi {applicantName},",
+    bodyDefault: "Thank you for applying for the {jobTitle} position. We have received your application and will review it shortly.",
+    variables: ["applicantName", "jobTitle", "orgName"],
+  },
+  {
+    module: "team",
+    event: "invite",
+    name: "Team invitation",
+    category: "Others",
+    sentTo: "Team",
+    subjectDefault: "Invitation to join {orgName} on Mintax",
+    greetingDefault: "Welcome!",
+    bodyDefault: "{inviterName} has invited you to join the {orgName} team on Mintax.\n\nClick the button below to accept the invitation and get started.",
+    variables: ["inviterName", "orgName"],
   },
 ]
-
-// ─── Row type for the data grid ─────────────────────────────────────────────
-
-interface TemplateRow {
-  id: string
-  name: string
-  category: string
-  module: string
-  sentTo: string
-  subject: string
-}
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
 interface Props {
   settings: Record<string, string>
   orgName: string
+  templates: DbTemplate[]
+  orgId: string
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Bills: "bg-primary/10 text-primary rounded-full",
-  Invoices: "bg-accent text-accent-foreground rounded-full",
-  Payments: "bg-secondary text-secondary-foreground rounded-full",
+  Accounting: "bg-primary/10 text-primary rounded-full",
+  Pipeline: "bg-accent text-accent-foreground rounded-full",
+  Hire: "bg-secondary text-secondary-foreground rounded-full",
   Others: "bg-muted text-muted-foreground rounded-full",
 }
 
-const SENT_TO_COLORS: Record<string, string> = {
-  Admin: "bg-muted text-muted-foreground rounded-full",
-  Customer: "bg-primary/10 text-primary rounded-full",
-  Vendor: "bg-accent text-accent-foreground rounded-full",
-  Assignee: "bg-secondary text-secondary-foreground rounded-full",
-  User: "bg-muted text-muted-foreground rounded-full",
-  Subscriber: "bg-primary/10 text-primary rounded-full",
-}
-
-export default function EmailTemplateSettingsForm({ settings, orgName }: Props) {
-  const [saveState, saveAction, pending] = useActionState(saveEmailTemplateSettingsAction, null)
-  const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null)
-  const [formData, setFormData] = useState<Record<string, string>>({})
-  const [globalSheetOpen, setGlobalSheetOpen] = useState(false)
-  const [globalForm, setGlobalForm] = useState({
-    email_sender_name: settings.email_sender_name || "",
-    email_reply_to: settings.email_reply_to || "",
-    email_footer_text: settings.email_footer_text || "",
+export default function EmailTemplateSettingsForm({ settings, orgName, templates, orgId }: Props) {
+  const [saveSettingsState, saveSettingsAction, pendingSettings] = useActionState(saveEmailTemplateSettingsAction, null)
+  
+  const [selectedRegistry, setSelectedRegistry] = useState<RegistryTemplate | null>(null)
+  const [selectedDbTemplate, setSelectedDbTemplate] = useState<DbTemplate | null>(null)
+  
+  const [editForm, setEditForm] = useState({
+    subject: "",
+    greeting: "",
+    body: "",
+    footer: "",
+    name: "",
+    isDefault: true,
   })
 
+  // Preview state
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null)
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false)
+  const [testSendPending, setTestSendPending] = useState(false)
+
   useEffect(() => {
-    if (saveState?.success) {
-      toast.success("Email settings saved")
-      setSelectedTemplate(null)
-      setGlobalSheetOpen(false)
-    }
-    if (saveState?.error) toast.error(saveState.error)
-  }, [saveState])
+    if (saveSettingsState?.success) toast.success("Email settings saved")
+  }, [saveSettingsState])
 
-  const rows: TemplateRow[] = useMemo(
-    () =>
-      EMAIL_TEMPLATES.map((t) => ({
-        id: t.id,
-        name: t.name,
-        category: t.category,
-        module: t.module,
-        sentTo: t.sentTo,
-        subject: settings[t.subjectKey] || t.subjectDefault,
-      })),
-    [settings]
-  )
-
-  const openEditSheet = useCallback(
-    (row: TemplateRow) => {
-      const template = EMAIL_TEMPLATES.find((t) => t.id === row.id)!
-      const data: Record<string, string> = {
-        [template.subjectKey]: settings[template.subjectKey] || "",
+  const rows = useMemo(() => {
+    return TEMPLATE_REGISTRY.map((reg) => {
+      const dbTemplate = templates.find(t => t.module === reg.module && t.event === reg.event && t.isDefault)
+      return {
+        id: reg.module + "_" + reg.event,
+        registry: reg,
+        dbTemplate,
+        name: reg.name,
+        category: reg.category,
+        sentTo: reg.sentTo,
+        subject: dbTemplate?.subject || reg.subjectDefault,
+        status: dbTemplate ? "Customized" : "Default",
       }
-      template.fields.forEach((f) => {
-        data[f.key] = settings[f.key] || ""
-      })
-      setFormData(data)
-      setSelectedTemplate(template)
-    },
-    [settings]
-  )
+    })
+  }, [templates])
 
-  const columns: DataGridColumn<TemplateRow>[] = [
-    {
-      key: "name",
-      label: "Template",
-      sortable: true,
-      className: "font-semibold",
-    },
-    {
-      key: "category",
-      label: "Category",
-      sortable: true,
+  const openSheet = useCallback((row: typeof rows[0]) => {
+    setSelectedRegistry(row.registry)
+    setSelectedDbTemplate(row.dbTemplate || null)
+    setEditForm({
+      name: row.dbTemplate?.name || row.registry.name,
+      subject: row.dbTemplate?.subject || row.registry.subjectDefault,
+      greeting: row.dbTemplate?.greeting || row.registry.greetingDefault,
+      body: row.dbTemplate?.body || row.registry.bodyDefault,
+      footer: row.dbTemplate?.footer || "",
+      isDefault: true,
+    })
+    setPreviewHtml(null)
+  }, [])
+
+  const handlePreview = async () => {
+    if (!selectedRegistry) return
+    setIsPreviewLoading(true)
+    
+    // Create mock variables
+    const mockVars: Record<string, string> = { orgName }
+    selectedRegistry.variables.forEach(v => {
+      mockVars[v] = `[${v}]`
+    })
+
+    try {
+      const res = await fetch("/api/email/preview", {
+        method: "POST",
+        body: JSON.stringify({
+          ...editForm,
+          variables: mockVars,
+        })
+      })
+      const data = await res.json()
+      setPreviewHtml(data.html)
+    } catch (err) {
+      toast.error("Failed to generate preview")
+    } finally {
+      setIsPreviewLoading(false)
+    }
+  }
+
+  const handleSendTest = async () => {
+    if (!selectedRegistry) return
+    setTestSendPending(true)
+    
+    const mockVars: Record<string, string> = { orgName }
+    selectedRegistry.variables.forEach(v => {
+      mockVars[v] = `[${v}]`
+    })
+
+    try {
+      const res = await sendTestEmailAction(orgId, {
+        ...editForm,
+        variables: mockVars,
+      })
+      if (res.success) toast.success("Test email sent to your address")
+      else toast.error("Failed to send test email")
+    } catch (err) {
+      toast.error("An error occurred")
+    } finally {
+      setTestSendPending(false)
+    }
+  }
+
+  const handleSaveTemplate = async () => {
+    if (!selectedRegistry) return
+    
+    const data = {
+      ...editForm,
+      module: selectedRegistry.module,
+      event: selectedRegistry.event,
+    }
+
+    try {
+      let res
+      if (selectedDbTemplate) {
+        res = await editEmailTemplateAction(orgId, selectedDbTemplate.id, data)
+      } else {
+        res = await addEmailTemplateAction(orgId, data)
+      }
+
+      if (res.success) {
+        toast.success("Template saved successfully")
+        setSelectedRegistry(null)
+      } else {
+        toast.error(res.error || "Failed to save template")
+      }
+    } catch (err) {
+      toast.error("An error occurred")
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!selectedDbTemplate) return
+    if (!confirm("Are you sure you want to revert to the default template? This will delete your customizations.")) return
+    
+    try {
+      const res = await deleteEmailTemplateAction(orgId, selectedDbTemplate.id)
+      if (res.success) {
+        toast.success("Reverted to default")
+        setSelectedRegistry(null)
+      }
+    } catch (err) {
+      toast.error("Failed to delete template")
+    }
+  }
+
+  const columns: DataGridColumn<typeof rows[0]>[] = [
+    { key: "name", label: "Template", className: "font-semibold" },
+    { 
+      key: "category", 
+      label: "Category", 
       render: (row) => (
-        <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-semibold ${CATEGORY_COLORS[row.category] || "bg-muted text-muted-foreground rounded-full"}`}>
-          {row.category}
-        </span>
-      ),
+        <span className={`px-2.5 py-0.5 text-xs font-semibold ${CATEGORY_COLORS[row.category]}`}>{row.category}</span>
+      )
     },
-    {
-      key: "sentTo",
-      label: "Sent to",
-      sortable: true,
+    { key: "sentTo", label: "Sent to" },
+    { key: "subject", label: "Subject", className: "text-muted-foreground truncate max-w-[200px]" },
+    { 
+      key: "status", 
+      label: "Status",
       render: (row) => (
-        <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-semibold ${SENT_TO_COLORS[row.sentTo] || "bg-muted text-muted-foreground rounded-full"}`}>
-          {row.sentTo}
+        <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${row.dbTemplate ? "text-primary" : "text-muted-foreground"}`}>
+          {row.dbTemplate ? <CheckCircle2 className="w-3.5 h-3.5" /> : null}
+          {row.status}
         </span>
-      ),
-    },
-    {
-      key: "subject",
-      label: "Subject line",
-      className: "text-muted-foreground max-w-[300px] truncate",
+      )
     },
   ]
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold tracking-tight">Email templates</h2>
-            <div className="bg-secondary text-sm px-2 py-0.5 rounded-md font-bold text-muted-foreground/70 tabular-nums border-black/[0.03] border shadow-sm">
-              {rows.length}
-            </div>
-          </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Customize subject lines, greetings, and footer notes for each email type.
-          </p>
+          <h2 className="text-xl font-bold tracking-tight">Email templates</h2>
+          <p className="text-sm text-muted-foreground mt-1">Manage transactional email content, branding, and testing.</p>
         </div>
-        <Button onClick={() => setGlobalSheetOpen(true)}>
-          Global settings
-        </Button>
       </div>
 
-      {/* Data grid */}
       <DataGrid
         data={rows}
         columns={columns}
         getRowId={(row) => row.id}
-        onRowClick={openEditSheet}
-        emptyTitle="No email templates"
-        emptyDescription="Email templates will appear here."
+        onRowClick={openSheet}
       />
 
-      {/* Template edit sheet */}
-      <Sheet open={!!selectedTemplate} onOpenChange={(open) => !open && setSelectedTemplate(null)}>
-        <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] rounded-lg w-[95vw] sm:max-w-md flex flex-col gap-0 p-0">
-          <SheetHeader className="px-6 pt-6 pb-4 shrink-0 border-b">
-            <SheetTitle>{selectedTemplate?.name}</SheetTitle>
-            <div className="flex gap-2 mt-1">
-              {selectedTemplate && (
-                <>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-semibold ${CATEGORY_COLORS[selectedTemplate.category] || "bg-muted text-muted-foreground rounded-full"}`}>{selectedTemplate.category}</span>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-semibold ${SENT_TO_COLORS[selectedTemplate.sentTo] || "bg-muted text-muted-foreground rounded-full"}`}>Sent to {selectedTemplate.sentTo.toLowerCase()}</span>
-                </>
+      <Sheet open={!!selectedRegistry} onOpenChange={(open) => !open && setSelectedRegistry(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-xl p-0 flex flex-col gap-0 border-l-0">
+          <SheetHeader className="px-6 pt-6 pb-4 border-b">
+            <div className="flex items-center justify-between">
+              <div>
+                <SheetTitle>{selectedRegistry?.name}</SheetTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {selectedRegistry?.module} / {selectedRegistry?.event}
+                </p>
+              </div>
+              {selectedDbTemplate && (
+                <Button variant="ghost" size="icon" onClick={handleDelete} className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                  <Trash2 className="w-4 h-4" />
+                </Button>
               )}
             </div>
           </SheetHeader>
-          <form action={saveAction} className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
-              {/* Subject line */}
-              {selectedTemplate && (
-                <div className="space-y-2">
-                  <Label htmlFor={selectedTemplate.subjectKey}>Subject line</Label>
-                  <Input
-                    id={selectedTemplate.subjectKey}
-                    name={selectedTemplate.subjectKey}
-                    value={formData[selectedTemplate.subjectKey] || ""}
-                    onChange={(e) => setFormData((p) => ({ ...p, [selectedTemplate.subjectKey]: e.target.value }))}
-                    placeholder={selectedTemplate.subjectDefault}
+
+          <Tabs defaultValue="edit" className="flex-1 flex flex-col overflow-hidden">
+            <div className="px-6 border-b bg-muted/20">
+              <TabsList className="bg-transparent h-12 p-0 gap-6">
+                <TabsTrigger value="edit" className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent shadow-none">Editor</TabsTrigger>
+                <TabsTrigger value="preview" onClick={handlePreview} className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent shadow-none">Preview</TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="edit" className="flex-1 overflow-y-auto p-6 m-0 space-y-6">
+              <div className="space-y-4">
+                <div className="grid gap-2">
+                  <Label>Subject Line</Label>
+                  <Input 
+                    value={editForm.subject}
+                    onChange={(e) => setEditForm(f => ({ ...f, subject: e.target.value }))}
+                    placeholder="Email subject..."
                   />
-                  {selectedTemplate.subjectVars && (
-                    <p className="text-[10px] text-muted-foreground">
-                      Variables: {selectedTemplate.subjectVars}
-                    </p>
-                  )}
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label>Greeting</Label>
+                  <Input 
+                    value={editForm.greeting}
+                    onChange={(e) => setEditForm(f => ({ ...f, greeting: e.target.value }))}
+                    placeholder="Hi {name},"
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>Body Paragraphs</Label>
+                  <Textarea 
+                    value={editForm.body}
+                    onChange={(e) => setEditForm(f => ({ ...f, body: e.target.value }))}
+                    rows={10}
+                    className="font-mono text-sm leading-relaxed"
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>Footer Note</Label>
+                  <Input 
+                    value={editForm.footer}
+                    onChange={(e) => setEditForm(f => ({ ...f, footer: e.target.value }))}
+                    placeholder="Thank you for your business."
+                  />
+                </div>
+                
+                <div className="p-3 bg-muted/30 rounded-lg border border-border/50">
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 block">Available Variables</Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedRegistry?.variables.map(v => (
+                      <code key={v} className="px-1.5 py-0.5 bg-background border rounded text-[11px] text-primary">{`{${v}}`}</code>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="preview" className="flex-1 overflow-hidden m-0 p-0 flex flex-col bg-muted/10">
+              {isPreviewLoading ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : previewHtml ? (
+                <iframe 
+                  srcDoc={previewHtml}
+                  className="w-full h-full bg-white border-0"
+                  title="Email Preview"
+                />
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+                  Click the Preview tab to see how your email looks.
                 </div>
               )}
+            </TabsContent>
+          </Tabs>
 
-              {/* Additional fields */}
-              {selectedTemplate?.fields.map((field) => (
-                <div key={field.key} className="space-y-2">
-                  <Label htmlFor={field.key}>{field.label}</Label>
-                  {field.type === "textarea" ? (
-                    <Textarea
-                      id={field.key}
-                      name={field.key}
-                      value={formData[field.key] || ""}
-                      onChange={(e) => setFormData((p) => ({ ...p, [field.key]: e.target.value }))}
-                      placeholder={field.placeholder}
-                      rows={3}
-                    />
-                  ) : (
-                    <Input
-                      id={field.key}
-                      name={field.key}
-                      value={formData[field.key] || ""}
-                      onChange={(e) => setFormData((p) => ({ ...p, [field.key]: e.target.value }))}
-                      placeholder={field.placeholder}
-                    />
-                  )}
-                  {field.vars && (
-                    <p className="text-[10px] text-muted-foreground">Variables: {field.vars}</p>
-                  )}
-                </div>
-              ))}
-
-              {selectedTemplate?.fields.length === 0 && (
-                <p className="text-sm text-muted-foreground">Only the subject line is customizable for this template.</p>
-              )}
-            </div>
-            <SheetFooter className="px-6 py-4 shrink-0 border-t">
-              <div className="flex gap-2 w-full">
-                <Button type="submit" disabled={pending} className="flex-1">
-                  {pending ? "Saving..." : "Save"}
-                </Button>
-                <Button type="button" variant="secondary" onClick={() => setSelectedTemplate(null)} className="flex-1">
-                  Cancel
-                </Button>
-              </div>
-            </SheetFooter>
-          </form>
-        </SheetContent>
-      </Sheet>
-
-      {/* Global settings sheet */}
-      <Sheet open={globalSheetOpen} onOpenChange={setGlobalSheetOpen}>
-        <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] rounded-lg w-[95vw] sm:max-w-md flex flex-col gap-0 p-0">
-          <SheetHeader className="px-6 pt-6 pb-4 shrink-0 border-b">
-            <SheetTitle>Global email settings</SheetTitle>
-            <p className="text-sm text-muted-foreground">Settings applied to all outgoing emails.</p>
-          </SheetHeader>
-          <form action={saveAction} className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="email_sender_name">Sender name</Label>
-                <Input
-                  id="email_sender_name"
-                  name="email_sender_name"
-                  value={globalForm.email_sender_name}
-                  onChange={(e) => setGlobalForm((p) => ({ ...p, email_sender_name: e.target.value }))}
-                  placeholder={orgName}
-                />
-                <p className="text-[10px] text-muted-foreground">
-                  Display name shown in the &quot;From&quot; field.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email_reply_to">Reply-to email</Label>
-                <Input
-                  id="email_reply_to"
-                  name="email_reply_to"
-                  type="email"
-                  value={globalForm.email_reply_to}
-                  onChange={(e) => setGlobalForm((p) => ({ ...p, email_reply_to: e.target.value }))}
-                  placeholder="akshitha@mindtris.com"
-                />
-                <p className="text-[10px] text-muted-foreground">
-                  Replies to your emails will be sent to this address.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email_footer_text">Footer text</Label>
-                <Textarea
-                  id="email_footer_text"
-                  name="email_footer_text"
-                  value={globalForm.email_footer_text}
-                  onChange={(e) => setGlobalForm((p) => ({ ...p, email_footer_text: e.target.value }))}
-                  placeholder="You received this email because you have a Mintax account."
-                  rows={3}
-                />
-                <p className="text-[10px] text-muted-foreground">
-                  Custom footer text shown at the bottom of all emails.
-                </p>
+          <SheetFooter className="px-6 py-4 border-t bg-muted/5">
+            <div className="flex items-center justify-between w-full">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSendTest} 
+                disabled={testSendPending}
+                className="gap-2"
+              >
+                {testSendPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                Send Test
+              </Button>
+              <div className="flex gap-2">
+                <Button variant="secondary" onClick={() => setSelectedRegistry(null)}>Cancel</Button>
+                <Button onClick={handleSaveTemplate}>Save Template</Button>
               </div>
             </div>
-            <SheetFooter className="px-6 py-4 shrink-0 border-t">
-              <div className="flex gap-2 w-full">
-                <Button type="submit" disabled={pending} className="flex-1">
-                  {pending ? "Saving..." : "Save"}
-                </Button>
-                <Button type="button" variant="secondary" onClick={() => setGlobalSheetOpen(false)} className="flex-1">
-                  Cancel
-                </Button>
-              </div>
-            </SheetFooter>
-          </form>
+          </SheetFooter>
         </SheetContent>
       </Sheet>
     </div>

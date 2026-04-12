@@ -11,15 +11,15 @@ interface PayableOwingWidgetProps {
 
 export function PayableOwingWidget({ stats, baseCurrency }: PayableOwingWidgetProps) {
   return (
-    <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden h-full flex flex-col">
-      <CardHeader className="px-6 py-4 border-b border-black/[0.03]">
+    <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden h-full flex flex-col">
+      <CardHeader className="px-6 py-4 border-b border-border/50">
         <CardTitle className="text-sm font-medium">Payable & owing</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 p-0 flex flex-col min-h-[280px]">
         <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-black/[0.03] flex-1">
           {/* Receivables Column */}
           <div className="flex flex-col">
-            <div className="px-6 py-3 bg-muted/30 border-b border-black/[0.03]">
+            <div className="px-6 py-3 bg-muted/30 border-b border-border/50">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Invoices payable to you</span>
             </div>
             <div className="flex flex-col">
@@ -39,7 +39,7 @@ export function PayableOwingWidget({ stats, baseCurrency }: PayableOwingWidgetPr
 
           {/* Payables Column */}
           <div className="flex flex-col">
-            <div className="px-6 py-3 bg-muted/30 border-b border-black/[0.03]">
+            <div className="px-6 py-3 bg-muted/30 border-b border-border/50">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Bills you owe</span>
             </div>
             <div className="flex flex-col">
@@ -58,7 +58,7 @@ export function PayableOwingWidget({ stats, baseCurrency }: PayableOwingWidgetPr
           </div>
         </div>
 
-        <div className="px-6 py-4 bg-muted/10 border-t border-black/[0.03] mt-auto">
+        <div className="px-6 py-4 bg-muted/10 border-t border-border/50 mt-auto">
           <div className="flex items-center justify-between">
             <div className="flex flex-col">
               <span className="text-[10px] uppercase font-semibold tracking-widest text-muted-foreground">Net Position</span>

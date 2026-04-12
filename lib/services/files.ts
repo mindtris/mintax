@@ -1,7 +1,6 @@
 "use server"
 
 import { prisma } from "@/lib/core/db"
-import { safePathJoin } from "@/lib/files"
 import { getStorage } from "@/lib/storage"
 import { cache } from "react"
 import { getTransactionById } from "./transactions"
@@ -84,15 +83,11 @@ export const deleteFile = async (id: string, orgId: string) => {
     return
   }
 
-  // Look up user email to build the full storage path
-  const user = await prisma.user.findFirst({ where: { id: file.userId }, select: { email: true } })
-  if (user) {
-    try {
-      const storagePath = safePathJoin(user.email, file.path)
-      await getStorage().delete(storagePath)
-    } catch (error) {
-      console.error("Error deleting file:", error)
-    }
+  // file.path is already the full org-scoped storage path
+  try {
+    await getStorage().delete(file.path)
+  } catch (error) {
+    console.error("Error deleting file:", error)
   }
 
   return await prisma.file.delete({
@@ -195,19 +190,17 @@ export async function attachFileToLead(leadId: string, fileId: string, label?: s
 export async function uploadAndCreateFile(
   orgId: string,
   userId: string,
-  userEmail: string,
   file: globalThis.File,
-  relativePath: string,
+  storagePath: string,
 ) {
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
-  const fullStoragePath = safePathJoin(userEmail, relativePath)
-  await getStorage().put(fullStoragePath, buffer)
+  await getStorage().put(storagePath, buffer)
 
   return createFile(orgId, userId, {
     id: require("crypto").randomUUID(),
     filename: file.name,
-    path: relativePath,
+    path: storagePath,
     mimetype: file.type,
     size: file.size,
     isReviewed: true,

@@ -38,7 +38,7 @@ export function MigrationHub({ orgId }: { orgId: string }) {
           </div>
         </div>
 
-        <div className="text-sm text-muted-foreground bg-background p-4 rounded-xl border border-black/[0.03]">
+        <div className="text-sm text-muted-foreground bg-background p-4 rounded-xl border border-border/50">
           <ul className="space-y-2">
             <li className="flex items-start gap-2">
               <ArrowRight className="w-3 h-3 mt-1 shrink-0 text-primary" />

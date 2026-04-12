@@ -48,8 +48,8 @@ export async function createCandidateAction(_prevState: any, formData: FormData)
     if (resumeFile && resumeFile.size > 0) {
       try {
         const { randomUUID } = await import("crypto")
-        const relativePath = getCandidateFilePath(randomUUID(), resumeFile.name)
-        const fileRecord = await uploadAndCreateFile(org.id, user.id, user.email, resumeFile, relativePath)
+        const storagePath = getCandidateFilePath(org.id, randomUUID(), resumeFile.name)
+        const fileRecord = await uploadAndCreateFile(org.id, user.id, resumeFile, storagePath)
         await attachFileToCandidate(candidate.id, fileRecord.id, "resume")
       } catch (e) {
         console.error("Resume upload failed:", e)

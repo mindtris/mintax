@@ -2,11 +2,12 @@ import { User } from "@/lib/prisma/client"
 import path from "path"
 import sharp from "sharp"
 import config from "@/lib/core/config"
-import { getStaticDirectory, isEnoughStorageToUploadFile, safePathJoin } from "./files"
+import { getOrgStaticDirectory, isEnoughStorageToUploadFile, safePathJoin } from "./files"
 import { getStorage } from "@/lib/storage"
 
 export async function uploadStaticImage(
   user: User,
+  orgId: string,
   file: File,
   saveFileName: string,
   maxWidth: number = config.upload.images.maxWidth,
@@ -14,7 +15,7 @@ export async function uploadStaticImage(
   quality: number = config.upload.images.quality
 ) {
   const storage = getStorage()
-  const uploadDirectory = getStaticDirectory(user)
+  const uploadDirectory = getOrgStaticDirectory(orgId)
 
   if (!isEnoughStorageToUploadFile(user, file.size)) {
     throw Error("Not enough space to upload the file")

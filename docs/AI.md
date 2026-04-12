@@ -1,6 +1,18 @@
-# AI Integration
+<p align="center">
+  <a href="https://www.mindtris.com">
+    <img src="../public/logo/logo.svg" width="80" alt="Mintax by Mindtris" />
+  </a>
+</p>
 
-mintax uses LLMs for document analysis, content generation, and job post writing. You can use cloud providers (OpenAI, Google, Mistral) or run models locally with Ollama.
+<h1 align="center">AI Integration</h1>
+
+<p align="center">
+  <sub><strong>Powered by Mindtris (Mintax)</strong></sub>
+</p>
+
+---
+
+Mintax uses LLMs for document analysis, content generation, and job post writing. You can use cloud providers (OpenAI, Google, Mistral) or run models locally with Ollama.
 
 ## Supported Providers
 
@@ -126,3 +138,10 @@ OPENAI_COMPATIBLE_MODEL_NAME=llama3.2
 ```
 
 For GPU inference, add resource limits and the NVIDIA device plugin to the Ollama container spec.
+
+---
+
+<p align="center">
+  <strong>Powered by <a href="https://www.mindtris.com">Mindtris</a> (Mintax)</strong><br/>
+  <sub>Made with care, shared with everyone.</sub>
+</p>

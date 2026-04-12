@@ -44,7 +44,7 @@ export function LeadsViewClient({
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold tracking-tighter text-foreground font-display">Leads</h1>
-          <div className="bg-secondary text-xl px-2.5 py-0.5 rounded-md font-bold text-muted-foreground/70 tabular-nums border-black/[0.03] border shadow-sm">
+          <div className="bg-secondary text-xl px-2.5 py-0.5 rounded-md font-bold text-muted-foreground/70 tabular-nums border-border/50 border shadow-sm">
             {total}
           </div>
         </div>
@@ -57,27 +57,27 @@ export function LeadsViewClient({
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
+        <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
           <CardContent className="pt-6">
-            <div className="text-sm font-medium text-[#141413]">Open leads</div>
+            <div className="text-sm font-medium text-card-foreground">Open leads</div>
             <div className="text-2xl font-bold mt-1">{stats.open}</div>
           </CardContent>
         </Card>
-        <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
+        <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
           <CardContent className="pt-6">
-            <div className="text-sm font-medium text-[#141413]">Pipeline value</div>
+            <div className="text-sm font-medium text-card-foreground">Pipeline value</div>
             <div className="text-2xl font-bold mt-1 font-mono">
               {(stats.pipelineValue / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </div>
           </CardContent>
         </Card>
-        <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
+        <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
           <CardContent className="pt-6">
             <div className="text-sm font-medium text-emerald-600">Won</div>
             <div className="text-2xl font-bold text-emerald-600 mt-1">{stats.won}</div>
           </CardContent>
         </Card>
-        <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
+        <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
           <CardContent className="pt-6">
             <div className="text-sm font-medium text-destructive">Lost</div>
             <div className="text-2xl font-bold text-destructive mt-1">{stats.lost}</div>

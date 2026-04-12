@@ -147,6 +147,7 @@ model Organization {
   submissions   MarketingSubmission[]
   leads         Lead[]
   llmPrompts    LlmPrompt[]
+  emailTemplates EmailTemplate[]
 
   @@map("organizations")
 }
@@ -1277,4 +1278,29 @@ model LlmPrompt {
   @@index([organizationId])
   @@index([organizationId, module])
   @@map("llm_prompts")
+}
+
+// ──────────────────────────────────────────────
+// Email Templates
+// ──────────────────────────────────────────────
+
+model EmailTemplate {
+  id              String   @id @default(uuid()) @db.Uuid
+  organizationId  String   @map("organization_id") @db.Uuid
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  module          String   // "invoice" | "bill" | "estimate" | "lead" | "hire" | "team" | "report"
+  event           String   // "sent" | "reminder" | "paid" | "overdue" | "accepted" | "declined" | "assigned" | "application_received" | "interview_scheduled" | "offer_sent" | "invite" | "ready"
+  name            String   // user-facing label (e.g. "Default Invoice Template")
+  subject         String   // e.g. "Invoice {invoiceNumber} from {orgName}"
+  greeting        String?  // e.g. "Hi {clientName},"
+  body            String   @db.Text  // Markdown or plain text with {variables}
+  footer          String?  // e.g. "Thank you for your business."
+  isDefault       Boolean  @default(false) @map("is_default")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([organizationId, module, event, name])
+  @@index([organizationId, module])
+  @@map("email_templates")
 }

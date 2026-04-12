@@ -7,8 +7,8 @@ export async function uploadMedia(file: File) {
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
 
-  const relativePath = getSocialFilePath(randomUUID(), file.name)
-  const fileRecord = await uploadAndCreateFile(org.id, user.id, user.email, file, relativePath)
+  const storagePath = getSocialFilePath(org.id, randomUUID(), file.name)
+  const fileRecord = await uploadAndCreateFile(org.id, user.id, file, storagePath)
 
   return {
     id: fileRecord.id,

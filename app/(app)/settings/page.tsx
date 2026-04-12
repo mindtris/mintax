@@ -133,7 +133,12 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
   // Invoice tab
   if (tab === "invoice") {
-    const settings = await getSettings(org.id)
+    const [settings, appData] = await Promise.all([
+      getSettings(org.id),
+      import("@/lib/services/apps").then((m) => m.getAppData(org.id, "invoices")),
+    ])
+    const templates = (appData as any)?.templates || []
+    
     return (
       <div className="flex flex-col gap-6">
         <div>
@@ -143,7 +148,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           </p>
         </div>
         <div className="w-full max-w-2xl">
-          <InvoiceSettingsForm settings={settings} orgName={org.name} />
+          <InvoiceSettingsForm settings={settings} orgName={org.name} templates={templates} />
         </div>
       </div>
     )
@@ -416,8 +421,12 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
   // Email templates tab
   if (tab === "email-templates") {
-    const settings = await getSettings(org.id)
-    return <EmailTemplateSettingsForm settings={settings} orgName={org.name} />
+    const { getOrgEmailTemplates } = await import("@/lib/services/email-templates")
+    const [settings, templates] = await Promise.all([
+      getSettings(org.id),
+      getOrgEmailTemplates(org.id),
+    ])
+    return <EmailTemplateSettingsForm settings={settings} orgName={org.name} templates={templates} orgId={org.id} />
   }
 
   // Social tab

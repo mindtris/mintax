@@ -154,7 +154,7 @@ export function LLMProvidersGrid({ settings }: { settings: Record<string, string
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bold tracking-tight">LLM providers</h2>
-            <div className="bg-secondary text-sm px-2 py-0.5 rounded-md font-bold text-muted-foreground/70 tabular-nums border-black/[0.03] border shadow-sm">
+            <div className="bg-secondary text-sm px-2 py-0.5 rounded-md font-bold text-muted-foreground/70 tabular-nums border-border border shadow-sm">
               {rows.length}
             </div>
           </div>

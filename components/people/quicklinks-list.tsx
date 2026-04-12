@@ -131,7 +131,7 @@ export function QuicklinksList({
       label: "Category",
       sortable: true,
       render: (row: QuicklinkRow) => (
-        <Badge variant="outline" className="text-[10px] font-medium border-black/[0.08] bg-black/[0.02]">
+        <Badge variant="outline" className="text-[10px] font-medium border-border bg-black/[0.02]">
           {row.category}
         </Badge>
       ),

@@ -5,10 +5,9 @@ import { ActionState } from "@/lib/actions"
 import { getActiveOrg, getCurrentUser, isSubscriptionExpired } from "@/lib/core/auth"
 import {
   getDirectorySize,
-  getTransactionFileUploadPath,
-  getUserUploadsDirectory,
+  getOrgRoot,
+  getTransactionFilePath,
   isEnoughStorageToUploadFile,
-  safePathJoin,
 } from "@/lib/files"
 import { updateField } from "@/lib/services/fields"
 import { createFile, deleteFile, attachFileToTransaction } from "@/lib/services/files"
@@ -117,8 +116,8 @@ export async function deleteTransactionFileAction(
 
   await deleteFile(fileId, org.id)
 
-  // Update user storage used
-  const storageUsed = await getDirectorySize(getUserUploadsDirectory(user))
+  // Update user storage used (computed from org root)
+  const storageUsed = await getDirectorySize(getOrgRoot(org.id))
   await updateUser(user.id, { storageUsed })
 
   revalidatePath("/accounts")
@@ -143,7 +142,6 @@ export async function uploadTransactionFilesAction(formData: FormData): Promise<
     }
 
     const storage = getStorage()
-    const userUploadsDirectory = getUserUploadsDirectory(user)
 
     // Check limits
     const totalFileSize = files.reduce((acc, file) => acc + file.size, 0)
@@ -161,18 +159,17 @@ export async function uploadTransactionFilesAction(formData: FormData): Promise<
     const fileRecords = await Promise.all(
       files.map(async (file) => {
         const fileUuid = randomUUID()
-        const relativeFilePath = getTransactionFileUploadPath(fileUuid, file.name, transaction)
+        const storagePath = getTransactionFilePath(org.id, fileUuid, file.name, transaction.issuedAt || undefined)
         const arrayBuffer = await file.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
 
-        const fullStoragePath = safePathJoin(userUploadsDirectory, relativeFilePath)
-        await storage.put(fullStoragePath, buffer)
+        await storage.put(storagePath, buffer)
 
         // Create file record in database
         const fileRecord = await createFile(org.id, user.id, {
           id: fileUuid,
           filename: file.name,
-          path: relativeFilePath,
+          path: storagePath,
           mimetype: file.type,
           size: file.size,
           isReviewed: true,
@@ -200,8 +197,8 @@ export async function uploadTransactionFilesAction(formData: FormData): Promise<
         : fileRecords.map((file) => file.id)
     )
 
-    // Update user storage used
-    const storageUsed = await getDirectorySize(getUserUploadsDirectory(user))
+    // Update user storage used (computed from org root)
+    const storageUsed = await getDirectorySize(getOrgRoot(org.id))
     await updateUser(user.id, { storageUsed })
 
     revalidatePath("/accounts")

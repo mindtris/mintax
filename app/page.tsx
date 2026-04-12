@@ -77,7 +77,7 @@ export default async function Home() {
                 GitHub
               </a>
               <a
-                href="https://github.com/mindtris/mintax"
+                href="https://github.com/mindtris/mintax/blob/main/docs/OPENSOURCE.md"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-6 py-3 rounded-lg hover:bg-white/20 transition-colors font-medium text-sm backdrop-blur-sm border border-white/10"

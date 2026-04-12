@@ -35,11 +35,11 @@ export function CalendarGrid({
     })
 
   return (
-    <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
+    <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
       <CardContent className="pt-6">
         <div className="grid grid-cols-7 gap-1 mb-2">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-            <div key={d} className="text-xs font-medium text-[#141413] text-center py-1">{d}</div>
+            <div key={d} className="text-xs font-medium text-card-foreground text-center py-1">{d}</div>
           ))}
         </div>
 
@@ -70,10 +70,10 @@ function DayCell({ day, isToday, posts }: { day: Date; isToday: boolean; posts: 
       <div
         onClick={() => setSheetOpen(true)}
         className={`min-h-[80px] border rounded-lg p-1 hover:border-primary/30 hover:bg-primary/[0.02] transition-colors cursor-pointer ${
-          isToday ? "border-primary bg-primary/5" : "border-black/[0.05]"
+          isToday ? "border-primary bg-primary/5" : "border-border"
         }`}
       >
-        <div className={`text-xs mb-1 ${isToday ? "font-bold text-primary" : "text-[#141413]"}`}>
+        <div className={`text-xs mb-1 ${isToday ? "font-bold text-primary" : "text-card-foreground"}`}>
           {format(day, "d")}
         </div>
         <div className="space-y-0.5">
@@ -89,7 +89,7 @@ function DayCell({ day, isToday, posts }: { day: Date; isToday: boolean; posts: 
             </Link>
           ))}
           {posts.length > 3 && (
-            <div className="text-[10px] text-[#141413] px-1">+{posts.length - 3} more</div>
+            <div className="text-[10px] text-card-foreground px-1">+{posts.length - 3} more</div>
           )}
         </div>
       </div>

@@ -1,0 +1,112 @@
+# Mintax issue labels
+# Sync with: npx github-label-sync --access-token $GH_TOKEN --labels .github/labels.yml mindtris/mintax
+
+# ─── Type ──
+- name: bug
+  color: d73a4a
+  description: Something isn't working
+
+- name: enhancement
+  color: a2eeef
+  description: New feature or request
+
+- name: documentation
+  color: 0075ca
+  description: Improvements or additions to documentation
+
+- name: refactor
+  color: cfd3d7
+  description: Code cleanup, no behavior change
+
+# ─── Priority ──
+- name: "priority: high"
+  color: b60205
+  description: Needs attention soon
+
+- name: "priority: medium"
+  color: fbca04
+  description: Should be addressed
+
+- name: "priority: low"
+  color: 0e8a16
+  description: Nice to have
+
+# ─── Status ──
+- name: "status: in progress"
+  color: fbca04
+  description: Work has started
+
+- name: "status: blocked"
+  color: d93f0b
+  description: Waiting on something else
+
+- name: "status: needs review"
+  color: 0e8a16
+  description: Ready for review
+
+- name: "status: needs info"
+  color: d876e3
+  description: More information needed from reporter
+
+# ─── Contributor friendly ──
+- name: good first issue
+  color: 7057ff
+  description: Good for newcomers
+
+- name: help wanted
+  color: 008672
+  description: Extra attention is needed
+
+- name: hacktoberfest
+  color: ff7518
+  description: Hacktoberfest eligible
+
+# ─── Module ──
+- name: "module: accounts"
+  color: 5319e7
+  description: Accounting, bills, transactions, reconciliation
+
+- name: "module: sales"
+  color: 5319e7
+  description: Invoices, estimates, leads, customers
+
+- name: "module: hire"
+  color: 5319e7
+  description: Jobs, candidates, pipeline, bench
+
+- name: "module: engage"
+  color: 5319e7
+  description: Social media posting and analytics
+
+- name: "module: people"
+  color: 5319e7
+  description: Directory, quicklinks, reminders
+
+- name: "module: apps"
+  color: 5319e7
+  description: Invoice generator, reminders, outlook
+
+- name: "module: settings"
+  color: 5319e7
+  description: Settings, email templates, LLM, schedules
+
+- name: "module: auth"
+  color: 5319e7
+  description: Authentication, sessions, organizations
+
+- name: "module: ai"
+  color: 5319e7
+  description: LLM integration, prompts, agents
+
+# ─── Meta ──
+- name: "meta: discussion"
+  color: c5def5
+  description: Needs broader discussion
+
+- name: "meta: wontfix"
+  color: ffffff
+  description: This will not be worked on
+
+- name: "meta: duplicate"
+  color: cfd3d7
+  description: This issue or PR already exists

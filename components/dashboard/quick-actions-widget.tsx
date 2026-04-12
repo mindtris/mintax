@@ -52,8 +52,8 @@ export function QuickActionsWidget({ files, orgName }: QuickActionsWidgetProps) 
   }
 
   return (
-    <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden h-full flex flex-col">
-      <CardHeader className="px-6 py-4 border-b border-black/[0.03]">
+    <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden h-full flex flex-col">
+      <CardHeader className="px-6 py-4 border-b border-border/50">
         <CardTitle className="text-sm font-medium">Quick actions</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 p-0 flex flex-col">
@@ -68,7 +68,7 @@ export function QuickActionsWidget({ files, orgName }: QuickActionsWidgetProps) 
             </div>
             <div>
               <p className="text-sm font-medium">Add transaction</p>
-              <p className="text-xs text-[#141413]">Record income or expense</p>
+              <p className="text-xs text-card-foreground">Record income or expense</p>
             </div>
           </Link>
 
@@ -81,7 +81,7 @@ export function QuickActionsWidget({ files, orgName }: QuickActionsWidgetProps) 
             </div>
             <div>
               <p className="text-sm font-medium">Add bill</p>
-              <p className="text-xs text-[#141413]">Record a payable bill</p>
+              <p className="text-xs text-card-foreground">Record a payable bill</p>
             </div>
           </Link>
 
@@ -94,16 +94,16 @@ export function QuickActionsWidget({ files, orgName }: QuickActionsWidgetProps) 
             </div>
             <div>
               <p className="text-sm font-medium">Import bank statement</p>
-              <p className="text-xs text-[#141413]">CSV or supported formats</p>
+              <p className="text-xs text-card-foreground">CSV or supported formats</p>
             </div>
           </Link>
         </div>
 
         {/* Unsorted files */}
         {files.length > 0 && (
-          <div className="border-t border-black/[0.03] px-6 py-4">
+          <div className="border-t border-border/50 px-6 py-4">
             <Link href="/unsorted" className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-[#141413]">Unsorted files</span>
+              <span className="text-xs font-medium text-card-foreground">Unsorted files</span>
               <span className="text-xs text-primary">{files.length} to review</span>
             </Link>
             <div className="flex flex-col gap-1.5">
@@ -113,7 +113,7 @@ export function QuickActionsWidget({ files, orgName }: QuickActionsWidgetProps) 
                   key={file.id}
                   className="flex items-center gap-2 rounded-md p-2 hover:bg-black/[0.02] transition-colors"
                 >
-                  <FilePlus className="h-4 w-4 text-[#141413] shrink-0" />
+                  <FilePlus className="h-4 w-4 text-card-foreground shrink-0" />
                   <span className="truncate text-xs">{file.filename}</span>
                 </Link>
               ))}
@@ -122,8 +122,8 @@ export function QuickActionsWidget({ files, orgName }: QuickActionsWidgetProps) 
         )}
 
         {/* Upload drop zone */}
-        <div className="mt-auto border-t border-black/[0.03] p-4">
-          <label className="flex flex-col items-center justify-center gap-2 border border-dashed border-black/[0.08] rounded-xl p-6 cursor-pointer hover:border-primary/30 transition-colors">
+        <div className="mt-auto border-t border-border/50 p-4">
+          <label className="flex flex-col items-center justify-center gap-2 border border-dashed border-border rounded-xl p-6 cursor-pointer hover:border-primary/30 transition-colors">
             <input
               type="file"
               className="hidden"
@@ -132,11 +132,11 @@ export function QuickActionsWidget({ files, orgName }: QuickActionsWidgetProps) 
               onChange={handleFileChange}
             />
             {isUploading ? (
-              <Loader2 className="h-5 w-5 text-[#141413] animate-spin" />
+              <Loader2 className="h-5 w-5 text-card-foreground animate-spin" />
             ) : (
-              <Camera className="h-5 w-5 text-[#141413]" />
+              <Camera className="h-5 w-5 text-card-foreground" />
             )}
-            <p className="text-xs text-[#141413] text-center">
+            <p className="text-xs text-card-foreground text-center">
               {isUploading ? "Uploading..." : "Drop receipts, invoices or statements"}
             </p>
             {uploadError && <FormError>{uploadError}</FormError>}

@@ -1,5 +1,5 @@
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
-import { getUserUploadsDirectory } from "@/lib/files"
+import { getOrgRoot } from "@/lib/files"
 import { MODEL_BACKUP, modelToJSON } from "@/lib/services/backups"
 import { updateProgress } from "@/lib/services/progress"
 import { getStorage } from "@/lib/storage"
@@ -13,7 +13,7 @@ const PROGRESS_UPDATE_INTERVAL_MS = 2000 // 2 seconds
 export async function GET(request: Request) {
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
-  const userUploadsDirectory = getUserUploadsDirectory(user)
+  const orgRoot = getOrgRoot(org.id)
   const url = new URL(request.url)
   const progressId = url.searchParams.get("progressId")
   const storage = getStorage()
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
       return new NextResponse("Internal Server Error", { status: 500 })
     }
 
-    const uploadedFiles = await storage.listRecursive(userUploadsDirectory)
+    const uploadedFiles = await storage.listRecursive(orgRoot)
 
     // Update progress with total files if progressId is provided
     if (progressId) {
@@ -80,11 +80,8 @@ export async function GET(request: Request) {
         }
 
         const fileContent = await storage.get(filePath)
-        // Store relative to user uploads directory
-        const relativePath = filePath.startsWith(userUploadsDirectory)
-          ? filePath.slice(userUploadsDirectory.length).replace(/^[/\\]/, "")
-          : filePath
-        uploadsFolder.file(relativePath, fileContent)
+        // Store with the full org-scoped path so restore can write it back as-is
+        uploadsFolder.file(filePath, fileContent)
 
         processedFiles++
 

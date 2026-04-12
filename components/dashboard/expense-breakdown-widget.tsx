@@ -50,8 +50,8 @@ export function ExpenseBreakdownWidget({ data }: ExpenseBreakdownWidgetProps) {
   }
 
   return (
-    <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden h-full flex flex-col">
-      <CardHeader className="px-6 py-4 border-b border-black/[0.03]">
+    <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden h-full flex flex-col">
+      <CardHeader className="px-6 py-4 border-b border-border/50">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium">Expense breakdown</CardTitle>
           <div className="text-right">

@@ -130,7 +130,7 @@ export function DirectoryList({ members }: { members: MemberRow[] }) {
       sortable: true,
       render: (row: MemberRow) => (
         <div className="flex items-center gap-3 py-1">
-          <div className="h-8 w-8 rounded-full bg-[#c96442]/10 flex items-center justify-center text-xs font-bold text-[#c96442] shrink-0 border border-[#c96442]/20">
+          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0 border border-primary/20">
             {row.initial}
           </div>
           <div className="flex flex-col">
@@ -282,7 +282,7 @@ export function DirectoryList({ members }: { members: MemberRow[] }) {
           <div className="flex flex-col h-full gap-0">
             <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-[#c96442]/10 flex items-center justify-center text-lg font-bold text-[#c96442] shrink-0 border-2 border-[#c96442]/20">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-lg font-bold text-primary shrink-0 border-2 border-primary/20">
                   {member.initial}
                 </div>
                 <div className="flex flex-col">

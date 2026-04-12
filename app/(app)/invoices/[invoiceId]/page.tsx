@@ -1,5 +1,6 @@
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { getInvoiceById } from "@/lib/services/invoices"
+import { getFilesByInvoiceId } from "@/lib/services/files"
 import { notFound } from "next/navigation"
 import { EditInvoiceForm } from "./edit-invoice-form"
 
@@ -7,7 +8,10 @@ export default async function EditInvoicePage({ params }: { params: Promise<{ in
   const { invoiceId } = await params
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
-  const invoice = await getInvoiceById(invoiceId, org.id)
+  const [invoice, files] = await Promise.all([
+    getInvoiceById(invoiceId, org.id),
+    getFilesByInvoiceId(invoiceId, org.id),
+  ])
 
   if (!invoice) notFound()
 
@@ -22,7 +26,7 @@ export default async function EditInvoicePage({ params }: { params: Promise<{ in
         </p>
       </header>
 
-      <EditInvoiceForm invoice={invoice} baseCurrency={org.baseCurrency} />
+      <EditInvoiceForm invoice={invoice} files={files} baseCurrency={org.baseCurrency} />
     </div>
   )
 }

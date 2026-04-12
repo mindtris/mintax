@@ -2,10 +2,8 @@
 
 import { getActiveOrg, getCurrentUser, isSubscriptionExpired } from "@/lib/core/auth"
 import {
-  getTransactionFileUploadPath,
-  getUserUploadsDirectory,
+  getTransactionFilePath,
   isEnoughStorageToUploadFile,
-  safePathJoin,
 } from "@/lib/files"
 import { getAppData, setAppData } from "@/lib/services/apps"
 import { createFile } from "@/lib/services/files"
@@ -90,17 +88,15 @@ export async function saveInvoiceAsTransactionAction(
     const storage = getStorage()
     const fileUuid = randomUUID()
     const fileName = `invoice-${formData.invoiceNumber}.pdf`
-    const relativeFilePath = getTransactionFileUploadPath(fileUuid, fileName, transaction)
-    const userUploadsDirectory = getUserUploadsDirectory(user)
-    const fullStoragePath = safePathJoin(userUploadsDirectory, relativeFilePath)
+    const storagePath = getTransactionFilePath(org.id, fileUuid, fileName, transaction.issuedAt || undefined)
 
-    await storage.put(fullStoragePath, Buffer.from(pdfBuffer))
+    await storage.put(storagePath, Buffer.from(pdfBuffer))
 
     // Create file record in database
     const fileRecord = await createFile(org.id, user.id, {
       id: fileUuid,
       filename: fileName,
-      path: relativeFilePath,
+      path: storagePath,
       mimetype: "application/pdf",
       isReviewed: true,
       metadata: {

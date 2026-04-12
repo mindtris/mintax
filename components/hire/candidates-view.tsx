@@ -40,7 +40,7 @@ export function CandidatesViewClient({
           <h1 className="text-3xl font-bold tracking-tighter text-foreground font-display">
             {tab === "bench" ? "Bench" : tab === "screening" ? "Screening" : tab === "offers" ? "Offers" : "Candidates"}
           </h1>
-          <div className="bg-secondary text-xl px-2.5 py-0.5 rounded-md font-bold text-muted-foreground/70 tabular-nums border-black/[0.03] border shadow-sm">
+          <div className="bg-secondary text-xl px-2.5 py-0.5 rounded-md font-bold text-muted-foreground/70 tabular-nums border-border/50 border shadow-sm">
             {total}
           </div>
         </div>

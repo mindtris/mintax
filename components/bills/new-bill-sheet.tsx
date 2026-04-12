@@ -141,9 +141,9 @@ export function NewBillSheet({
 
       <SheetContent
         side="right"
-        className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] w-[95vw] sm:max-w-xl flex flex-col gap-0 p-0 overflow-hidden border-black/[0.05] shadow-2xl"
+        className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] w-[95vw] sm:max-w-xl flex flex-col gap-0 p-0 overflow-hidden border-border shadow-2xl"
       >
-        <SheetHeader className="px-8 pt-8 pb-6 shrink-0 bg-muted/5 border-b border-black/[0.03]">
+        <SheetHeader className="px-8 pt-8 pb-6 shrink-0 bg-muted/5 border-b border-border/50">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-md">
               <ReceiptText className="h-5 w-5 text-primary" />
@@ -153,7 +153,13 @@ export function NewBillSheet({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-8 py-8">
-          <form action={formAction} className="flex flex-col gap-8">
+          <form
+            action={(formData) => {
+              files.forEach((file) => formData.append("files", file))
+              formAction(formData)
+            }}
+            className="flex flex-col gap-8"
+          >
             {/* Vendor */}
             <div className="space-y-4">
               <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Vendor</h4>
@@ -355,7 +361,7 @@ export function NewBillSheet({
               </div>
             )}
 
-            <div className="pt-2 sticky bottom-0 bg-white">
+            <div className="pt-2 sticky bottom-0 bg-background">
               <Button type="submit" disabled={pending} className="w-full h-12 text-md font-semibold shadow-lg shadow-primary/20 text-white leading-none">
                 {pending ? "Recording..." : "Record bill"}
               </Button>

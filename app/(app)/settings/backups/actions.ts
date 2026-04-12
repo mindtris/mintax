@@ -3,7 +3,7 @@
 import { ActionState } from "@/lib/actions"
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { prisma } from "@/lib/core/db"
-import { getUserUploadsDirectory, safePathJoin } from "@/lib/files"
+import { getOrgRoot } from "@/lib/files"
 import { MODEL_BACKUP, modelFromJSON } from "@/lib/services/backups"
 import { getStorage } from "@/lib/storage"
 import JSZip from "jszip"
@@ -23,7 +23,7 @@ export async function restoreBackupAction(
 ): Promise<ActionState<BackupRestoreResult>> {
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
-  const userUploadsDirectory = getUserUploadsDirectory(user)
+  const orgRoot = getOrgRoot(org.id)
   const file = formData.get("file") as File
   const storage = getStorage()
 
@@ -71,7 +71,7 @@ export async function restoreBackupAction(
     // Remove existing data
     if (REMOVE_EXISTING_DATA) {
       await cleanupOrgTables(org.id)
-      await storage.deleteDirectory(userUploadsDirectory)
+      await storage.deleteDirectory(orgRoot)
     }
 
     const counters: Record<string, number> = {}
@@ -101,8 +101,8 @@ export async function restoreBackupAction(
       })
 
       for (const dbFile of files) {
-        const filePathWithoutPrefix = path.normalize(dbFile.path.replace(/^.*\/uploads\//, ""))
-        const zipFilePath = path.join("data/uploads", filePathWithoutPrefix)
+        // dbFile.path is now the full org-scoped storage path; restore it directly
+        const zipFilePath = path.join("data/uploads", dbFile.path)
         const zipFile = zip.file(zipFilePath)
         if (!zipFile) {
           console.log(`File ${dbFile.path} not found in backup`)
@@ -110,22 +110,14 @@ export async function restoreBackupAction(
         }
 
         const fileContents = await zipFile.async("nodebuffer")
-        const fullStoragePath = safePathJoin(userUploadsDirectory, filePathWithoutPrefix)
 
         try {
-          await storage.put(fullStoragePath, fileContents)
+          await storage.put(dbFile.path, fileContents)
           restoredFilesCount++
         } catch (error) {
-          console.error(`Error writing file ${fullStoragePath}:`, error)
+          console.error(`Error writing file ${dbFile.path}:`, error)
           continue
         }
-
-        await prisma.file.update({
-          where: { id: dbFile.id },
-          data: {
-            path: filePathWithoutPrefix,
-          },
-        })
       }
       counters["Uploaded attachments"] = restoredFilesCount
     } catch (error) {

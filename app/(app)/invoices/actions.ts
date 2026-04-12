@@ -14,8 +14,13 @@ import {
 import { format } from "date-fns"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { getInvoiceFilePath } from "@/lib/files"
+import { getBillFilePath, getInvoiceFilePath } from "@/lib/files"
 import { uploadAndCreateFile, attachFileToInvoice } from "@/lib/services/files"
+import { renderToBuffer } from "@react-pdf/renderer"
+import { createElement } from "react"
+import { prisma } from "@/lib/core/db"
+import { InvoicePDF } from "@/components/invoices/invoice-pdf"
+import { invoiceToFormData } from "@/components/invoices/templates"
 
 export async function createInvoiceAction(_prevState: any, formData: FormData) {
   const user = await getCurrentUser()
@@ -72,13 +77,14 @@ export async function createInvoiceAction(_prevState: any, formData: FormData) {
     items,
   })
 
-  // Handle files via storage abstraction
+  // Handle files via storage abstraction — bills go under /bills, everything else under /invoices
+  const filePathBuilder = type === "bill" ? getBillFilePath : getInvoiceFilePath
   for (const file of files) {
     if (file && file.size > 0) {
       try {
         const { randomUUID } = await import("crypto")
-        const relativePath = getInvoiceFilePath(randomUUID(), file.name, issuedDate)
-        const fileRecord = await uploadAndCreateFile(org.id, user.id, user.email, file, relativePath)
+        const storagePath = filePathBuilder(org.id, randomUUID(), file.name, issuedDate)
+        const fileRecord = await uploadAndCreateFile(org.id, user.id, file, storagePath)
         await attachFileToInvoice(invoice.id, fileRecord.id)
       } catch (err) {
         console.error("Failed to upload file:", err)
@@ -238,35 +244,142 @@ export async function bulkMarkInvoicesPaidAction(invoiceIds: string[]) {
   return { success: true }
 }
 
-export async function sendInvoiceAction(invoiceId: string) {
+export async function sendInvoiceAction(invoiceId: string, attachPdf: boolean = true) {
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
-  const invoice = await getInvoiceById(invoiceId, org.id)
+  const [invoice, emailSettings] = await Promise.all([
+    getInvoiceById(invoiceId, org.id),
+    getSettings(org.id),
+  ])
 
   if (!invoice) return { error: "Invoice not found" }
   if (!invoice.clientEmail) return { error: "Client email is required to send" }
 
   try {
-    const emailSettings = await getSettings(org.id)
-    await sendInvoiceEmail({
-      email: invoice.clientEmail,
-      invoiceNumber: invoice.invoiceNumber,
-      clientName: invoice.clientName,
-      total: (invoice.total / 100).toFixed(2),
-      currency: invoice.currency,
-      dueDate: invoice.dueAt ? format(invoice.dueAt, "MMMM d, yyyy") : "Not specified",
-      orgName: org.name,
-      notes: invoice.notes,
-      emailSettings,
-    })
+    let pdfAttachment = undefined
+
+    if (attachPdf) {
+      const formData = invoiceToFormData(invoice, org, emailSettings)
+      const pdfElement = createElement(InvoicePDF as any, { data: formData })
+      const buffer = await renderToBuffer(pdfElement as any)
+
+      pdfAttachment = {
+        filename: `${invoice.type === "estimate" ? "Estimate" : "Invoice"}-${invoice.invoiceNumber}.pdf`,
+        content: new Uint8Array(buffer),
+        contentType: "application/pdf",
+      }
+
+      // Also attach to invoice file records if not already there
+      const filePathBuilder = invoice.type === "bill" ? getBillFilePath : getInvoiceFilePath
+      const { randomUUID } = await import("crypto")
+      const fileUuid = randomUUID()
+      const storagePath = filePathBuilder(org.id, fileUuid, pdfAttachment.filename, invoice.issuedAt || new Date())
+
+      // Manual construction of File object for the helper or use put directly
+      const { getStorage } = await import("@/lib/storage")
+      await getStorage().put(storagePath, Buffer.from(pdfAttachment.content))
+
+      const fileRecord = await prisma.file.create({
+        data: {
+          id: fileUuid,
+          filename: pdfAttachment.filename,
+          path: storagePath,
+          mimetype: "application/pdf",
+          size: pdfAttachment.content.length,
+          isReviewed: true,
+          userId: user.id,
+          organizationId: org.id,
+          metadata: { size: pdfAttachment.content.length },
+        },
+      })
+
+      await attachFileToInvoice(invoice.id, fileRecord.id)
+    }
+
+    if (invoice.type === "estimate") {
+      const { sendEstimateEmail } = await import("@/lib/integrations/email")
+      await sendEstimateEmail({
+        orgId: org.id,
+        email: invoice.clientEmail,
+        estimateNumber: invoice.invoiceNumber,
+        clientName: invoice.clientName,
+        total: (invoice.total / 100).toFixed(2),
+        currency: invoice.currency,
+        orgName: org.name,
+        emailSettings,
+      })
+    } else {
+      await sendInvoiceEmail({
+        orgId: org.id,
+        email: invoice.clientEmail,
+        invoiceNumber: invoice.invoiceNumber,
+        clientName: invoice.clientName,
+        total: (invoice.total / 100).toFixed(2),
+        currency: invoice.currency,
+        dueDate: invoice.dueAt ? format(invoice.dueAt, "MMMM d, yyyy") : "Not specified",
+        orgName: org.name,
+        notes: invoice.notes,
+        emailSettings,
+        pdfAttachment,
+      })
+    }
 
     await updateInvoice(invoiceId, org.id, { status: "sent" })
 
     revalidatePath("/invoices")
+    revalidatePath(`/invoices/${invoiceId}`)
     return { success: true }
   } catch (error) {
     console.error("Failed to send invoice:", error)
     return { error: "Failed to send invoice email" }
+  }
+}
+
+export async function generateAndAttachInvoicePDFAction(invoiceId: string) {
+  const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
+  const [invoice, settings] = await Promise.all([
+    getInvoiceById(invoiceId, org.id),
+    getSettings(org.id),
+  ])
+
+  if (!invoice) return { error: "Invoice not found" }
+
+  try {
+    const formData = invoiceToFormData(invoice, org, settings)
+    const pdfElement = createElement(InvoicePDF as any, { data: formData })
+    const buffer = await renderToBuffer(pdfElement as any)
+
+    const fileName = `Invoice-${invoice.invoiceNumber}.pdf`
+    const filePathBuilder = invoice.type === "bill" ? getBillFilePath : getInvoiceFilePath
+    const { randomUUID } = await import("crypto")
+    const fileUuid = randomUUID()
+    const storagePath = filePathBuilder(org.id, fileUuid, fileName, invoice.issuedAt || new Date())
+
+    const { getStorage } = await import("@/lib/storage")
+    await getStorage().put(storagePath, Buffer.from(buffer))
+
+    const fileRecord = await prisma.file.create({
+      data: {
+        id: fileUuid,
+        filename: fileName,
+        path: storagePath,
+        mimetype: "application/pdf",
+        size: buffer.length,
+        isReviewed: true,
+        userId: user.id,
+        organizationId: org.id,
+        metadata: { size: buffer.length },
+      },
+    })
+
+    await attachFileToInvoice(invoice.id, fileRecord.id)
+
+    revalidatePath(`/invoices/${invoiceId}`)
+    return { success: true, fileId: fileRecord.id }
+  } catch (error) {
+    console.error("Failed to generate PDF:", error)
+    return { error: "Failed to generate invoice PDF" }
   }
 }
 

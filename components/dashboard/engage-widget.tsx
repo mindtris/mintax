@@ -44,7 +44,7 @@ export async function EngageWidget() {
 
       {/* Stats Row */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
+        <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <Share2 className="h-4 w-4 text-muted-foreground" />
@@ -53,7 +53,7 @@ export async function EngageWidget() {
             <div className="text-2xl font-bold mt-1">{accountCount}</div>
           </CardContent>
         </Card>
-        <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
+        <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <PenTool className="h-4 w-4 text-muted-foreground" />
@@ -62,7 +62,7 @@ export async function EngageWidget() {
             <div className="text-2xl font-bold mt-1">{postsThisWeek}</div>
           </CardContent>
         </Card>
-        <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
+        <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -71,7 +71,7 @@ export async function EngageWidget() {
             <div className="text-2xl font-bold mt-1">{stats.queued || 0}</div>
           </CardContent>
         </Card>
-        <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
+        <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
@@ -84,7 +84,7 @@ export async function EngageWidget() {
 
       {/* Upcoming + Recent */}
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
+        <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium">Upcoming</CardTitle>
@@ -112,7 +112,7 @@ export async function EngageWidget() {
           </CardContent>
         </Card>
 
-        <Card className="border border-black/[0.03] shadow-sm shadow-black/[0.02] bg-[#f5f4ef] text-[#141413] rounded-2xl overflow-hidden">
+        <Card className="border border-border/50 shadow-sm shadow-black/[0.02] bg-card text-card-foreground rounded-2xl overflow-hidden">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium">Recent</CardTitle>
