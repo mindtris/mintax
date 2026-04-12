@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { getBills, getBillStats, BillFilters } from "@/lib/services/bills"
+import { getItems } from "@/lib/services/items"
+import { getTaxes } from "@/lib/services/taxes"
 import { Plus } from "lucide-react"
 
 function formatAmount(amount: number, currency: string) {
@@ -17,7 +19,11 @@ function formatAmount(amount: number, currency: string) {
 export async function BillsView({ searchParams }: { searchParams?: BillFilters }) {
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
-  const bills = await getBills(org.id, searchParams)
+  const [bills, items, taxes] = await Promise.all([
+    getBills(org.id, searchParams),
+    getItems(org.id),
+    getTaxes(org.id),
+  ])
   const stats = await getBillStats(org.id).catch(() => ({
     outstanding: { total: 0, count: 0 },
     overdue: { total: 0, count: 0 },
@@ -34,7 +40,7 @@ export async function BillsView({ searchParams }: { searchParams?: BillFilters }
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <NewBillSheet baseCurrency={org.baseCurrency}>
+          <NewBillSheet baseCurrency={org.baseCurrency} items={items} taxes={taxes}>
             <Button className="text-white">
               <Plus className="h-4 w-4" />
               <span>Record bill</span>

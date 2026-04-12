@@ -30,9 +30,32 @@ export async function createBillAction(_prevState: any, formData: FormData) {
   const issuedAt = formData.get("issuedAt") as string
   const dueAt = formData.get("dueAt") as string
   const notes = formData.get("notes") as string
+  const itemsJson = formData.get("items") as string
 
   if (!vendorName || vendorName.trim().length < 1) {
     return { error: "Vendor name is required" }
+  }
+
+  // Parse line items
+  let items: any[] | undefined
+  if (itemsJson) {
+    try {
+      const parsed = JSON.parse(itemsJson)
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        items = parsed
+          .filter((item: any) => item.name || item.itemId)
+          .map((item: any) => ({
+            name: item.name || "Untitled Item",
+            description: item.description || undefined,
+            quantity: item.quantity || 1,
+            price: item.price || 0,
+            total: item.total || 0,
+            itemId: item.itemId || undefined,
+            taxId: item.taxId || undefined,
+            taxAmount: item.taxAmount || 0,
+          }))
+      }
+    } catch {}
   }
 
   const billNumber = await getNextBillNumber(org.id)
@@ -44,6 +67,7 @@ export async function createBillAction(_prevState: any, formData: FormData) {
     vendorEmail: vendorEmail || undefined,
     vendorAddress: vendorAddress || undefined,
     vendorTaxId: vendorTaxId || undefined,
+    items,
     subtotal,
     taxTotal,
     total: total || subtotal + taxTotal,
