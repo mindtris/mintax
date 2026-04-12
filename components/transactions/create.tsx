@@ -8,6 +8,8 @@ import { FormSelectProject } from "@/components/forms/select-project"
 import { FormSelectType } from "@/components/forms/select-type"
 import { FormInput, FormTextarea } from "@/components/forms/simple"
 import { Button } from "@/components/ui/button"
+import { DatePicker } from "@/components/ui/date-picker"
+import { Label } from "@/components/ui/label"
 import { Category, Currency, Project } from "@/lib/prisma/client"
 import { format } from "date-fns"
 import { Import, Loader2 } from "lucide-react"
@@ -91,7 +93,10 @@ export default function TransactionCreateForm({
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <FormInput title="Issued At" type="date" name="issuedAt" defaultValue={formData.issuedAt} className="w-full" />
+          <div className="flex flex-col gap-1">
+            <Label className="text-sm font-medium">Issued at</Label>
+            <DatePicker name="issuedAt" defaultValue={formData.issuedAt} placeholder="Pick a date" />
+          </div>
 
           <FormSelectCategory
             title="Category"

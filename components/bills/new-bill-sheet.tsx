@@ -9,6 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -189,14 +190,14 @@ export function NewBillSheet({
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="bill-issued" className="text-xs font-semibold">Issue date</Label>
-                  <Input id="bill-issued" name="issuedAt" type="date" defaultValue={today} className="h-11" />
+                  <DatePicker id="bill-issued" name="issuedAt" defaultValue={today} placeholder="Issue date" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="bill-due" className="text-xs font-semibold text-primary">Due date (Pre-populated)</Label>
-                  <Input id="bill-due" name="dueAt" type="date" defaultValue={calculatedDueDate} className="h-11 border-primary/20 bg-primary/5" />
+                  <DatePicker id="bill-due" name="dueAt" defaultValue={calculatedDueDate} placeholder="Due date" className="border-primary/20 bg-primary/5" />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="bill-total" className="text-xs font-semibold">Total amount *</Label>

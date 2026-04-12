@@ -2,20 +2,30 @@
 
 import { FormInput, FormSelect, FormTextarea } from "@/components/forms/simple"
 import { Button } from "@/components/ui/button"
+import { DatePicker } from "@/components/ui/date-picker"
+import { Label } from "@/components/ui/label"
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger,
 } from "@/components/ui/sheet"
-import { LEAD_SOURCES, LEAD_STAGES, SOURCE_LABELS, STAGE_LABELS } from "@/lib/services/leads"
+// import { LEAD_SOURCES, LEAD_STAGES, SOURCE_LABELS, STAGE_LABELS } from "@/lib/services/leads"
 
-const stageItems = LEAD_STAGES.map((s) => ({ code: s, name: STAGE_LABELS[s] }))
-const sourceItems = LEAD_SOURCES.map((s) => ({ code: s, name: SOURCE_LABELS[s] }))
 import { useActionState, useState } from "react"
 import { createLeadAction, updateLeadAction } from "@/app/(app)/sales/actions"
+
+const sourceItems = [
+  { code: "website", name: "Website" },
+  { code: "referral", name: "Referral" },
+  { code: "linkedin", name: "LinkedIn" },
+  { code: "cold_call", name: "Cold call" },
+  { code: "advertisement", name: "Advertisement" },
+  { code: "other", name: "Other" },
+]
 
 export function NewLeadSheet({
   children,
   lead,
   currency = "INR",
+  categories,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
 }: {
@@ -24,7 +34,9 @@ export function NewLeadSheet({
   currency?: string
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  categories?: any[]
 }) {
+  const stageItems = categories?.map((c) => ({ code: c.code, name: c.name })) || []
   const isEdit = !!lead
   const action = isEdit ? updateLeadAction : createLeadAction
   const [state, formAction, pending] = useActionState(action, null)
@@ -52,21 +64,21 @@ export function NewLeadSheet({
             {isEdit && <input type="hidden" name="leadId" value={lead.id} />}
 
             <FormInput title="Lead title" name="title" required defaultValue={lead?.title} placeholder="e.g. Website redesign project" />
-            <FormInput title="Contact name" name="contactName" required defaultValue={lead?.contactName} placeholder="Full name" />
+            <FormInput title="Contact name" name="contactName" required defaultValue={lead?.contactName} placeholder="Akshitha Kandikanti" />
 
             <div className="grid grid-cols-2 gap-4">
-              <FormInput title="Email" name="email" type="email" defaultValue={lead?.email} placeholder="email@example.com" />
+              <FormInput title="Email" name="email" type="email" defaultValue={lead?.email} placeholder="akshitha@mindtris.com" />
               <FormInput title="Phone" name="phone" defaultValue={lead?.phone} placeholder="+91..." />
             </div>
 
-            <FormInput title="Company" name="company" defaultValue={lead?.company} placeholder="Company name" />
+            <FormInput title="Company" name="company" defaultValue={lead?.company} placeholder="Mindtris" />
 
             <div className="grid grid-cols-2 gap-4">
               <FormSelect
                 title="Stage"
                 name="stage"
                 items={stageItems}
-                defaultValue={lead?.stage || "new"}
+                defaultValue={lead?.stage || categories?.[0]?.code || ""}
                 placeholder="Select stage"
               />
               <FormSelect
@@ -85,7 +97,10 @@ export function NewLeadSheet({
               <FormInput title="Probability %" name="probability" type="number" min="0" max="100" defaultValue={lead?.probability || 0} />
             </div>
 
-            <FormInput title="Expected close date" name="expectedCloseAt" type="date" defaultValue={lead?.expectedCloseAt ? new Date(lead.expectedCloseAt).toISOString().split("T")[0] : ""} />
+            <div className="flex flex-col gap-1">
+              <Label className="text-sm font-medium">Expected close date</Label>
+              <DatePicker name="expectedCloseAt" defaultValue={lead?.expectedCloseAt || null} placeholder="Pick a date" />
+            </div>
 
             <FormTextarea title="Description" name="description" defaultValue={lead?.description} placeholder="Notes about this lead..." />
 

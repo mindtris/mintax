@@ -13,6 +13,8 @@ import { FormSelectType } from "@/components/forms/select-type"
 import { FormInput, FormTextarea } from "@/components/forms/simple"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { DatePicker } from "@/components/ui/date-picker"
+import { Label } from "@/components/ui/label"
 import { Category, Currency, Field, File, Project } from "@/lib/prisma/client"
 import { format } from "date-fns"
 import { ArrowDownToLine, Brain, Loader2, Trash2 } from "lucide-react"
@@ -242,17 +244,17 @@ export default function AnalyzeForm({
           </ToolWindow>
         )}
 
-        <div className="flex flex-row gap-4">
-          <FormInput
-            title={fieldMap.issuedAt.name}
-            type="date"
-            name="issuedAt"
-            value={formData.issuedAt}
-            onChange={(e) => setFormData((prev) => ({ ...prev, issuedAt: e.target.value }))}
-            hideIfEmpty={!fieldMap.issuedAt.isVisibleInAnalysis}
-            required={fieldMap.issuedAt.isRequired}
-          />
-        </div>
+        {fieldMap.issuedAt.isVisibleInAnalysis && (
+          <div className="flex flex-col gap-1">
+            <Label className="text-sm font-medium">{fieldMap.issuedAt.name}</Label>
+            <DatePicker
+              name="issuedAt"
+              value={formData.issuedAt || null}
+              onChange={(date) => setFormData((prev) => ({ ...prev, issuedAt: date ? date.toISOString().split("T")[0] : "" }))}
+              placeholder="Pick a date"
+            />
+          </div>
+        )}
 
         <div className="flex flex-row gap-4">
           <FormSelectCategory

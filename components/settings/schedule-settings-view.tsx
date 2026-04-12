@@ -10,6 +10,7 @@ import {
 } from "@/app/(app)/settings/actions"
 import { Button } from "@/components/ui/button"
 import { DataGrid, DataGridColumn } from "@/components/ui/data-grid"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -340,8 +341,13 @@ export default function ScheduleSettingsView({ schedules }: { schedules: Schedul
 
             {!editingSchedule && (
               <div className="space-y-2">
-                <Label htmlFor="startAt">Start date</Label>
-                <Input id="startAt" type="date" value={form.startAt} onChange={(e) => setForm((p) => ({ ...p, startAt: e.target.value }))} />
+                <Label>Start date</Label>
+                <DatePicker
+                  name="startAt"
+                  value={form.startAt || null}
+                  onChange={(date) => setForm((p) => ({ ...p, startAt: date ? date.toISOString().split("T")[0] : "" }))}
+                  placeholder="Pick a start date"
+                />
               </div>
             )}
 
@@ -364,8 +370,13 @@ export default function ScheduleSettingsView({ schedules }: { schedules: Schedul
 
             {form.limitBy === "date" && (
               <div className="space-y-2">
-                <Label htmlFor="limitDate">End date</Label>
-                <Input id="limitDate" type="date" value={form.limitDate} onChange={(e) => setForm((p) => ({ ...p, limitDate: e.target.value }))} />
+                <Label>End date</Label>
+                <DatePicker
+                  name="limitDate"
+                  value={form.limitDate || null}
+                  onChange={(date) => setForm((p) => ({ ...p, limitDate: date ? date.toISOString().split("T")[0] : "" }))}
+                  placeholder="Pick an end date"
+                />
               </div>
             )}
 

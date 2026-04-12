@@ -10,6 +10,8 @@ import { FormSelectProject } from "@/components/forms/select-project"
 import { FormSelectType } from "@/components/forms/select-type"
 import { FormInput, FormTextarea } from "@/components/forms/simple"
 import { Button } from "@/components/ui/button"
+import { DatePicker } from "@/components/ui/date-picker"
+import { Label } from "@/components/ui/label"
 import { TransactionData } from "@/lib/services/transactions"
 import { Category, Currency, Field, Project, Transaction } from "@/lib/prisma/client"
 import { format } from "date-fns"
@@ -141,13 +143,10 @@ export default function TransactionEditForm({
       </div>
 
       <div className="flex flex-row flex-grow gap-4">
-        <FormInput
-          title={fieldMap.issuedAt.name}
-          type="date"
-          name="issuedAt"
-          defaultValue={formData.issuedAt}
-          isRequired={fieldMap.issuedAt.isRequired}
-        />
+        <div className="flex flex-col gap-1">
+          <Label className="text-sm font-medium">{fieldMap.issuedAt.name}</Label>
+          <DatePicker name="issuedAt" defaultValue={formData.issuedAt} placeholder="Pick a date" />
+        </div>
         {formData.currencyCode !== settings.default_currency || formData.convertedTotal !== 0 ? (
           <>
             {formData.convertedTotal !== null && (

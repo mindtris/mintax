@@ -9,6 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -202,11 +203,11 @@ export function NewInvoiceSheet({
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="inv-issued">Issue date</Label>
-                <Input id="inv-issued" name="issuedAt" type="date" defaultValue={today} />
+                <DatePicker id="inv-issued" name="issuedAt" defaultValue={today} placeholder="Issue date" />
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="inv-due">Due date</Label>
-                <Input id="inv-due" name="dueAt" type="date" defaultValue={defaultDueDate} />
+                <DatePicker id="inv-due" name="dueAt" defaultValue={defaultDueDate} placeholder="Due date" />
               </div>
             </div>
 
