@@ -1,8 +1,13 @@
 "use server"
 
-import { put } from "@vercel/blob"
 import config from "@/lib/core/config"
 import { ActionState } from "@/lib/actions"
+import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
+import { getStorage } from "@/lib/storage"
+import { safePathJoin } from "@/lib/files"
+import { createFile } from "@/lib/services/files"
+import { randomUUID } from "crypto"
+import path from "path"
 import { z } from "zod"
 
 const bugSchema = z.object({
@@ -30,10 +35,32 @@ export async function submitBugReportAction(
 
     let screenshotUrl = ""
     if (screenshot && screenshot.size > 0) {
-      const blob = await put(`bugs/${Date.now()}-${screenshot.name}`, screenshot, {
-        access: "public",
-      })
-      screenshotUrl = blob.url
+      try {
+        const user = await getCurrentUser()
+        const org = await getActiveOrg(user)
+        const ext = path.extname(screenshot.name)
+        const fileUuid = randomUUID()
+        const storagePath = safePathJoin(org.id, "bugs", `${fileUuid}${ext}`)
+
+        const arrayBuffer = await screenshot.arrayBuffer()
+        await getStorage().put(storagePath, Buffer.from(arrayBuffer))
+
+        const fileRecord = await createFile(org.id, user.id, {
+          id: fileUuid,
+          filename: screenshot.name,
+          path: storagePath,
+          mimetype: screenshot.type,
+          size: screenshot.size,
+          isReviewed: true,
+          metadata: { size: screenshot.size, lastModified: screenshot.lastModified },
+        })
+
+        // Public download URL (works for both authenticated users and the GitHub issue link)
+        screenshotUrl = `${config.app.baseURL}/files/download/${fileRecord.id}`
+      } catch (uploadErr) {
+        console.error("Screenshot upload failed:", uploadErr)
+        // Continue without screenshot rather than failing the whole bug report
+      }
     }
 
     // Prepare GitHub Issue Body
