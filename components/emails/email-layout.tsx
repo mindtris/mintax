@@ -113,7 +113,7 @@ export const EmailLayout: React.FC<EmailLayoutProps> = ({ children, preview = ""
                     letterSpacing: "0.1em",
                     textAlign: "center",
                   }}>
-                    &copy; {new Date().getFullYear()} Mindtris&trade; Inc.
+                    Powered by Mindtris (Mintax) &bull; &copy; {new Date().getFullYear()} Mindtris&trade; Inc.
                   </p>
                 </td>
               </tr>

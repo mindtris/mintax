@@ -165,7 +165,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ slug
 
       <footer className="border-t border-black/[0.05] py-4 mt-12">
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <p className="text-xs text-muted-foreground">Powered by {config.app.title}</p>
+          <p className="text-xs text-muted-foreground">Powered by Mindtris ({config.app.title})</p>
         </div>
       </footer>
 

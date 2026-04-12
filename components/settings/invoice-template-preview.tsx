@@ -53,7 +53,7 @@ function BrandingFooter({ accentColor }: { accentColor: string }) {
             <rect width="40" height="40" rx="8" fill={accentColor} />
             <path d="M10 28V12l10 8 10-8v16" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <span className="text-[4px] text-gray-300">Powered by <span style={{ color: accentColor }} className="font-semibold">Mintax</span></span>
+          <span className="text-[4px] text-gray-300">Powered by <span style={{ color: accentColor }} className="font-semibold">Mindtris</span> <span className="text-gray-300">(Mintax)</span></span>
         </div>
       </div>
     </div>
@@ -73,7 +73,7 @@ function DefaultTemplate({ accentColor, orgName }: { accentColor: string; orgNam
           </svg>
           <div>
             <div className="font-bold text-[8px]" style={{ color: accentColor }}>{orgName}</div>
-            <div className="text-[4px] text-gray-400">via Mintax by Mindtris</div>
+            <div className="text-[4px] text-gray-400">Powered by Mindtris (Mintax)</div>
           </div>
         </div>
         <div className="text-right">
@@ -141,7 +141,7 @@ function ClassicTemplate({ accentColor, orgName }: { accentColor: string; orgNam
         <div className="text-center">
           <div className="font-bold text-[10px]" style={{ color: accentColor }}>{orgName}</div>
           <div className="text-[5px] text-gray-400">123 Business St, City | +1 234 567 890</div>
-          <div className="text-[4px] text-gray-300 mt-0.5">Powered by Mintax by Mindtris</div>
+          <div className="text-[4px] text-gray-300 mt-0.5">Powered by Mindtris (Mintax)</div>
         </div>
       </div>
       <div className="px-3 pt-2 text-center">
@@ -216,7 +216,7 @@ function ModernTemplate({ accentColor, orgName }: { accentColor: string; orgName
           <div className="text-[8px] font-light tracking-wider opacity-80">INVOICE</div>
         </div>
         <div className="text-[5px] opacity-70 mt-0.5">123 Business St, City | info@company.com</div>
-        <div className="text-[4px] opacity-50 mt-0.5">Powered by Mintax by Mindtris</div>
+        <div className="text-[4px] opacity-50 mt-0.5">Powered by Mindtris (Mintax)</div>
       </div>
       <div className="px-3 pt-2 flex justify-between">
         <div>

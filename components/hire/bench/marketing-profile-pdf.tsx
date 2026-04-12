@@ -167,7 +167,7 @@ export const MarketingProfilePDF = ({ candidate, organization }: MarketingProfil
       {/* Footer */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>© {new Date().getFullYear()} {organization.name}. All rights reserved.</Text>
-        <Text style={styles.footerText}>Powered by Mintax Recruitment hub</Text>
+        <Text style={styles.footerText}>Powered by Mindtris (Mintax)</Text>
       </View>
     </Page>
   </Document>
