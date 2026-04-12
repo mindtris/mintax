@@ -21,7 +21,8 @@ export async function TransactionsView({ searchParams }: { searchParams: Transac
     limit: TRANSACTIONS_PER_PAGE,
     offset: ((page ?? 1) - 1) * TRANSACTIONS_PER_PAGE,
   })
-  const categories = await getCategories(org.id)
+  const allCategories = await getCategories(org.id)
+  const categories = allCategories.filter((c) => c.type === "expense" || c.type === "income")
   const projects = await getProjects(org.id)
   const fields = await getFields(org.id)
 

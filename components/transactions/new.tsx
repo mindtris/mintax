@@ -8,7 +8,8 @@ import { NewTransactionSheet } from "./new-sheet"
 export async function NewTransactionDialog() {
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
-  const categories = await getCategories(org.id)
+  const allCategories = await getCategories(org.id)
+  const categories = allCategories.filter((c) => c.type === "expense" || c.type === "income")
   const currencies = await getCurrencies(org.id)
   const settings = await getSettings(org.id)
   const projects = await getProjects(org.id)
