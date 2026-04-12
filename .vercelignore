@@ -2,6 +2,7 @@ pgdata/
 test-results/
 tests/
 infra/
+!infra/scripts/patch-next.cjs
 .env
 .env.local
 docker-compose*.yml
