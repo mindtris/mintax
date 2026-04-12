@@ -1,7 +1,6 @@
 "use client"
 
 import { saveEmailTemplateSettingsAction } from "@/app/(app)/settings/actions"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DataGrid, DataGridColumn } from "@/components/ui/data-grid"
 import { Input } from "@/components/ui/input"
@@ -244,19 +243,19 @@ interface Props {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Bills: "bg-amber-100 text-amber-700",
-  Invoices: "bg-blue-100 text-blue-700",
-  Payments: "bg-green-100 text-green-700",
-  Others: "bg-purple-100 text-purple-700",
+  Bills: "bg-primary/10 text-primary rounded-full",
+  Invoices: "bg-accent text-accent-foreground rounded-full",
+  Payments: "bg-secondary text-secondary-foreground rounded-full",
+  Others: "bg-muted text-muted-foreground rounded-full",
 }
 
 const SENT_TO_COLORS: Record<string, string> = {
-  Admin: "bg-slate-100 text-slate-600",
-  Customer: "bg-sky-100 text-sky-700",
-  Vendor: "bg-orange-100 text-orange-700",
-  Assignee: "bg-violet-100 text-violet-700",
-  User: "bg-gray-100 text-gray-600",
-  Subscriber: "bg-emerald-100 text-emerald-700",
+  Admin: "bg-muted text-muted-foreground rounded-full",
+  Customer: "bg-primary/10 text-primary rounded-full",
+  Vendor: "bg-accent text-accent-foreground rounded-full",
+  Assignee: "bg-secondary text-secondary-foreground rounded-full",
+  User: "bg-muted text-muted-foreground rounded-full",
+  Subscriber: "bg-primary/10 text-primary rounded-full",
 }
 
 export default function EmailTemplateSettingsForm({ settings, orgName }: Props) {
@@ -319,9 +318,9 @@ export default function EmailTemplateSettingsForm({ settings, orgName }: Props) 
       label: "Category",
       sortable: true,
       render: (row) => (
-        <Badge variant="secondary" className={CATEGORY_COLORS[row.category] || ""}>
+        <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-semibold ${CATEGORY_COLORS[row.category] || "bg-muted text-muted-foreground rounded-full"}`}>
           {row.category}
-        </Badge>
+        </span>
       ),
     },
     {
@@ -329,9 +328,9 @@ export default function EmailTemplateSettingsForm({ settings, orgName }: Props) 
       label: "Sent to",
       sortable: true,
       render: (row) => (
-        <Badge variant="outline" className={SENT_TO_COLORS[row.sentTo] || ""}>
+        <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-semibold ${SENT_TO_COLORS[row.sentTo] || "bg-muted text-muted-foreground rounded-full"}`}>
           {row.sentTo}
-        </Badge>
+        </span>
       ),
     },
     {
@@ -356,7 +355,7 @@ export default function EmailTemplateSettingsForm({ settings, orgName }: Props) 
             Customize subject lines, greetings, and footer notes for each email type.
           </p>
         </div>
-        <Button variant="outline" onClick={() => setGlobalSheetOpen(true)}>
+        <Button onClick={() => setGlobalSheetOpen(true)}>
           Global settings
         </Button>
       </div>
@@ -373,14 +372,14 @@ export default function EmailTemplateSettingsForm({ settings, orgName }: Props) 
 
       {/* Template edit sheet */}
       <Sheet open={!!selectedTemplate} onOpenChange={(open) => !open && setSelectedTemplate(null)}>
-        <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-auto max-h-[96vh] rounded-lg w-[95vw] sm:max-w-md flex flex-col gap-0 p-0">
+        <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] rounded-lg w-[95vw] sm:max-w-md flex flex-col gap-0 p-0">
           <SheetHeader className="px-6 pt-6 pb-4 shrink-0 border-b">
             <SheetTitle>{selectedTemplate?.name}</SheetTitle>
             <div className="flex gap-2 mt-1">
               {selectedTemplate && (
                 <>
-                  <Badge variant="secondary" className={CATEGORY_COLORS[selectedTemplate.category] || ""}>{selectedTemplate.category}</Badge>
-                  <Badge variant="outline" className={SENT_TO_COLORS[selectedTemplate.sentTo] || ""}>Sent to {selectedTemplate.sentTo.toLowerCase()}</Badge>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-semibold ${CATEGORY_COLORS[selectedTemplate.category] || "bg-muted text-muted-foreground rounded-full"}`}>{selectedTemplate.category}</span>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-semibold ${SENT_TO_COLORS[selectedTemplate.sentTo] || "bg-muted text-muted-foreground rounded-full"}`}>Sent to {selectedTemplate.sentTo.toLowerCase()}</span>
                 </>
               )}
             </div>
@@ -443,7 +442,7 @@ export default function EmailTemplateSettingsForm({ settings, orgName }: Props) 
                 <Button type="submit" disabled={pending} className="flex-1">
                   {pending ? "Saving..." : "Save"}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setSelectedTemplate(null)} className="flex-1">
+                <Button type="button" variant="secondary" onClick={() => setSelectedTemplate(null)} className="flex-1">
                   Cancel
                 </Button>
               </div>
@@ -454,7 +453,7 @@ export default function EmailTemplateSettingsForm({ settings, orgName }: Props) 
 
       {/* Global settings sheet */}
       <Sheet open={globalSheetOpen} onOpenChange={setGlobalSheetOpen}>
-        <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-auto max-h-[96vh] rounded-lg w-[95vw] sm:max-w-md flex flex-col gap-0 p-0">
+        <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] rounded-lg w-[95vw] sm:max-w-md flex flex-col gap-0 p-0">
           <SheetHeader className="px-6 pt-6 pb-4 shrink-0 border-b">
             <SheetTitle>Global email settings</SheetTitle>
             <p className="text-sm text-muted-foreground">Settings applied to all outgoing emails.</p>
@@ -510,7 +509,7 @@ export default function EmailTemplateSettingsForm({ settings, orgName }: Props) 
                 <Button type="submit" disabled={pending} className="flex-1">
                   {pending ? "Saving..." : "Save"}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setGlobalSheetOpen(false)} className="flex-1">
+                <Button type="button" variant="secondary" onClick={() => setGlobalSheetOpen(false)} className="flex-1">
                   Cancel
                 </Button>
               </div>

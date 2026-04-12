@@ -18,6 +18,8 @@ const nextConfig: NextConfig = {
     config.ignoreWarnings = [
       { module: /node_modules\/require-in-the-middle/ },
       { module: /node_modules\/@opentelemetry/ },
+      { module: /node_modules\/jose/ },
+      { module: /node_modules\/better-auth/ },
     ]
     return config
   },
