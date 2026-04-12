@@ -151,7 +151,16 @@ export async function markInvoicePaid(id: string, orgId: string, transactionId?:
 }
 
 export async function getNextInvoiceNumber(orgId: string, type: string = "sales") {
-  const prefix = type === "sales" ? "INV" : "BILL"
+  // Load custom prefix and digit settings
+  const settings = await prisma.setting.findMany({
+    where: { organizationId: orgId, code: { in: ["invoice_number_prefix", "invoice_number_digits"] } },
+  })
+  const settingsMap = Object.fromEntries(settings.map((s) => [s.code, s.value || ""]))
+
+  const defaultPrefix = type === "sales" ? "INV" : type === "estimate" ? "EST" : "BILL"
+  const prefix = settingsMap.invoice_number_prefix || defaultPrefix
+  const digits = parseInt(settingsMap.invoice_number_digits || "3") || 3
+
   const lastInvoice = await prisma.invoice.findFirst({
     where: { organizationId: orgId, type },
     orderBy: { createdAt: "desc" },
@@ -159,11 +168,11 @@ export async function getNextInvoiceNumber(orgId: string, type: string = "sales"
   })
 
   if (!lastInvoice) {
-    return `${prefix}-001`
+    return `${prefix}-${String(1).padStart(digits, "0")}`
   }
 
   const lastNumber = parseInt(lastInvoice.invoiceNumber.replace(/\D/g, "")) || 0
-  return `${prefix}-${String(lastNumber + 1).padStart(3, "0")}`
+  return `${prefix}-${String(lastNumber + 1).padStart(digits, "0")}`
 }
 
 export const getOverdueInvoices = cache(async (orgId: string) => {

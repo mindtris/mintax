@@ -1,6 +1,7 @@
 import ProfileSettingsForm from "@/components/settings/profile-settings-form"
 import BusinessSettingsForm from "@/components/settings/business-settings-form"
 import EmailTemplateSettingsForm from "@/components/settings/email-template-settings-form"
+import InvoiceSettingsForm from "@/components/settings/invoice-settings-form"
 import PayablesSettingsForm from "@/components/settings/payables-settings-form"
 import ScheduleSettingsView from "@/components/settings/schedule-settings-view"
 import { LLMProvidersGrid } from "@/components/settings/llm-providers-grid"
@@ -127,6 +128,24 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   if (tab === "schedule") {
     const schedules = await getSchedules(org.id)
     return <ScheduleSettingsView schedules={schedules} />
+  }
+
+  // Invoice tab
+  if (tab === "invoice") {
+    const settings = await getSettings(org.id)
+    return (
+      <div className="flex flex-col gap-6">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight">Invoice settings</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Configure invoice numbering, defaults, appearance, and column labels.
+          </p>
+        </div>
+        <div className="w-full max-w-2xl">
+          <InvoiceSettingsForm settings={settings} />
+        </div>
+      </div>
+    )
   }
 
   // Taxes tab

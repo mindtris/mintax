@@ -29,6 +29,8 @@ interface NewInvoiceSheetProps {
   defaultClientName?: string
   baseCurrency?: string
   defaultType?: string
+  /** Invoice settings from /settings?tab=invoice */
+  invoiceSettings?: Record<string, string>
 }
 
 export function NewInvoiceSheet({
@@ -37,12 +39,14 @@ export function NewInvoiceSheet({
   defaultClientName = "",
   baseCurrency = "INR",
   defaultType = "sales",
+  invoiceSettings = {},
 }: NewInvoiceSheetProps) {
   const [open, setOpen] = useState(false)
   const [state, formAction, pending] = useActionState(createInvoiceAction, null)
 
+  const paymentTermsDays = parseInt(invoiceSettings.invoice_payment_terms || "30") || 30
   const today = new Date().toISOString().split("T")[0]
-  const thirtyDaysLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+  const defaultDueDate = new Date(Date.now() + paymentTermsDays * 24 * 60 * 60 * 1000)
     .toISOString()
     .split("T")[0]
 
@@ -150,7 +154,7 @@ export function NewInvoiceSheet({
               </Label>
               <Input
                 id="inv-client-name"
-                placeholder="Acme Corp"
+                placeholder="Mindtris"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
               />
@@ -164,7 +168,7 @@ export function NewInvoiceSheet({
                   id="inv-client-email"
                   name="clientEmail"
                   type="email"
-                  placeholder="client@example.com"
+                  placeholder="akshitha@mindtris.com"
                   value={clientEmail}
                   onChange={(e) => setClientEmail(e.target.value)}
                 />
@@ -202,7 +206,7 @@ export function NewInvoiceSheet({
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="inv-due">Due date</Label>
-                <Input id="inv-due" name="dueAt" type="date" defaultValue={thirtyDaysLater} />
+                <Input id="inv-due" name="dueAt" type="date" defaultValue={defaultDueDate} />
               </div>
             </div>
 
@@ -225,7 +229,7 @@ export function NewInvoiceSheet({
             {/* Notes */}
             <div className="flex flex-col gap-2">
               <Label htmlFor="inv-notes">Notes</Label>
-              <Textarea id="inv-notes" name="notes" placeholder="Payment terms, notes…" rows={3} />
+              <Textarea id="inv-notes" name="notes" defaultValue={invoiceSettings.invoice_notes || ""} placeholder="Payment terms, notes…" rows={3} />
             </div>
 
             {state?.error && (

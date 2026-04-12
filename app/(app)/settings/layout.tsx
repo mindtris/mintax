@@ -24,6 +24,7 @@ const settingsGroups: NavGroup[] = [
   {
     label: "Financial",
     items: [
+      { title: "Invoice", href: "/settings?tab=invoice", icon: "file-text" },
       { title: "Taxes", href: "/settings?tab=taxes", icon: "receipt" },
       { title: "Items", href: "/settings?tab=items", icon: "square-stack" },
       { title: "Categories", href: "/settings?tab=categories", icon: "folder-kanban" },

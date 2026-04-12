@@ -42,6 +42,22 @@ export const categoryFormSchema = z.object({
   parentId: z.string().nullable().optional(),
 })
 
+export const invoiceSettingsSchema = z.object({
+  invoice_number_prefix: z.string().max(10).optional(),
+  invoice_number_digits: z.string().optional(),
+  invoice_payment_terms: z.string().optional(),
+  invoice_title: z.string().max(128).optional(),
+  invoice_subheading: z.string().max(256).optional(),
+  invoice_notes: z.string().max(2000).optional(),
+  invoice_footer: z.string().max(1000).optional(),
+  invoice_color: z.string().max(7).optional(),
+  invoice_auto_send: z.string().optional(),
+  invoice_item_label: z.string().max(64).optional(),
+  invoice_price_label: z.string().max(64).optional(),
+  invoice_quantity_label: z.string().max(64).optional(),
+  invoice_hide_item_description: z.string().optional(),
+})
+
 export const emailTemplateSettingsSchema = z.object({
   // Global
   email_sender_name: z.string().max(128).optional(),
