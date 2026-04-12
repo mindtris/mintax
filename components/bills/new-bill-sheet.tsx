@@ -119,7 +119,7 @@ export function NewBillSheet({
               <input type="hidden" name="vendorName" value={vendorName} />
               
               <div className="flex flex-col gap-2">
-                <Label htmlFor="bill-vendor-name" className="text-xs font-semibold">Vendor name (Manual entry)</Label>
+                <Label htmlFor="bill-vendor-name" className="text-xs font-semibold">Vendor name</Label>
                 <Input
                   id="bill-vendor-name"
                   placeholder="Mindtris"
@@ -196,7 +196,7 @@ export function NewBillSheet({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="bill-due" className="text-xs font-semibold text-primary">Due date (Pre-populated)</Label>
+                  <Label htmlFor="bill-due" className="text-xs font-semibold text-primary">Due date</Label>
                   <DatePicker id="bill-due" name="dueAt" defaultValue={calculatedDueDate} placeholder="Due date" className="border-primary/20 bg-primary/5" />
                 </div>
                 <div className="flex flex-col gap-2">
