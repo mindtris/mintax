@@ -3,7 +3,7 @@ import config from "@/lib/core/config"
 import { redirect } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import { Bug, Github } from "lucide-react"
+import { Bug, Github, Leaf } from "lucide-react"
 
 export default async function Home() {
   const session = await getSession()
@@ -54,40 +54,35 @@ export default async function Home() {
             <p className="mt-4 text-base md:text-lg text-white/60 max-w-2xl mx-auto leading-relaxed">
               One platform for accounting, invoicing, hiring, and engagement. Built for businesses that move fast.
             </p>
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
+            <div className="mt-8 grid grid-cols-2 sm:flex sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
               <Link
                 href="/book-a-demo"
-                className="w-full sm:w-auto text-center bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors font-semibold text-sm"
+                className="text-center bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors font-semibold text-sm"
               >
                 Book a demo
               </Link>
               <Link
                 href="/signin"
-                className="w-full sm:w-auto text-center bg-white/10 text-white px-6 py-3 rounded-lg hover:bg-white/20 transition-colors font-medium text-sm backdrop-blur-sm border border-white/10"
+                className="text-center bg-white/10 text-white px-6 py-3 rounded-lg hover:bg-white/20 transition-colors font-medium text-sm backdrop-blur-sm border border-white/10"
               >
                 Sign in
               </Link>
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-3 w-full max-w-xs">
               <a
                 href="https://github.com/mindtris/mintax"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-lg hover:bg-white/20 transition-colors font-medium text-xs backdrop-blur-sm border border-white/10"
+                className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-6 py-3 rounded-lg hover:bg-white/20 transition-colors font-medium text-sm backdrop-blur-sm border border-white/10"
               >
-                <Github className="h-3.5 w-3.5" />
+                <Github className="h-4 w-4" />
                 GitHub
               </a>
               <a
                 href="https://github.com/mindtris/mintax"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-lg hover:bg-white/20 transition-colors font-medium text-xs backdrop-blur-sm border border-white/10"
+                className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-6 py-3 rounded-lg hover:bg-white/20 transition-colors font-medium text-sm backdrop-blur-sm border border-white/10"
               >
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
-                </span>
+                <Leaf className="h-4 w-4" />
                 Open source
               </a>
             </div>
