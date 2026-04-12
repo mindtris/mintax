@@ -96,7 +96,7 @@ export function TransactionSearchAndFilters({
 
       {/* Filter Sheet */}
       <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
-        <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-auto max-h-[96vh] w-[95vw] sm:max-w-md flex flex-col gap-0 p-0 overflow-hidden border-black/[0.05] shadow-2xl">
+        <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] w-[95vw] sm:max-w-md flex flex-col gap-0 p-0 overflow-hidden border-black/[0.05] shadow-2xl">
           <SheetHeader className="px-6 pt-6 pb-4 shrink-0 border-b">
             <SheetTitle className="font-display text-xl tracking-tight font-bold">Filters</SheetTitle>
           </SheetHeader>

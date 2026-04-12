@@ -9,23 +9,18 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter,
 } from "@/components/ui/sheet"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  DropdownMenu as ColMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent as ColMenuContent,
-  DropdownMenuTrigger as ColMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { ColumnsIcon, Facebook, Filter, Instagram, Linkedin, MoreVertical, Power, Search, Share2, Trash2, Twitter, X } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useMemo, useState } from "react"
-import { disableSocialAccountAction, deleteSocialAccountAction } from "./actions"
+import { disableSocialAccountAction, deleteSocialAccountAction } from "@/app/(app)/settings/social/actions"
 
 const providerIcons: Record<string, any> = {
   facebook: Facebook,
@@ -188,13 +183,13 @@ export function SocialAccountsList({ accounts }: { accounts: AccountRow[] }) {
           </Button>
         )}
 
-        <ColMenu>
-          <ColMenuTrigger asChild>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon" title="Select table columns">
               <ColumnsIcon className="h-4 w-4" />
             </Button>
-          </ColMenuTrigger>
-          <ColMenuContent align="end" className="w-48">
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
             {ALL_COLUMNS.map((col) => (
               <DropdownMenuCheckboxItem
                 key={col.key}
@@ -205,8 +200,8 @@ export function SocialAccountsList({ accounts }: { accounts: AccountRow[] }) {
                 {col.label}
               </DropdownMenuCheckboxItem>
             ))}
-          </ColMenuContent>
-        </ColMenu>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Filter sheet */}

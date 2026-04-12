@@ -20,10 +20,12 @@ export function EngageSearchAndFilters({
   columns = [],
   visibleColumns = [],
   onToggleColumn,
+  categories = [],
 }: {
   columns?: ColumnConfig[]
   visibleColumns?: string[]
   onToggleColumn?: (key: string) => void
+  categories?: any[]
 }) {
   const [filters, setFilters] = useEngageFilters()
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
@@ -34,6 +36,7 @@ export function EngageSearchAndFilters({
 
   const activeFilterCount = [
     filters.status && filters.status !== "-",
+    filters.category && filters.category !== "-",
     filters.provider && filters.provider !== "-",
   ].filter(Boolean).length
 
@@ -94,11 +97,23 @@ export function EngageSearchAndFilters({
       </div>
 
       <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
-        <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-auto max-h-[96vh] w-[95vw] sm:max-w-md flex flex-col gap-0 p-0 overflow-hidden shadow-2xl">
+        <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] w-[95vw] sm:max-w-md flex flex-col gap-0 p-0 overflow-hidden shadow-2xl">
           <SheetHeader className="px-6 pt-6 pb-4 shrink-0 border-b">
             <SheetTitle>Filters</SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">Category</label>
+              <Select value={filters.category || "-"} onValueChange={(v) => handleFilterChange("category", v)}>
+                <SelectTrigger className="w-full h-10"><SelectValue placeholder="All categories" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="-">All categories</SelectItem>
+                  {categories.map((c: any) => (
+                    <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground">Status</label>
               <Select value={filters.status || "-"} onValueChange={(v) => handleFilterChange("status", v)}>

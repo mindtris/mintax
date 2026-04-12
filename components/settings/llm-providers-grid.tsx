@@ -198,7 +198,7 @@ export function LLMProvidersGrid({ settings }: { settings: Record<string, string
 
       {/* Edit sheet */}
       <Sheet open={!!editingProvider} onOpenChange={(open) => !open && setEditingProvider(null)}>
-        <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-auto max-h-[96vh] rounded-lg w-[95vw] sm:max-w-md flex flex-col gap-0 p-0">
+        <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] rounded-lg w-[95vw] sm:max-w-md flex flex-col gap-0 p-0">
           <SheetHeader className="px-6 pt-6 pb-4 shrink-0 border-b">
             <SheetTitle>Configure {editingProvider?.label}</SheetTitle>
           </SheetHeader>

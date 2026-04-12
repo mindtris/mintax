@@ -90,7 +90,7 @@ export function NewBillSheet({
 
       <SheetContent
         side="right"
-        className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-auto max-h-[96vh] w-[95vw] sm:max-w-xl flex flex-col gap-0 p-0 overflow-hidden border-black/[0.05] shadow-2xl"
+        className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] w-[95vw] sm:max-w-xl flex flex-col gap-0 p-0 overflow-hidden border-black/[0.05] shadow-2xl"
       >
         <SheetHeader className="px-8 pt-8 pb-6 shrink-0 bg-muted/5 border-b border-black/[0.03]">
           <div className="flex items-center gap-3">
@@ -121,7 +121,7 @@ export function NewBillSheet({
                 <Label htmlFor="bill-vendor-name" className="text-xs font-semibold">Vendor name (Manual entry)</Label>
                 <Input
                   id="bill-vendor-name"
-                  placeholder="ACME Supplies Ltd"
+                  placeholder="Mindtris"
                   value={vendorName}
                   onChange={(e) => setVendorName(e.target.value)}
                   className="h-11"
@@ -135,7 +135,7 @@ export function NewBillSheet({
                     id="bill-vendor-email"
                     name="vendorEmail"
                     type="email"
-                    placeholder="billing@vendor.com"
+                    placeholder="akshitha@mindtris.com"
                     value={vendorEmail}
                     onChange={(e) => setVendorEmail(e.target.value)}
                     className="h-11"

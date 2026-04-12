@@ -29,7 +29,13 @@ const ALL_COLUMNS = [
   { key: "financials", label: "Activity" },
 ]
 
-export function ContactSearchAndFilters({ countries = [] }: { countries?: string[] }) {
+export function ContactSearchAndFilters({
+  countries = [],
+  categories = [],
+}: {
+  countries?: string[]
+  categories?: any[]
+}) {
   const [filters, setFilters] = useContactFilters()
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [visibleColumns, setVisibleColumns] = useState(ALL_COLUMNS.map((c) => c.key))
@@ -118,7 +124,7 @@ export function ContactSearchAndFilters({ countries = [] }: { countries?: string
       </div>
 
       <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
-        <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-auto max-h-[96vh] w-[95vw] sm:max-w-md flex flex-col gap-0 p-0 overflow-hidden shadow-2xl">
+        <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] w-[95vw] sm:max-w-md flex flex-col gap-0 p-0 overflow-hidden shadow-2xl">
           <SheetHeader className="px-6 pt-6 pb-4 shrink-0 border-b">
             <SheetTitle>Filters</SheetTitle>
           </SheetHeader>
