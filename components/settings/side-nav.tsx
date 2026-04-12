@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils"
 import {
   BadgeCent,
   BrainCircuit,
+  CalendarClock,
   CreditCard,
   Database,
   FolderKanban,
@@ -19,13 +20,14 @@ import {
   User,
 } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   settings: Settings,
   user: User,
   landmark: Landmark,
   "brain-circuit": BrainCircuit,
+  "calendar-clock": CalendarClock,
   receipt: Receipt,
   "square-stack": SquareStack,
   "folder-kanban": FolderKanban,
@@ -54,15 +56,23 @@ interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
 
 export function SideNav({ className, groups, ...props }: SidebarNavProps) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const activeTab = searchParams.get("tab") || "business"
 
   const allItems = groups.flatMap((g) => g.items)
+
+  const isItemActive = (href: string) => {
+    const url = new URL(href, "http://x")
+    const itemTab = url.searchParams.get("tab")
+    return pathname === "/settings" && itemTab === activeTab
+  }
 
   return (
     <>
       {/* Mobile: horizontal scrollable tabs */}
       <nav className={cn("flex lg:hidden overflow-x-auto gap-1 pb-2 scrollbar-none", className)} {...props}>
         {allItems.map((item) => {
-          const isActive = pathname === item.href
+          const isActive = isItemActive(item.href)
           const Icon = iconMap[item.icon] || Settings
           return (
             <Link
@@ -90,7 +100,7 @@ export function SideNav({ className, groups, ...props }: SidebarNavProps) {
               {group.label}
             </span>
             {group.items.map((item) => {
-              const isActive = pathname === item.href
+              const isActive = isItemActive(item.href)
               const Icon = iconMap[item.icon] || Settings
               return (
                 <Link

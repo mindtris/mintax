@@ -11,6 +11,7 @@ export const maxDuration = 60
 //   reconcile:         every 6 hours
 //   publish-posts:     every 5 minutes
 //   refresh-analytics: every 12 hours
+//   schedules:         every hour
 //   reminders:         every 15 minutes
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization")
@@ -30,6 +31,7 @@ export async function GET(request: NextRequest) {
     "/api/cron/reconcile",
     "/api/cron/publish-posts",
     "/api/cron/refresh-analytics",
+    "/api/cron/schedules",
     "/api/reminders/process",
   ]
 

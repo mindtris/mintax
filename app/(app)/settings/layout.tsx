@@ -10,41 +10,41 @@ const settingsGroups: NavGroup[] = [
   {
     label: "Account",
     items: [
-      { title: "General", href: "/settings", icon: "settings" },
-      { title: "Profile & plan", href: "/settings/profile", icon: "user" },
-      { title: "Business details", href: "/settings/business", icon: "landmark" },
+      { title: "Profile", href: "/settings?tab=profile", icon: "user" },
+      { title: "Business details", href: "/settings?tab=business", icon: "landmark" },
     ],
   },
   {
     label: "AI & Automation",
     items: [
-      { title: "LLM settings", href: "/settings/llm", icon: "brain-circuit" },
+      { title: "LLM settings", href: "/settings?tab=llm", icon: "brain-circuit" },
+      { title: "Schedules", href: "/settings?tab=schedule", icon: "calendar-clock" },
     ],
   },
   {
     label: "Financial",
     items: [
-      { title: "Taxes", href: "/settings/taxes", icon: "receipt" },
-      { title: "Items", href: "/settings/items", icon: "square-stack" },
-      { title: "Categories", href: "/settings/categories", icon: "folder-kanban" },
-      { title: "Projects", href: "/settings/projects", icon: "palette" },
-      { title: "Currencies", href: "/settings/currencies", icon: "badge-cent" },
+      { title: "Taxes", href: "/settings?tab=taxes", icon: "receipt" },
+      { title: "Items", href: "/settings?tab=items", icon: "square-stack" },
+      { title: "Categories", href: "/settings?tab=categories", icon: "folder-kanban" },
+      { title: "Projects", href: "/settings?tab=projects", icon: "palette" },
+      { title: "Currencies", href: "/settings?tab=currencies", icon: "badge-cent" },
     ],
   },
   {
     label: "Communications",
     items: [
-      { title: "Email templates", href: "/settings/email-templates", icon: "mail" },
-      { title: "Social accounts", href: "/settings/social", icon: "share-2" },
+      { title: "Email templates", href: "/settings?tab=email-templates", icon: "mail" },
+      { title: "Social accounts", href: "/settings?tab=social", icon: "share-2" },
     ],
   },
   {
     label: "Advanced",
     items: [
-      { title: "Fields", href: "/settings/fields", icon: "list-checks" },
-      { title: "Payables", href: "/settings/payables", icon: "credit-card" },
-      { title: "Backups", href: "/settings/backups", icon: "database" },
-      { title: "Danger zone", href: "/settings/danger", icon: "shield-alert" },
+      { title: "Fields", href: "/settings?tab=fields", icon: "list-checks" },
+      { title: "Payables", href: "/settings?tab=payables", icon: "credit-card" },
+      { title: "Backups", href: "/settings?tab=backups", icon: "database" },
+      { title: "Danger zone", href: "/settings?tab=danger", icon: "shield-alert" },
     ],
   },
 ]

@@ -93,7 +93,7 @@ export async function saveProfileAction(
     avatar: avatarUrl,
   })
 
-  revalidatePath("/settings/profile")
+  revalidatePath("/settings")
   return { success: true }
 }
 
@@ -142,7 +142,16 @@ export async function saveBusinessAction(
     await updateSettings(org.id, "default_currency", validatedForm.data.baseCurrency)
   }
 
-  revalidatePath("/settings/business")
+  // Save transaction defaults
+  const defaultCurrency = formData.get("default_currency") as string | null
+  const defaultType = formData.get("default_type") as string | null
+  const defaultCategory = formData.get("default_category") as string | null
+  if (defaultCurrency) await updateSettings(org.id, "default_currency", defaultCurrency)
+  if (defaultType) await updateSettings(org.id, "default_type", defaultType)
+  if (defaultCategory) await updateSettings(org.id, "default_category", defaultCategory)
+
+  revalidatePath("/settings")
+  revalidatePath("/settings")
   return { success: true }
 }
 
@@ -159,7 +168,7 @@ export async function addProjectAction(orgId: string, data: Prisma.ProjectCreate
     llm_prompt: validatedForm.data.llm_prompt || null,
     color: validatedForm.data.color || randomHexColor(),
   })
-  revalidatePath("/settings/projects")
+  revalidatePath("/settings")
 
   return { success: true, project }
 }
@@ -176,7 +185,7 @@ export async function editProjectAction(orgId: string, code: string, data: Prism
     llm_prompt: validatedForm.data.llm_prompt,
     color: validatedForm.data.color || "",
   })
-  revalidatePath("/settings/projects")
+  revalidatePath("/settings")
 
   return { success: true, project }
 }
@@ -187,7 +196,7 @@ export async function deleteProjectAction(orgId: string, code: string) {
   } catch (error) {
     return { success: false, error: "Failed to delete project" + error }
   }
-  revalidatePath("/settings/projects")
+  revalidatePath("/settings")
   return { success: true }
 }
 
@@ -202,7 +211,7 @@ export async function addCurrencyAction(orgId: string, data: Prisma.CurrencyCrea
     code: validatedForm.data.code,
     name: validatedForm.data.name,
   })
-  revalidatePath("/settings/currencies")
+  revalidatePath("/settings")
 
   return { success: true, currency }
 }
@@ -215,7 +224,7 @@ export async function editCurrencyAction(orgId: string, code: string, data: Pris
   }
 
   const currency = await updateCurrency(orgId, code, { name: validatedForm.data.name })
-  revalidatePath("/settings/currencies")
+  revalidatePath("/settings")
   return { success: true, currency }
 }
 
@@ -225,7 +234,7 @@ export async function deleteCurrencyAction(orgId: string, code: string) {
   } catch (error) {
     return { success: false, error: "Failed to delete currency" + error }
   }
-  revalidatePath("/settings/currencies")
+  revalidatePath("/settings")
   return { success: true }
 }
 
@@ -246,7 +255,7 @@ export async function addCategoryAction(orgId: string, data: Prisma.CategoryCrea
       color: validatedForm.data.color || "",
       parentId: validatedForm.data.parentId === "none" ? null : (validatedForm.data.parentId || null),
     })
-    revalidatePath("/settings/categories")
+    revalidatePath("/settings")
 
     return { success: true, category }
   } catch (error: unknown) {
@@ -274,7 +283,7 @@ export async function editCategoryAction(orgId: string, code: string, data: Pris
     color: validatedForm.data.color || "",
     parentId: validatedForm.data.parentId === "none" ? null : (validatedForm.data.parentId || null),
   })
-  revalidatePath("/settings/categories")
+  revalidatePath("/settings")
 
   return { success: true, category }
 }
@@ -285,7 +294,7 @@ export async function deleteCategoryAction(orgId: string, code: string) {
   } catch (error) {
     return { success: false, error: "Failed to delete category" + error }
   }
-  revalidatePath("/settings/categories")
+  revalidatePath("/settings")
   return { success: true }
 }
 
@@ -306,7 +315,7 @@ export async function addFieldAction(orgId: string, data: Prisma.FieldCreateInpu
     isRequired: validatedForm.data.isRequired,
     isExtra: true,
   })
-  revalidatePath("/settings/fields")
+  revalidatePath("/settings")
 
   return { success: true, field }
 }
@@ -326,7 +335,7 @@ export async function editFieldAction(orgId: string, code: string, data: Prisma.
     isVisibleInAnalysis: validatedForm.data.isVisibleInAnalysis,
     isRequired: validatedForm.data.isRequired,
   })
-  revalidatePath("/settings/fields")
+  revalidatePath("/settings")
 
   return { success: true, field }
 }
@@ -337,7 +346,7 @@ export async function deleteFieldAction(orgId: string, code: string) {
   } catch (error) {
     return { success: false, error: "Failed to delete field" + error }
   }
-  revalidatePath("/settings/fields")
+  revalidatePath("/settings")
   return { success: true }
 }
 
@@ -346,7 +355,7 @@ export async function deleteFieldAction(orgId: string, code: string) {
 export async function addTaxAction(orgId: string, data: any) {
   try {
     await createTax(orgId, data)
-    revalidatePath("/settings/taxes")
+    revalidatePath("/settings")
     return { success: true }
   } catch (error) {
     return { success: false, error: "Failed to add tax" }
@@ -356,7 +365,7 @@ export async function addTaxAction(orgId: string, data: any) {
 export async function editTaxAction(orgId: string, id: string, data: any) {
   try {
     await updateTax(id, orgId, data)
-    revalidatePath("/settings/taxes")
+    revalidatePath("/settings")
     return { success: true }
   } catch (error) {
     return { success: false, error: "Failed to update tax" }
@@ -366,7 +375,7 @@ export async function editTaxAction(orgId: string, id: string, data: any) {
 export async function deleteTaxAction(orgId: string, id: string) {
   try {
     await deleteTax(id, orgId)
-    revalidatePath("/settings/taxes")
+    revalidatePath("/settings")
     return { success: true }
   } catch (error) {
     return { success: false, error: "Failed to delete tax" }
@@ -378,7 +387,7 @@ export async function deleteTaxAction(orgId: string, id: string) {
 export async function addItemAction(orgId: string, data: any) {
   try {
     await createItem(orgId, data)
-    revalidatePath("/settings/items")
+    revalidatePath("/settings")
     return { success: true }
   } catch (error) {
     return { success: false, error: "Failed to add item" }
@@ -388,7 +397,7 @@ export async function addItemAction(orgId: string, data: any) {
 export async function editItemAction(orgId: string, id: string, data: any) {
   try {
     await updateItem(id, orgId, data)
-    revalidatePath("/settings/items")
+    revalidatePath("/settings")
     return { success: true }
   } catch (error) {
     return { success: false, error: "Failed to update item" }
@@ -398,7 +407,7 @@ export async function editItemAction(orgId: string, id: string, data: any) {
 export async function deleteItemAction(orgId: string, id: string) {
   try {
     await deleteItem(id, orgId)
-    revalidatePath("/settings/items")
+    revalidatePath("/settings")
     return { success: true }
   } catch (error) {
     return { success: false, error: "Failed to delete item" }
@@ -411,7 +420,7 @@ export async function addLlmPromptAction(orgId: string, data: any) {
   try {
     const { createLlmPrompt } = await import("@/lib/services/llm-prompts")
     await createLlmPrompt(orgId, data)
-    revalidatePath("/settings/llm")
+    revalidatePath("/settings")
     return { success: true }
   } catch (error) {
     return { success: false, error: "Failed to add prompt" }
@@ -422,7 +431,7 @@ export async function editLlmPromptAction(orgId: string, id: string, data: any) 
   try {
     const { updateLlmPrompt } = await import("@/lib/services/llm-prompts")
     await updateLlmPrompt(id, orgId, data)
-    revalidatePath("/settings/llm")
+    revalidatePath("/settings")
     return { success: true }
   } catch (error) {
     return { success: false, error: "Failed to update prompt" }
@@ -433,7 +442,7 @@ export async function deleteLlmPromptAction(orgId: string, id: string) {
   try {
     const { deleteLlmPrompt } = await import("@/lib/services/llm-prompts")
     await deleteLlmPrompt(id, orgId)
-    revalidatePath("/settings/llm")
+    revalidatePath("/settings")
     return { success: true }
   } catch (error) {
     return { success: false, error: "Failed to delete prompt" }
@@ -461,8 +470,95 @@ export async function saveEmailTemplateSettingsAction(
     }
   }
 
-  revalidatePath("/settings/email-templates")
+  revalidatePath("/settings")
   return { success: true }
+}
+
+// --- Schedule Actions ---
+
+export async function addScheduleAction(data: any) {
+  const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
+  try {
+    const { createSchedule } = await import("@/lib/services/schedules")
+    await createSchedule(org.id, user.id, {
+      module: data.module,
+      name: data.name,
+      frequency: data.frequency,
+      interval: data.interval ? Number(data.interval) : 1,
+      startAt: new Date(data.startAt),
+      limitBy: data.limitBy || null,
+      limitCount: data.limitCount ? Number(data.limitCount) : null,
+      limitDate: data.limitDate ? new Date(data.limitDate) : null,
+      autoSend: data.autoSend === true || data.autoSend === "true",
+      templateData: data.templateData || {},
+    })
+    revalidatePath("/settings")
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to create schedule" }
+  }
+}
+
+export async function editScheduleAction(id: string, data: any) {
+  const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
+  try {
+    const { updateSchedule } = await import("@/lib/services/schedules")
+    await updateSchedule(id, org.id, {
+      name: data.name,
+      frequency: data.frequency,
+      interval: data.interval ? Number(data.interval) : undefined,
+      limitBy: data.limitBy,
+      limitCount: data.limitCount ? Number(data.limitCount) : undefined,
+      limitDate: data.limitDate ? new Date(data.limitDate) : undefined,
+      autoSend: data.autoSend === true || data.autoSend === "true",
+      templateData: data.templateData,
+    })
+    revalidatePath("/settings")
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to update schedule" }
+  }
+}
+
+export async function pauseScheduleAction(id: string) {
+  const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
+  try {
+    const { pauseSchedule } = await import("@/lib/services/schedules")
+    await pauseSchedule(id, org.id)
+    revalidatePath("/settings")
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to pause schedule" }
+  }
+}
+
+export async function resumeScheduleAction(id: string) {
+  const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
+  try {
+    const { resumeSchedule } = await import("@/lib/services/schedules")
+    await resumeSchedule(id, org.id)
+    revalidatePath("/settings")
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to resume schedule" }
+  }
+}
+
+export async function deleteScheduleAction(id: string) {
+  const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
+  try {
+    const { deleteSchedule } = await import("@/lib/services/schedules")
+    await deleteSchedule(id, org.id)
+    revalidatePath("/settings")
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to delete schedule" }
+  }
 }
 
 // --- Migration Actions ---
@@ -471,7 +567,7 @@ export async function migrateLegacyDataAction(orgId: string) {
   try {
     await migrateLegacyCategoryTypes(orgId)
     revalidatePath("/settings")
-    revalidatePath("/settings/categories")
+    revalidatePath("/settings")
     return { success: true }
   } catch (error) {
     return { success: false, error: "Failed to migrate legacy data" }

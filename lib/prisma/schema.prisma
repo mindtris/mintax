@@ -126,6 +126,7 @@ model Organization {
   currencies    Currency[]
   transactions           Transaction[]
   recurringTransactions  RecurringTransaction[]
+  schedules              Schedule[]
   bankAccounts           BankAccount[]
   invoices               Invoice[]
   reminders              Reminder[]
@@ -424,6 +425,50 @@ model RecurringTransaction {
   @@index([organizationId])
   @@index([isActive, nextRunAt])
   @@map("recurring_transactions")
+}
+
+model Schedule {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdById    String    @map("created_by_id") @db.Uuid
+
+  // What this schedule creates
+  module         String    // "invoice" | "bill" | "transaction" | "reminder" | "social_post"
+  name           String    // Display name (e.g. "Monthly hosting invoice")
+
+  // Recurrence rule
+  frequency      String    @default("monthly") // "daily" | "weekly" | "monthly" | "yearly"
+  interval       Int       @default(1)          // every N frequency units
+  startAt        DateTime  @map("start_at")
+  nextRunAt      DateTime  @map("next_run_at")
+  lastRunAt      DateTime? @map("last_run_at")
+
+  // Limits
+  limitBy        String?   @map("limit_by")     // "count" | "date" | null (infinite)
+  limitCount     Int?      @map("limit_count")   // max occurrences
+  limitDate      DateTime? @map("limit_date")    // end date
+  runCount       Int       @default(0) @map("run_count") // how many times it has run
+
+  // Auto-send email on creation
+  autoSend       Boolean   @default(false) @map("auto_send")
+
+  // Template data — JSON blob with module-specific fields
+  // For invoices: { clientName, clientEmail, items, currency, dueInDays, notes, ... }
+  // For bills: { vendorName, vendorEmail, items, currency, dueInDays, ... }
+  // For transactions: { name, total, type, categoryCode, projectCode, ... }
+  // For reminders: { title, description, category, priority, assignees, ... }
+  // For social posts: { content, socialAccountIds, contentType, ... }
+  templateData   Json      @map("template_data")
+
+  status         String    @default("active") // "active" | "paused" | "completed" | "cancelled"
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@index([organizationId])
+  @@index([status, nextRunAt])
+  @@index([module])
+  @@map("schedules")
 }
 
 // ──────────────────────────────────────────────
