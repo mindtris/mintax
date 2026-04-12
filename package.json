@@ -10,9 +10,9 @@
   },
   "type": "module",
   "scripts": {
-    "postinstall": "node infra/scripts/patch-next.cjs",
+    "postinstall": "node scripts/patch-next.cjs",
     "dev": "next dev -p 7331",
-    "build": "node infra/scripts/patch-next.cjs && prisma generate --schema=lib/prisma/schema.prisma && prisma db push --schema=lib/prisma/schema.prisma && next build",
+    "build": "node scripts/patch-next.cjs && prisma generate --schema=lib/prisma/schema.prisma && prisma db push --schema=lib/prisma/schema.prisma && next build",
     "start": "prisma migrate deploy --schema=lib/prisma/schema.prisma && next start",
     "db:generate": "prisma generate --schema=lib/prisma/schema.prisma",
     "db:migrate": "prisma migrate dev --schema=lib/prisma/schema.prisma",
