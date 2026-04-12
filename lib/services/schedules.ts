@@ -1,5 +1,3 @@
-"use server"
-
 import { prisma } from "@/lib/core/db"
 import { addDays, addWeeks, addMonths, addYears, format } from "date-fns"
 import { cache } from "react"
