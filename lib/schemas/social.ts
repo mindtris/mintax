@@ -1,9 +1,14 @@
 import { z } from "zod"
 
 export const SOCIAL_PROVIDERS = [
-  "twitter", "linkedin", "instagram", "facebook",
-  "wordpress", "medium", "devto", "hashnode",
-  "website", "newsletter",
+  // Social — OAuth
+  "twitter", "linkedin", "facebook", "instagram", "tiktok", "youtube",
+  "pinterest", "reddit", "threads", "gmb", "dribbble", "twitch",
+  // Social — API key / webhook
+  "bluesky", "mastodon", "discord", "telegram", "slack",
+  "nostr", "farcaster", "vk", "lemmy", "kick", "mewe", "skool",
+  // Blog
+  "medium", "devto", "hashnode", "wordpress",
 ] as const
 
 export const CONTENT_TYPES = ["post", "article", "newsletter", "page", "thread"] as const
