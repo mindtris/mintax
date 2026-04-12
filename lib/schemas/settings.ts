@@ -59,6 +59,22 @@ export const invoiceSettingsSchema = z.object({
   invoice_hide_item_description: z.string().optional(),
 })
 
+export const estimateSettingsSchema = z.object({
+  estimate_template: z.string().max(20).optional(),
+  estimate_number_prefix: z.string().max(10).optional(),
+  estimate_number_digits: z.string().optional(),
+  estimate_validity_days: z.string().optional(),
+  estimate_title: z.string().max(128).optional(),
+  estimate_subheading: z.string().max(256).optional(),
+  estimate_notes: z.string().max(2000).optional(),
+  estimate_footer: z.string().max(1000).optional(),
+  estimate_color: z.string().max(7).optional(),
+  estimate_item_label: z.string().max(64).optional(),
+  estimate_price_label: z.string().max(64).optional(),
+  estimate_quantity_label: z.string().max(64).optional(),
+  estimate_hide_item_description: z.string().optional(),
+})
+
 export const emailTemplateSettingsSchema = z.object({
   // Global
   email_sender_name: z.string().max(128).optional(),

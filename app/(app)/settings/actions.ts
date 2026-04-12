@@ -4,6 +4,7 @@ import {
   categoryFormSchema,
   currencyFormSchema,
   emailTemplateSettingsSchema,
+  estimateSettingsSchema,
   fieldFormSchema,
   invoiceSettingsSchema,
   projectFormSchema,
@@ -484,6 +485,31 @@ export async function saveInvoiceSettingsAction(
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
   const validatedForm = invoiceSettingsSchema.safeParse(Object.fromEntries(formData))
+
+  if (!validatedForm.success) {
+    return { success: false, error: validatedForm.error.message }
+  }
+
+  for (const key in validatedForm.data) {
+    const value = validatedForm.data[key as keyof typeof validatedForm.data]
+    if (value !== undefined) {
+      await updateSettings(org.id, key, value)
+    }
+  }
+
+  revalidatePath("/settings")
+  return { success: true }
+}
+
+// --- Estimate Settings Actions ---
+
+export async function saveEstimateSettingsAction(
+  _prevState: ActionState<SettingsMap> | null,
+  formData: FormData
+): Promise<ActionState<SettingsMap>> {
+  const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
+  const validatedForm = estimateSettingsSchema.safeParse(Object.fromEntries(formData))
 
   if (!validatedForm.success) {
     return { success: false, error: validatedForm.error.message }

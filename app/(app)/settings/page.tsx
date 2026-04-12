@@ -1,6 +1,7 @@
 import ProfileSettingsForm from "@/components/settings/profile-settings-form"
 import BusinessSettingsForm from "@/components/settings/business-settings-form"
 import EmailTemplateSettingsForm from "@/components/settings/email-template-settings-form"
+import EstimateSettingsForm from "@/components/settings/estimate-settings-form"
 import InvoiceSettingsForm from "@/components/settings/invoice-settings-form"
 import PayablesSettingsForm from "@/components/settings/payables-settings-form"
 import ScheduleSettingsView from "@/components/settings/schedule-settings-view"
@@ -143,6 +144,24 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         </div>
         <div className="w-full max-w-2xl">
           <InvoiceSettingsForm settings={settings} orgName={org.name} />
+        </div>
+      </div>
+    )
+  }
+
+  // Estimate tab
+  if (tab === "estimate") {
+    const settings = await getSettings(org.id)
+    return (
+      <div className="flex flex-col gap-6">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight">Estimate settings</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Configure estimate numbering, defaults, appearance, and column labels.
+          </p>
+        </div>
+        <div className="w-full max-w-2xl">
+          <EstimateSettingsForm settings={settings} orgName={org.name} />
         </div>
       </div>
     )

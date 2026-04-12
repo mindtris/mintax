@@ -151,15 +151,18 @@ export async function markInvoicePaid(id: string, orgId: string, transactionId?:
 }
 
 export async function getNextInvoiceNumber(orgId: string, type: string = "sales") {
-  // Load custom prefix and digit settings
+  // Load custom prefix and digit settings per type
+  const prefixKey = type === "estimate" ? "estimate_number_prefix" : "invoice_number_prefix"
+  const digitsKey = type === "estimate" ? "estimate_number_digits" : "invoice_number_digits"
+
   const settings = await prisma.setting.findMany({
-    where: { organizationId: orgId, code: { in: ["invoice_number_prefix", "invoice_number_digits"] } },
+    where: { organizationId: orgId, code: { in: [prefixKey, digitsKey] } },
   })
   const settingsMap = Object.fromEntries(settings.map((s) => [s.code, s.value || ""]))
 
   const defaultPrefix = type === "sales" ? "INV" : type === "estimate" ? "EST" : "BILL"
-  const prefix = settingsMap.invoice_number_prefix || defaultPrefix
-  const digits = parseInt(settingsMap.invoice_number_digits || "3") || 3
+  const prefix = settingsMap[prefixKey] || defaultPrefix
+  const digits = parseInt(settingsMap[digitsKey] || "3") || 3
 
   const lastInvoice = await prisma.invoice.findFirst({
     where: { organizationId: orgId, type },
