@@ -30,8 +30,7 @@ export const auth = betterAuth({
   baseURL: config.app.baseURL,
   trustedOrigins: [
     config.app.baseURL,
-    "http://localhost:3000",
-    "http://localhost:7331",
+    "http://localhost:8080",
     "https://mintax.vercel.app",
     // Allow any Vercel preview deployment for this project
     ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
