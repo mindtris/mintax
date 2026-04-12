@@ -260,12 +260,21 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     const typeGroups = {
       financial: ["expense", "income"],
       offering: ["item", "tax", "cogs"],
-      operations: ["sales", "hire", "engage"],
+      operations: ["sales", "hire", "hire_expense", "engage"],
+      hiring: ["job_type", "employment_type", "work_auth", "applicant_status"],
       system: ["quicklink", "post"],
     }
 
+    // Parent categories (module-level) for the dropdown
+    const parentCategories = categoriesWithActions.filter(c => c.code?.startsWith("_mod_"))
+    // Child categories only (exclude parent records from the table)
+    const childCategories = categoriesWithActions.filter(c => !c.code?.startsWith("_mod_"))
+
     const renderTable = (types: string[]) => {
-      const filtered = categoriesWithActions.filter(c => types.includes(c.type))
+      const filtered = childCategories.filter(c => types.includes(c.type))
+      const parentOptions = parentCategories
+        .filter(p => types.includes(p.type))
+        .map(p => ({ label: p.name, value: p.id }))
       return (
         <CrudTable
           title="Categories"
@@ -275,11 +284,11 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             { key: "name", label: "Name", editable: true },
             {
               key: "parentId",
-              label: "Parent Category",
+              label: "Module",
               type: "select",
               complexOptions: [
                 { label: "None", value: "none" },
-                ...filtered.map(c => ({ label: c.name, value: c.id }))
+                ...parentOptions,
               ],
               editable: true,
             },
@@ -289,7 +298,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               type: "select",
               options: [
                 "expense", "income", "tax", "cogs", "item",
-                "sales", "hire", "engage", "quicklink", "post"
+                "sales", "hire", "hire_expense", "engage",
+                "job_type", "employment_type", "work_auth", "applicant_status",
+                "quicklink", "post"
               ],
               defaultValue: types[0],
               editable: true,
@@ -321,11 +332,13 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             <TabsTrigger value="financial">Financial</TabsTrigger>
             <TabsTrigger value="offering">Products & taxes</TabsTrigger>
             <TabsTrigger value="operations">Operations</TabsTrigger>
+            <TabsTrigger value="hiring">Hiring</TabsTrigger>
             <TabsTrigger value="system">System</TabsTrigger>
           </TabsList>
           <TabsContent value="financial" className="mt-0">{renderTable(typeGroups.financial)}</TabsContent>
           <TabsContent value="offering" className="mt-0">{renderTable(typeGroups.offering)}</TabsContent>
           <TabsContent value="operations" className="mt-0">{renderTable(typeGroups.operations)}</TabsContent>
+          <TabsContent value="hiring" className="mt-0">{renderTable(typeGroups.hiring)}</TabsContent>
           <TabsContent value="system" className="mt-0">{renderTable(typeGroups.system)}</TabsContent>
         </Tabs>
       </div>

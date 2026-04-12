@@ -117,3 +117,47 @@
     scrollbar-width: none;  /* Firefox */
   }
 }
+
+/* Sheet scrollbar — thin, flush right */
+[class*="SheetContent"] .overflow-y-auto,
+[role="dialog"] .overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
+}
+[class*="SheetContent"] .overflow-y-auto::-webkit-scrollbar,
+[role="dialog"] .overflow-y-auto::-webkit-scrollbar {
+  width: 4px;
+}
+[class*="SheetContent"] .overflow-y-auto::-webkit-scrollbar-track,
+[role="dialog"] .overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+[class*="SheetContent"] .overflow-y-auto::-webkit-scrollbar-thumb,
+[role="dialog"] .overflow-y-auto::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 9999px;
+}
+
+/* Sheet animations — simple fade */
+.sheet-overlay {
+  animation: sheet-fade 150ms both;
+}
+.sheet-overlay[data-state="closed"] {
+  animation: sheet-fade 100ms reverse both;
+}
+.sheet-slide-right,
+.sheet-slide-left,
+.sheet-slide-top,
+.sheet-slide-bottom {
+  animation: sheet-fade 150ms both;
+}
+.sheet-slide-right[data-state="closed"],
+.sheet-slide-left[data-state="closed"],
+.sheet-slide-top[data-state="closed"],
+.sheet-slide-bottom[data-state="closed"] {
+  animation: sheet-fade 100ms reverse both;
+}
+@keyframes sheet-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

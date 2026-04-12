@@ -76,6 +76,23 @@ export const DEFAULT_SETTINGS = [
   },
 ]
 
+// --- Parent (module-level) categories ---
+
+export const PARENT_CATEGORIES: Record<string, { code: string; name: string; color: string }> = {
+  expense:          { code: "_mod_expense",          name: "Expenses",            color: "#ef4444" },
+  income:           { code: "_mod_income",           name: "Income",              color: "#059669" },
+  cogs:             { code: "_mod_cogs",             name: "Cost of goods sold",  color: "#ca8a04" },
+  item:             { code: "_mod_item",             name: "Items & products",    color: "#6366f1" },
+  sales:            { code: "_mod_sales",            name: "Sales pipeline",      color: "#3b82f6" },
+  hire:             { code: "_mod_hire",             name: "Hiring departments",  color: "#8b5cf6" },
+  hire_expense:     { code: "_mod_hire_expense",     name: "Hiring costs",        color: "#f59e0b" },
+  job_type:         { code: "_mod_job_type",         name: "Job types",           color: "#10b981" },
+  employment_type:  { code: "_mod_employment_type",  name: "Employment types",    color: "#3b82f6" },
+  work_auth:        { code: "_mod_work_auth",        name: "Work authorization",  color: "#10b981" },
+  applicant_status: { code: "_mod_applicant_status", name: "Applicant status",    color: "#94a3b8" },
+  engage:           { code: "_mod_engage",           name: "Content types",       color: "#0d9488" },
+}
+
 // --- Universal Type-Aware Categories ---
 
 export const BUSINESS_DEFAULTS = {
@@ -337,19 +354,31 @@ export async function createOrgDefaults(orgId: string, orgType = "business", opt
     })
   }
 
-  // Flattened categories seeding
+  // Seed parent (module-level) categories first
+  const parentIdMap: Record<string, string> = {}
+  for (const [type, parent] of Object.entries(PARENT_CATEGORIES)) {
+    const record = await prisma.category.upsert({
+      where: { organizationId_code: { code: parent.code, organizationId: orgId } },
+      update: { name: parent.name, color: parent.color, type },
+      create: { organizationId: orgId, code: parent.code, name: parent.name, color: parent.color, type },
+    })
+    parentIdMap[type] = record.id
+  }
+
+  // Seed child categories linked to their parent
   for (const [type, list] of Object.entries(defaults.categories)) {
     for (const category of list) {
       await prisma.category.upsert({
         where: { organizationId_code: { code: category.code, organizationId: orgId } },
-        update: { name: category.name, color: category.color, llm_prompt: (category as any).llm, type },
+        update: { name: category.name, color: category.color, llm_prompt: (category as any).llm, type, parentId: parentIdMap[type] || null },
         create: {
           organizationId: orgId,
           code: category.code,
           name: category.name,
           color: category.color,
           llm_prompt: (category as any).llm,
-          type: type
+          type,
+          parentId: parentIdMap[type] || null,
         },
       })
     }

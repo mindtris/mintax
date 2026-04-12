@@ -28,13 +28,22 @@ export default async function Home() {
           <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-70">
             <Image src="/logo/logo.svg" alt="Mindtris" width={32} height={32} className="w-8 h-8 brightness-0 invert" />
           </Link>
-          <nav className="flex items-center gap-4">
-            <Link href="/signin" className="text-sm text-white/70 hover:text-white transition-colors">
+          <nav className="flex items-center gap-2 sm:gap-4">
+            <a
+              href="https://github.com/mindtris/mintax"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/60 hover:text-white transition-colors"
+              title="GitHub"
+            >
+              <Github className="h-5 w-5" />
+            </a>
+            <Link href="/signin" className="text-sm text-white/70 hover:text-white transition-colors hidden sm:block">
               Sign in
             </Link>
             <Link
               href="/book-a-demo"
-              className="text-sm bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium"
+              className="text-xs sm:text-sm bg-primary text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium"
             >
               Book a demo
             </Link>
@@ -48,33 +57,22 @@ export default async function Home() {
               <Image src="/logo/logo.svg" alt="Mindtris" width={64} height={64} className="brightness-0 invert opacity-80" />
               <span className="text-3xl font-bold tracking-tight text-white/90 leading-tight">Mindtris&trade;</span>
             </div>
-            <div className="relative inline-block">
-              <div className="absolute -top-3 -right-4 md:-top-4 md:-right-6">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/10 backdrop-blur-sm">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
-                  </span>
-                  <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest">Open Source</span>
-                </span>
-              </div>
-              <h1 className="text-3xl md:text-5xl font-bold tracking-tighter text-white leading-tight">
-                Automate the mundane so your team can focus on <span className="text-primary">what actually matters</span>
-              </h1>
-            </div>
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tighter text-white leading-tight">
+              Automate the mundane so your team can focus on <span className="text-primary">what actually matters</span>
+            </h1>
             <p className="mt-4 text-base md:text-lg text-white/60 max-w-2xl mx-auto leading-relaxed">
               One platform for accounting, invoicing, hiring, and engagement. Built for businesses that move fast.
             </p>
-            <div className="mt-8 flex items-center justify-center gap-3">
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
               <Link
                 href="/book-a-demo"
-                className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors font-semibold text-sm"
+                className="w-full sm:w-auto text-center bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors font-semibold text-sm"
               >
                 Book a demo
               </Link>
               <Link
                 href="/signin"
-                className="bg-white/10 text-white px-6 py-3 rounded-lg hover:bg-white/20 transition-colors font-medium text-sm backdrop-blur-sm border border-white/10"
+                className="w-full sm:w-auto text-center bg-white/10 text-white px-6 py-3 rounded-lg hover:bg-white/20 transition-colors font-medium text-sm backdrop-blur-sm border border-white/10"
               >
                 Sign in
               </Link>
@@ -82,7 +80,7 @@ export default async function Home() {
                 href="https://github.com/mindtris/mintax"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-white/10 text-white px-6 py-3 rounded-lg hover:bg-white/20 transition-colors font-medium text-sm backdrop-blur-sm border border-white/10"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 text-white px-6 py-3 rounded-lg hover:bg-white/20 transition-colors font-medium text-sm backdrop-blur-sm border border-white/10"
               >
                 <Github className="h-4 w-4" />
                 GitHub

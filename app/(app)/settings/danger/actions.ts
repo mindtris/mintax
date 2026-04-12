@@ -4,6 +4,7 @@ import { prisma } from "@/lib/core/db"
 import {
   BUSINESS_DEFAULTS,
   PERSONAL_DEFAULTS,
+  PARENT_CATEGORIES,
   DEFAULT_CURRENCIES,
   DEFAULT_FIELDS,
   DEFAULT_SETTINGS,
@@ -29,23 +30,32 @@ export async function resetLLMSettings(org: Organization) {
 export async function resetFieldsAndCategories(org: Organization) {
   const defaults = org.type === "personal" ? PERSONAL_DEFAULTS : BUSINESS_DEFAULTS
 
-  // Reset categories — flatten all typed groups
-  const allCategories: { code: string; name: string; color: string; llm?: string; type: string }[] = []
-  for (const [type, list] of Object.entries(defaults.categories)) {
-    for (const cat of list) {
-      allCategories.push({ ...cat, type, llm: (cat as any).llm })
-    }
+  // Seed parent (module-level) categories first
+  const parentIdMap: Record<string, string> = {}
+  const allCodes: string[] = []
+  for (const [type, parent] of Object.entries(PARENT_CATEGORIES)) {
+    const record = await prisma.category.upsert({
+      where: { organizationId_code: { code: parent.code, organizationId: org.id } },
+      update: { name: parent.name, color: parent.color, type },
+      create: { organizationId: org.id, code: parent.code, name: parent.name, color: parent.color, type },
+    })
+    parentIdMap[type] = record.id
+    allCodes.push(parent.code)
   }
 
-  for (const category of allCategories) {
-    await prisma.category.upsert({
-      where: { organizationId_code: { code: category.code, organizationId: org.id } },
-      update: { name: category.name, color: category.color, llm_prompt: category.llm, type: category.type, createdAt: new Date() },
-      create: { code: category.code, name: category.name, color: category.color, llm_prompt: category.llm, type: category.type, organizationId: org.id, createdAt: new Date() },
-    })
+  // Reset child categories — flatten all typed groups
+  for (const [type, list] of Object.entries(defaults.categories)) {
+    for (const cat of list) {
+      await prisma.category.upsert({
+        where: { organizationId_code: { code: cat.code, organizationId: org.id } },
+        update: { name: cat.name, color: cat.color, llm_prompt: (cat as any).llm, type, parentId: parentIdMap[type] || null, createdAt: new Date() },
+        create: { code: cat.code, name: cat.name, color: cat.color, llm_prompt: (cat as any).llm, type, parentId: parentIdMap[type] || null, organizationId: org.id, createdAt: new Date() },
+      })
+      allCodes.push(cat.code)
+    }
   }
   await prisma.category.deleteMany({
-    where: { organizationId: org.id, code: { notIn: allCategories.map((c) => c.code) } },
+    where: { organizationId: org.id, code: { notIn: allCodes } },
   })
 
   // Reset currencies
