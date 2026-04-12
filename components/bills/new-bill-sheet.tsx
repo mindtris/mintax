@@ -52,6 +52,7 @@ export function NewBillSheet({
   const [vendorEmail, setVendorEmail] = useState("")
   const [vendorAddress, setVendorAddress] = useState("")
   const [vendorTaxId, setVendorTaxId] = useState("")
+  const [hasSelectedContact, setHasSelectedContact] = useState(false)
 
   function handleVendorSelect(
     contact: {
@@ -68,6 +69,7 @@ export function NewBillSheet({
       setVendorEmail("")
       setVendorAddress("")
       setVendorTaxId("")
+      setHasSelectedContact(false)
       return
     }
     setVendorName(contact.name)
@@ -76,6 +78,7 @@ export function NewBillSheet({
     setVendorAddress(
       [contact.address, contact.city, contact.country].filter(Boolean).join(", ")
     )
+    setHasSelectedContact(true)
   }
 
   return (
@@ -115,58 +118,66 @@ export function NewBillSheet({
                 type="vendor"
               />
 
-              <input type="hidden" name="contactId" value={defaultContactId} />
+              {/* Hidden inputs for form submission */}
               <input type="hidden" name="vendorName" value={vendorName} />
-              
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="bill-vendor-name" className="text-xs font-semibold">Vendor name</Label>
-                <Input
-                  id="bill-vendor-name"
-                  placeholder="Mindtris"
-                  value={vendorName}
-                  onChange={(e) => setVendorName(e.target.value)}
-                  className="h-11"
-                />
-              </div>
+              <input type="hidden" name="vendorEmail" value={vendorEmail} />
+              <input type="hidden" name="vendorTaxId" value={vendorTaxId} />
+              <input type="hidden" name="vendorAddress" value={vendorAddress} />
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="bill-vendor-email" className="text-xs font-semibold">Email</Label>
-                  <Input
-                    id="bill-vendor-email"
-                    name="vendorEmail"
-                    type="email"
-                    placeholder="akshitha@mindtris.com"
-                    value={vendorEmail}
-                    onChange={(e) => setVendorEmail(e.target.value)}
-                    className="h-11"
-                  />
+              {hasSelectedContact ? (
+                <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-1">
+                  <p className="text-sm font-semibold">{vendorName}</p>
+                  {vendorEmail && <p className="text-xs text-muted-foreground">{vendorEmail}</p>}
+                  {vendorTaxId && <p className="text-xs text-muted-foreground">Tax ID: {vendorTaxId}</p>}
+                  {vendorAddress && <p className="text-xs text-muted-foreground">{vendorAddress}</p>}
                 </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="bill-tax-id" className="text-xs font-semibold">Tax ID</Label>
-                  <Input
-                    id="bill-tax-id"
-                    name="vendorTaxId"
-                    placeholder="Optional"
-                    value={vendorTaxId}
-                    onChange={(e) => setVendorTaxId(e.target.value)}
-                    className="h-11"
-                  />
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="bill-vendor-name" className="text-xs font-semibold">Vendor name</Label>
+                    <Input
+                      id="bill-vendor-name"
+                      placeholder="Enter vendor name"
+                      value={vendorName}
+                      onChange={(e) => setVendorName(e.target.value)}
+                    />
+                  </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="bill-address" className="text-xs font-semibold">Address</Label>
-                <Textarea
-                  id="bill-address"
-                  name="vendorAddress"
-                  placeholder="Street, City, ZIP"
-                  rows={2}
-                  value={vendorAddress}
-                  onChange={(e) => setVendorAddress(e.target.value)}
-                  className="resize-none"
-                />
-              </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="bill-vendor-email" className="text-xs font-semibold">Email</Label>
+                      <Input
+                        id="bill-vendor-email"
+                        type="email"
+                        placeholder="vendor@email.com"
+                        value={vendorEmail}
+                        onChange={(e) => setVendorEmail(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="bill-tax-id" className="text-xs font-semibold">Tax ID</Label>
+                      <Input
+                        id="bill-tax-id"
+                        placeholder="Optional"
+                        value={vendorTaxId}
+                        onChange={(e) => setVendorTaxId(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="bill-address" className="text-xs font-semibold">Address</Label>
+                    <Textarea
+                      id="bill-address"
+                      placeholder="Street, City, ZIP"
+                      rows={2}
+                      value={vendorAddress}
+                      onChange={(e) => setVendorAddress(e.target.value)}
+                      className="resize-none"
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Financial Details */}

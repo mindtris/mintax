@@ -86,9 +86,11 @@ export function ContactPicker({
     onSelect(null)
   }
 
+  const labelText = type === "vendor" ? "Vendor" : type === "client" ? "Client" : "Contact"
+
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-sm font-medium">Client / Contact</span>
+      <span className="text-sm font-medium">{labelText}</span>
 
       {/* Hidden inputs for form submission */}
       <input
@@ -105,21 +107,21 @@ export function ContactPicker({
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className="flex-1 justify-between font-normal"
+              className="flex-1 justify-between font-normal h-9"
             >
               <span className="flex items-center gap-2 truncate">
                 <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
                 <span className="truncate">
                   {selected
                     ? selected.name
-                    : inputValue || "Search or type a name…"}
+                    : inputValue || `Search ${labelText.toLowerCase()}s…`}
                 </span>
               </span>
               <ChevronsUpDown className="h-4 w-4 text-muted-foreground shrink-0 ml-2" />
             </Button>
           </PopoverTrigger>
 
-          <PopoverContent className="w-72 p-0" align="start">
+          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
             {/* Search input */}
             <div className="flex items-center gap-2 px-3 py-2 border-b">
               <Search className="h-4 w-4 text-muted-foreground shrink-0" />
