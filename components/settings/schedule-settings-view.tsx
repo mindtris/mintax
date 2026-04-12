@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import {
   addScheduleAction,
   editScheduleAction,
@@ -294,6 +295,7 @@ export default function ScheduleSettingsView({ schedules }: { schedules: Schedul
         columns={columns}
         getRowId={(row) => row.id}
         onRowClick={openEditSheet}
+        emptyIcon={<Image src="/empty-state.svg" alt="No schedules" width={120} height={120} priority />}
         emptyTitle="No schedules"
         emptyDescription="Create your first recurring schedule to automate invoices, bills, and more."
       />

@@ -2,20 +2,24 @@
 
 import { saveInvoiceSettingsAction } from "@/app/(app)/settings/actions"
 import { FormError } from "@/components/forms/error"
+import { InvoiceTemplatePreview } from "@/components/settings/invoice-template-preview"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { useActionState, useEffect } from "react"
+import { useActionState, useEffect, useState } from "react"
 import { toast } from "sonner"
 
 interface Props {
   settings: Record<string, string>
+  orgName: string
 }
 
-export default function InvoiceSettingsForm({ settings }: Props) {
+export default function InvoiceSettingsForm({ settings, orgName }: Props) {
   const [saveState, saveAction, pending] = useActionState(saveInvoiceSettingsAction, null)
+  const [selectedTemplate, setSelectedTemplate] = useState(settings.invoice_template || "default")
+  const [accentColor, setAccentColor] = useState(settings.invoice_color || "#c96442")
 
   useEffect(() => {
     if (saveState?.success) toast.success("Invoice settings saved")
@@ -24,6 +28,32 @@ export default function InvoiceSettingsForm({ settings }: Props) {
 
   return (
     <form action={saveAction} className="space-y-10">
+      {/* Template selection */}
+      <section className="space-y-5">
+        <div>
+          <h3 className="text-base font-semibold tracking-tight">Template</h3>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Choose the layout for your invoice documents.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          {(["default", "classic", "modern"] as const).map((tpl) => (
+            <InvoiceTemplatePreview
+              key={tpl}
+              template={tpl}
+              accentColor={accentColor}
+              orgName={orgName}
+              selected={selectedTemplate === tpl}
+              onClick={() => setSelectedTemplate(tpl)}
+            />
+          ))}
+        </div>
+        <input type="hidden" name="invoice_template" value={selectedTemplate} />
+      </section>
+
+      <hr className="border-border" />
+
       {/* Numbering */}
       <section className="space-y-5">
         <div>
@@ -159,22 +189,24 @@ export default function InvoiceSettingsForm({ settings }: Props) {
             <div className="relative">
               <span
                 className="block h-8 w-8 rounded-md border"
-                style={{ backgroundColor: settings.invoice_color || "#c96442" }}
+                style={{ backgroundColor: accentColor }}
               />
               <input
                 type="color"
                 name="invoice_color"
                 className="absolute inset-0 h-8 w-8 opacity-0 cursor-pointer"
-                defaultValue={settings.invoice_color || "#c96442"}
+                value={accentColor}
+                onChange={(e) => setAccentColor(e.target.value)}
               />
             </div>
             <Input
-              defaultValue={settings.invoice_color || "#c96442"}
+              value={accentColor}
+              onChange={(e) => setAccentColor(e.target.value)}
               placeholder="#c96442"
               className="flex-1 max-w-[140px]"
-              readOnly
             />
           </div>
+          <p className="text-[10px] text-muted-foreground">Updates the template preview in real time.</p>
         </div>
       </section>
 

@@ -43,6 +43,7 @@ export const categoryFormSchema = z.object({
 })
 
 export const invoiceSettingsSchema = z.object({
+  invoice_template: z.string().max(20).optional(),
   invoice_number_prefix: z.string().max(10).optional(),
   invoice_number_digits: z.string().optional(),
   invoice_payment_terms: z.string().optional(),

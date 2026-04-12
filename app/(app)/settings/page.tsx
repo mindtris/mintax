@@ -142,7 +142,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           </p>
         </div>
         <div className="w-full max-w-2xl">
-          <InvoiceSettingsForm settings={settings} />
+          <InvoiceSettingsForm settings={settings} orgName={org.name} />
         </div>
       </div>
     )
