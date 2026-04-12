@@ -28,6 +28,14 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   appName: config.app.title,
   baseURL: config.app.baseURL,
+  trustedOrigins: [
+    config.app.baseURL,
+    "http://localhost:3000",
+    "http://localhost:7331",
+    "https://mintax.vercel.app",
+    // Allow any Vercel preview deployment for this project
+    ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+  ].filter(Boolean) as string[],
   secret: config.auth.secret,
   email: {
     provider: "resend",
