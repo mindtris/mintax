@@ -192,8 +192,11 @@ export async function createMultiPlatformPost(
     status?: string
     scheduledAt?: Date | null
     settings?: any
+    accountSettings?: Record<string, any>
     templateId?: string
     mediaUrls?: string[]
+    mediaIds?: string[]
+    comments?: { content: string; delayMinutes: number; mediaUrls?: string[] }[]
   },
   accountIds: string[]
 ) {
@@ -218,14 +221,24 @@ export async function createMultiPlatformPost(
           tags: data.tags || [],
           status: data.status || "draft",
           scheduledAt: data.scheduledAt,
-          settings: data.settings,
+          settings: data.accountSettings?.[accountId] || data.settings,
           templateId: data.templateId,
+          hasComments: data.comments && data.comments.length > 0,
           group,
           media: data.mediaUrls && data.mediaUrls.length > 0 ? {
             create: data.mediaUrls.map((url, index) => ({
               url,
+              fileId: data.mediaIds?.[index],
               type: url.match(/\.(mp4|webm|ogg)$/i) ? "video" : "image",
               sortOrder: index
+            }))
+          } : undefined,
+          comments: data.comments && data.comments.length > 0 ? {
+            create: data.comments.map((c, index) => ({
+              content: c.content,
+              delayMinutes: c.delayMinutes,
+              order: index + 1,
+              status: "pending",
             }))
           } : undefined
         },

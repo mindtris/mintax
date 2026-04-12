@@ -167,4 +167,20 @@ export class LinkedInProvider implements SocialProvider {
       externalUrl: `https://www.linkedin.com/feed/update/${postId}`,
     }
   }
+
+  async runTool(params: { accessToken: string; tool: string; params?: any }): Promise<any> {
+    if (params.tool === "organizations") {
+      const res = await fetch(`${LINKEDIN_API_URL}/organizationalEntityAcls?q=roleAssignee&role=ADMINISTRATOR`, {
+        headers: { Authorization: `Bearer ${params.accessToken}` },
+      })
+      if (!res.ok) throw new Error("Failed to fetch organizations")
+      const data = await res.json()
+      // This is a simplified fetch, fully resolving names would require more API calls
+      return data.elements?.map((e: any) => ({
+        id: e.organizationalTarget,
+        role: e.role,
+      })) || []
+    }
+    throw new Error(`Tool ${params.tool} not supported by LinkedIn`)
+  }
 }

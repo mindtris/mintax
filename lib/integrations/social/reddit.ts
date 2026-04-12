@@ -75,4 +75,20 @@ export class RedditProvider implements SocialProvider {
     const postId = data.json?.data?.id || data.json?.data?.name || ""
     return { externalPostId: postId, externalUrl: postUrl }
   }
+
+  async runTool(params: { accessToken: string; tool: string; params?: any }): Promise<any> {
+    if (params.tool === "subreddits") {
+      const res = await fetch("https://oauth.reddit.com/subreddits/mine/subscriber?limit=100", {
+        headers: { Authorization: `Bearer ${params.accessToken}`, "User-Agent": "Mintax/1.0" },
+      })
+      if (!res.ok) throw new Error("Failed to fetch subreddits")
+      const data = await res.json()
+      return data.data?.children?.map((c: any) => ({
+        id: c.data.name,
+        name: c.data.display_name,
+        title: c.data.title,
+      })) || []
+    }
+    throw new Error(`Tool ${params.tool} not supported by Reddit`)
+  }
 }

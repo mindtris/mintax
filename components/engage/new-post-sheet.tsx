@@ -8,11 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Loader2, Save, Send, Sparkles, Trash2, Upload } from "lucide-react"
+import { Clock, Loader2, Play, Save, Send, Sparkles, Trash2, Upload } from "lucide-react"
 import { useEffect, useActionState, useState } from "react"
 import { createPostAction } from "@/app/(app)/engage/posts/actions"
 import { toast } from "sonner"
 import { DatePicker } from "@/components/ui/date-picker"
+import { PlatformSettings } from "./platform-settings"
+import { CommentEditor, CommentData } from "./comment-editor"
 
 const PLATFORM_LIMITS: Record<string, number> = {
   twitter: 280,
@@ -44,7 +46,7 @@ export function NewPostSheet({
   const [state, formAction, pending] = useActionState(createPostAction, null)
   const [accounts, setAccounts] = useState<any[]>([])
   const [content, setContent] = useState("")
-  const [mediaFiles, setMediaFiles] = useState<File[]>([])
+  const [mediaItems, setMediaItems] = useState<{ id: string; url: string; name: string; type: string; uploading?: boolean; progress?: number; file?: File }[]>([])
   const [contentType, setContentType] = useState(categories?.[0]?.code || "post")
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([])
   const [generating, setGenerating] = useState(false)
@@ -74,8 +76,59 @@ export function NewPostSheet({
     if (state?.success && open) {
       toast.success(state.message || "Post created successfully")
       setOpen(false)
+      setMediaItems([])
+      setContent("")
+      setPlatformSettings({})
+      setComments([])
     }
   }, [state, open, setOpen])
+
+  const [platformSettings, setPlatformSettings] = useState<Record<string, Record<string, any>>>({})
+  const [comments, setComments] = useState<CommentData[]>([])
+
+  const updatePlatformSetting = (accountId: string, settings: Record<string, any>) => {
+    setPlatformSettings(prev => ({ ...prev, [accountId]: settings }))
+  }
+
+  const handleFileUpload = async (files: File[]) => {
+    const newItems = files.map(file => ({
+      id: Math.random().toString(36).substring(7),
+      url: URL.createObjectURL(file),
+      name: file.name,
+      type: file.type,
+      uploading: true,
+      progress: 0,
+      file,
+    }))
+
+    setMediaItems(prev => [...prev, ...newItems])
+
+    for (const item of newItems) {
+      const formData = new FormData()
+      formData.append("file", item.file)
+
+      try {
+        const res = await fetch("/api/social/upload", {
+          method: "POST",
+          body: formData,
+        })
+
+        if (!res.ok) throw new Error("Upload failed")
+
+        const data = await res.json()
+        setMediaItems(prev => prev.map(m => m.id === item.id ? { 
+          ...m, 
+          id: data.id, 
+          url: data.url, 
+          uploading: false, 
+          progress: 100 
+        } : m))
+      } catch (err) {
+        toast.error(`Failed to upload ${item.name}`)
+        setMediaItems(prev => prev.filter(m => m.id !== item.id))
+      }
+    }
+  }
 
   const activeLimit = selectedAccounts.reduce((min, id) => {
     const account = accounts.find((a: any) => a.id === id)
@@ -236,30 +289,81 @@ export function NewPostSheet({
               )}
             </div>
 
+            {/* Comments / Thread */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Thread / First Comment</Label>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-7 text-[10px]"
+                  onClick={() => setComments([...comments, { content: "", delayMinutes: 0, mediaUrls: [] }])}
+                >
+                  Add thread item
+                </Button>
+              </div>
+              {comments.map((c, i) => (
+                <CommentEditor 
+                  key={i}
+                  index={i}
+                  data={c}
+                  onChange={(newData) => setComments(prev => prev.map((curr, idx) => idx === i ? newData : curr))}
+                  onDelete={() => setComments(prev => prev.filter((_, idx) => idx !== i))}
+                />
+              ))}
+              <input type="hidden" name="comments" value={JSON.stringify(comments)} />
+            </div>
+
             {/* Media upload */}
             <div className="flex flex-col gap-2">
               <Label>Media</Label>
               <div
                 onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => { e.preventDefault(); setMediaFiles((prev) => [...prev, ...Array.from(e.dataTransfer.files)]) }}
-                className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary/40 transition-colors cursor-pointer"
+                onDrop={(e) => { e.preventDefault(); handleFileUpload(Array.from(e.dataTransfer.files)) }}
+                className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/40 transition-colors cursor-pointer bg-muted/5 min-h-[100px] flex flex-col items-center justify-center gap-2"
                 onClick={() => document.getElementById("post-media-input")?.click()}
               >
-                <Upload className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
-                <p className="text-xs text-muted-foreground">Drop images or videos here</p>
-                <input id="post-media-input" name="media" type="file" multiple className="hidden"
+                <Upload className="h-6 w-6 text-muted-foreground" />
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Click or drag images/videos</p>
+                  <p className="text-xs text-muted-foreground">Up to 50MB per file</p>
+                </div>
+                <input id="post-media-input" type="file" multiple className="hidden"
                   accept="image/*,video/*,.gif"
-                  onChange={(e) => { if (e.target.files) setMediaFiles((prev) => [...prev, ...Array.from(e.target.files!)]) }}
+                  onChange={(e) => { if (e.target.files) handleFileUpload(Array.from(e.target.files!)) }}
                 />
               </div>
-              {mediaFiles.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {mediaFiles.map((f, i) => (
-                    <div key={i} className="flex items-center gap-1.5 text-xs bg-muted/30 rounded px-2 py-1">
-                      <span className="truncate max-w-[120px]">{f.name}</span>
-                      <button type="button" onClick={() => setMediaFiles((prev) => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive">
+
+              {mediaItems.length > 0 && (
+                <div className="grid grid-cols-4 gap-2 mt-2">
+                  {mediaItems.map((item) => (
+                    <div key={item.id} className="relative aspect-square rounded-md overflow-hidden border bg-muted">
+                      {item.type.startsWith("video") ? (
+                        <div className="w-full h-full flex items-center justify-center bg-black/10">
+                          <Play className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                      ) : (
+                        <img src={item.url} alt="" className="w-full h-full object-cover" />
+                      )}
+                      
+                      {item.uploading && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <Loader2 className="h-5 w-5 animate-spin text-white" />
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => setMediaItems(prev => prev.filter(m => m.id !== item.id))}
+                        className="absolute top-1 right-1 p-1 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
+                      >
                         <Trash2 className="h-3 w-3" />
                       </button>
+
+                      {/* Hidden inputs to pass data to server action */}
+                      <input type="hidden" name="mediaUrls" value={item.url} />
+                      <input type="hidden" name="mediaIds" value={item.id} />
                     </div>
                   ))}
                 </div>
@@ -271,35 +375,47 @@ export function NewPostSheet({
               <Input id="tags" name="tags" placeholder="marketing, launch" />
             </div>
 
-            <div className="flex flex-col gap-2">
-              <Label>Media (Image/Video)</Label>
-              <div className="flex items-center gap-2 p-3 bg-white border border-black/10 rounded-xl">
-                 <Input name="media" type="file" accept="image/*,video/*" className="border-none p-0 h-auto focus-visible:ring-0 cursor-pointer text-xs" />
-              </div>
-            </div>
 
             {/* Accounts */}
             <div className="flex flex-col gap-2">
               <Label>Publish to</Label>
               {accounts.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-4">
                   {accounts.map((account: any) => (
-                    <label key={account.id} className="flex items-center gap-3 cursor-pointer">
-                      <Checkbox
-                        name="accountIds"
-                        value={account.id}
-                        checked={selectedAccounts.includes(account.id)}
-                        onCheckedChange={() => toggleAccount(account.id)}
-                      />
-                      <div className="flex items-center gap-2 flex-1">
-                        {account.picture && <img src={account.picture} alt="" className="h-5 w-5 rounded-full" />}
-                        <span className="text-sm">{account.name}</span>
-                        <Badge variant="outline" className="text-xs capitalize">{account.provider}</Badge>
-                      </div>
-                      <span className="text-[10px] text-muted-foreground">
-                        {PLATFORM_LIMITS[account.provider] > 0 ? `${PLATFORM_LIMITS[account.provider]}` : "∞"}
-                      </span>
-                    </label>
+                    <div key={account.id} className="space-y-3 p-2 rounded-lg border bg-card/50">
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <Checkbox
+                          name="accountIds"
+                          value={account.id}
+                          checked={selectedAccounts.includes(account.id)}
+                          onCheckedChange={() => toggleAccount(account.id)}
+                        />
+                        <div className="flex items-center gap-2 flex-1">
+                          {account.picture && <img src={account.picture} alt="" className="h-5 w-5 rounded-full" />}
+                          <span className="text-sm font-medium">{account.name}</span>
+                          <Badge variant="outline" className="text-[10px] h-4 py-0 capitalize">{account.provider}</Badge>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">
+                          {PLATFORM_LIMITS[account.provider] > 0 ? `${PLATFORM_LIMITS[account.provider]}` : "∞"}
+                        </span>
+                      </label>
+
+                      {selectedAccounts.includes(account.id) && (
+                        <div className="pl-7 pr-2 pb-1 transition-all">
+                          <PlatformSettings 
+                            provider={account.provider}
+                            accountId={account.id}
+                            settings={platformSettings[account.id] || {}}
+                            onChange={(s) => updatePlatformSetting(account.id, s)}
+                          />
+                          <input 
+                            type="hidden" 
+                            name={`settings_${account.id}`} 
+                            value={JSON.stringify(platformSettings[account.id] || {})} 
+                          />
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               ) : (

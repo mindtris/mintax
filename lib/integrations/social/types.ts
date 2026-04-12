@@ -114,4 +114,11 @@ export interface SocialProvider {
     accessToken: string
     externalPostId: string
   }): Promise<SocialProviderAnalytics>
+
+  /** Run platform-specific tool (optional) */
+  runTool?(params: {
+    accessToken: string
+    tool: string
+    params?: any
+  }): Promise<any>
 }

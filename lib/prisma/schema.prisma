@@ -748,10 +748,12 @@ model SocialPost {
   externalUrl     String?       @map("external_url")
   error           String?
   templateId      String?       @map("template_id") @db.Uuid
+  hasComments     Boolean       @default(false) @map("has_comments")
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
 
   media     SocialPostMedia[]
+  comments  SocialPostComment[]
   analytics SocialPostAnalytics[]
 
   @@index([organizationId])
@@ -771,13 +773,39 @@ model SocialPostMedia {
   file      File?      @relation(fields: [fileId], references: [id], onDelete: SetNull)
   url       String?
   type      String     @default("image") // "image" | "video" | "gif"
+  width     Int?
+  height    Int?
   alt       String?
   sortOrder Int        @default(0) @map("sort_order")
+  commentId String?    @map("comment_id") @db.Uuid
+  comment   SocialPostComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
   createdAt DateTime   @default(now()) @map("created_at")
 
   @@index([postId])
   @@index([fileId])
+  @@index([commentId])
   @@map("social_post_media")
+}
+
+model SocialPostComment {
+  id              String   @id @default(uuid()) @db.Uuid
+  postId          String   @map("post_id") @db.Uuid
+  post            SocialPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parentCommentId String?  @map("parent_comment_id") @db.Uuid
+  content         String
+  delayMinutes    Int      @default(0) @map("delay_minutes")
+  order           Int
+  externalCommentId String? @map("external_comment_id")
+  publishedAt     DateTime? @map("published_at")
+  status          String   @default("pending") // pending | published | error
+  errorMessage    String?  @map("error_message")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  media           SocialPostMedia[]
+
+  @@index([postId])
+  @@map("social_post_comments")
 }
 
 model SocialPostAnalytics {

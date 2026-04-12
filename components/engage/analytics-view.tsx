@@ -3,9 +3,10 @@ import { Badge } from "@/components/ui/badge"
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { getAccountAnalytics } from "@/lib/services/social-analytics"
 import { getSocialAccounts } from "@/lib/services/social-accounts"
-import { getPostStats, getRecentPublished } from "@/lib/services/social-posts"
+import { getRecentPublished } from "@/lib/services/social-posts"
 import { BarChart3, Eye, Heart, MessageCircle, MousePointerClick, Share2, Users } from "lucide-react"
 import { formatDate } from "date-fns"
+import { SocialAnalyticsChart } from "./social-analytics-chart"
 
 function MetricCard({ icon: Icon, label, value }: { icon: any; label: string; value: number }) {
   return (
@@ -25,7 +26,6 @@ export async function AnalyticsView() {
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
   const accounts = await getSocialAccounts(org.id)
-  const stats = await getPostStats(org.id)
   const totals = await getAccountAnalytics(org.id)
   const recentPosts = await getRecentPublished(org.id, 10)
 
@@ -34,6 +34,8 @@ export async function AnalyticsView() {
       <header>
         <h1 className="text-3xl font-bold tracking-tighter text-foreground font-display">Analytics</h1>
       </header>
+
+      <SocialAnalyticsChart />
 
       <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-7">
         <MetricCard icon={Eye} label="Impressions" value={totals.impressions} />

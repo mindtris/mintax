@@ -42,22 +42,23 @@ export async function createPostAction(_prevState: any, formData: FormData) {
   const status = action === "schedule" || action === "publish_now" ? "queued" : "draft"
   const schedule = action === "publish_now" ? new Date() : scheduledAt ? new Date(scheduledAt) : null
 
-  const mediaFiles = formData.getAll("media") as File[]
-  const mediaUrls: string[] = []
+  const mediaUrls = formData.getAll("mediaUrls") as string[]
+  const mediaIds = formData.getAll("mediaIds") as string[]
 
-  for (const file of mediaFiles) {
-    if (file.size > 0) {
+  const accountSettings: Record<string, any> = {}
+  for (const id of accountIds) {
+    const s = formData.get(`settings_${id}`) as string
+    if (s) {
       try {
-        const { randomUUID } = await import("crypto")
-        const relativePath = getSocialFilePath(randomUUID(), file.name)
-        const fileRecord = await uploadAndCreateFile(org.id, user.id, user.email, file, relativePath)
-        // Pass the download URL so social publishers can access the file
-        mediaUrls.push(`/files/download/${fileRecord.id}`)
+        accountSettings[id] = JSON.parse(s)
       } catch (e) {
-        console.error("Media upload failed:", e)
+        console.error(`Failed to parse settings for account ${id}:`, e)
       }
     }
   }
+
+  const commentsStr = formData.get("comments") as string
+  const comments = commentsStr ? JSON.parse(commentsStr) : []
 
   const { group, posts } = await createMultiPlatformPost(
     org.id,
@@ -72,6 +73,9 @@ export async function createPostAction(_prevState: any, formData: FormData) {
       status,
       scheduledAt: schedule,
       mediaUrls,
+      mediaIds,
+      accountSettings,
+      comments,
     },
     accountIds
   )
