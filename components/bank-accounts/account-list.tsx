@@ -12,6 +12,7 @@ import { useMemo } from "react"
 import { useBankAccountVisibility, BankAccountColumnKey } from "@/lib/hooks/use-bank-account-visibility"
 import { useBankAccountFilters } from "@/lib/hooks/use-bank-account-filters"
 import { BankAccountSearchAndFilters, ACCOUNT_TYPE_LABELS } from "./filters"
+import { formatCurrency } from "@/lib/utils"
 
 
 
@@ -57,11 +58,7 @@ export function AccountList({ accounts }: { accounts: BankAccount[] }) {
       key: "currentBalance",
       label: "Balance",
       render: (account: BankAccount) => {
-        const amount = (account.currentBalance / 100).toLocaleString("en-IN", {
-          style: "currency",
-          currency: account.currency,
-          minimumFractionDigits: 2,
-        })
+        const amount = formatCurrency(account.currentBalance, account.currency || "INR")
         return <span className="font-mono font-bold text-foreground">{amount}</span>
       },
     },
@@ -98,10 +95,7 @@ export function AccountList({ accounts }: { accounts: BankAccount[] }) {
         emptyTitle="Bank accounts"
         emptyDescription="You don't have any bank accounts yet. Add your first account to start tracking your finances."
         emptyActions={
-          <Button onClick={() => window.location.href = '/bank-accounts/new'}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add account
-          </Button>
+          <p className="text-xs text-muted-foreground">Use the &quot;Add account&quot; button above to get started.</p>
         }
       />
     </div>

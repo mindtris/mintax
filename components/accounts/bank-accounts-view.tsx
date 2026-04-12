@@ -1,15 +1,32 @@
 import { AccountList } from "@/components/bank-accounts/account-list"
-import { Button } from "@/components/ui/button"
+import { NewBankAccountSheet } from "@/components/bank-accounts/new-account-sheet"
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
-import { getBankAccounts } from "@/lib/services/bank-accounts"
-import { Plus } from "lucide-react"
-import Link from "next/link"
+import { createBankAccount, getBankAccounts } from "@/lib/services/bank-accounts"
+import { revalidatePath } from "next/cache"
 
 export async function BankAccountsView({ searchParams }: { searchParams: Promise<any> }) {
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
   const params = await searchParams
   const accounts = await getBankAccounts(org.id, params)
+
+  async function addBankAccountAction(data: {
+    name: string
+    accountNumber?: string
+    bankName?: string
+    ifscCode?: string
+    accountType?: string
+    currency?: string
+  }) {
+    "use server"
+    try {
+      await createBankAccount(org.id, data)
+      revalidatePath("/accounts")
+      return { success: true }
+    } catch (error: any) {
+      return { success: false, error: error.message || "Failed to create bank account" }
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -18,14 +35,7 @@ export async function BankAccountsView({ searchParams }: { searchParams: Promise
           <h1 className="text-3xl font-bold tracking-tight font-display">Bank accounts</h1>
           <p className="text-sm text-muted-foreground">Manage your institution connections and track balances.</p>
         </div>
-        <div className="flex items-center gap-2">
-            <Link href="/bank-accounts/new">
-                <Button className="text-white">
-                    <Plus className="h-4 w-4" />
-                    <span>Add account</span>
-                </Button>
-            </Link>
-        </div>
+        <NewBankAccountSheet baseCurrency={org.baseCurrency} onAdd={addBankAccountAction} />
       </header>
 
       <AccountList accounts={accounts} />
