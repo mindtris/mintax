@@ -28,22 +28,13 @@ export default async function Home() {
           <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-70">
             <Image src="/logo/logo.svg" alt="Mindtris" width={32} height={32} className="w-8 h-8 brightness-0 invert" />
           </Link>
-          <nav className="flex items-center gap-2 sm:gap-4">
-            <a
-              href="https://github.com/mindtris/mintax"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white/60 hover:text-white transition-colors"
-              title="GitHub"
-            >
-              <Github className="h-5 w-5" />
-            </a>
-            <Link href="/signin" className="text-sm text-white/70 hover:text-white transition-colors hidden sm:block">
+          <nav className="flex items-center gap-4">
+            <Link href="/signin" className="text-sm text-white/70 hover:text-white transition-colors">
               Sign in
             </Link>
             <Link
               href="/book-a-demo"
-              className="text-xs sm:text-sm bg-primary text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium"
+              className="text-sm bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium"
             >
               Book a demo
             </Link>
@@ -76,14 +67,28 @@ export default async function Home() {
               >
                 Sign in
               </Link>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-3 w-full max-w-xs">
               <a
                 href="https://github.com/mindtris/mintax"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 text-white px-6 py-3 rounded-lg hover:bg-white/20 transition-colors font-medium text-sm backdrop-blur-sm border border-white/10"
+                className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-lg hover:bg-white/20 transition-colors font-medium text-xs backdrop-blur-sm border border-white/10"
               >
-                <Github className="h-4 w-4" />
+                <Github className="h-3.5 w-3.5" />
                 GitHub
+              </a>
+              <a
+                href="https://github.com/mindtris/mintax"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-4 py-2.5 rounded-lg hover:bg-white/20 transition-colors font-medium text-xs backdrop-blur-sm border border-white/10"
+              >
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                </span>
+                Open source
               </a>
             </div>
           </div>
