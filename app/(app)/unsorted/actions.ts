@@ -242,24 +242,56 @@ export async function acceptAISuggestionsAction(fileId: string): Promise<ActionS
 
     const parsed = file.cachedParseResult as Record<string, any>
 
+    // Fuzzy-match merchant → existing Contact (vendor)
+    const { findContactByMerchant, resolveTransactionDefaults } = await import(
+      "@/lib/services/transaction-intelligence"
+    )
+    let contactId: string | undefined
+    if (parsed.merchant) {
+      const match = await findContactByMerchant(org.id, parsed.merchant, "vendor")
+      if (match) contactId = match.contact.id
+    }
+
     // Build transaction data from cached AI results
     const type = parsed.type || "expense"
     const categoryCode = parsed.categoryCode || undefined
     const chartAccountId = await autoAssignCOA(org.id, categoryCode, type)
+    const total = parsed.total ? Math.round(parseFloat(parsed.total) * 100) : undefined
+
+    // Apply category defaults + categorization rules + vendor memory
+    const resolved = await resolveTransactionDefaults(org.id, {
+      merchant: parsed.merchant,
+      total,
+      contactId,
+      categoryCode,
+      chartAccountId,
+      projectCode: parsed.projectCode,
+      taxRate: parsed.taxRate,
+    })
+
+    // Auto-generate transaction number
+    const { getNextTransactionNumber } = await import("@/lib/services/transactions")
+    const number = await getNextTransactionNumber(org.id)
 
     const transactionData: any = {
       name: parsed.name || file.filename,
       description: parsed.description || undefined,
       merchant: parsed.merchant || undefined,
-      total: parsed.total ? Math.round(parseFloat(parsed.total) * 100) : undefined,
+      contactId: resolved.contactId,
+      total,
       currencyCode: parsed.currencyCode || undefined,
-      categoryCode,
-      projectCode: parsed.projectCode || undefined,
+      categoryCode: resolved.categoryCode,
+      projectCode: resolved.projectCode,
+      chartAccountId: resolved.chartAccountId,
+      taxRate: resolved.taxRate,
       type,
       issuedAt: parsed.issuedAt ? new Date(parsed.issuedAt) : new Date(),
       note: parsed.note || undefined,
       text: parsed.text || undefined,
-      chartAccountId,
+      number,
+      status: "needs_review", // AI-created → flag for human review
+      source: "ai",
+      aiConfidence: parsed._confidence || null,
     }
 
     // Create the transaction

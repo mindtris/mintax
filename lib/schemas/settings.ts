@@ -40,6 +40,21 @@ export const categoryFormSchema = z.object({
   llm_prompt: z.string().max(512).nullable().optional(),
   color: z.string().max(7).default(randomHexColor()).nullable().optional(),
   parentId: z.string().nullable().optional(),
+  defaultChartAccountId: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((v) => (v && v.trim() !== "" ? v : null)),
+  defaultTaxId: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((v) => (v && v.trim() !== "" ? v : null)),
+  defaultProjectCode: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((v) => (v && v.trim() !== "" ? v : null)),
 })
 
 export const invoiceSettingsSchema = z.object({

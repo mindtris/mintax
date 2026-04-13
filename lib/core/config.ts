@@ -26,6 +26,12 @@ const envSchema = z.object({
   MAIL_SMTP_ENCRYPTION: z.enum(["ssl", "tls", "none"]).default("ssl"),
   STRIPE_SECRET_KEY: z.string().default(""),
   STRIPE_WEBHOOK_SECRET: z.string().default(""),
+  // Plaid (bank connections)
+  PLAID_CLIENT_ID: z.string().default(""),
+  PLAID_SECRET: z.string().default(""),
+  PLAID_ENV: z.enum(["sandbox", "development", "production"]).default("sandbox"),
+  PLAID_WEBHOOK_SECRET: z.string().default(""),
+  PLAID_ENCRYPTION_KEY: z.string().default(""), // 32-byte base64
   // Social media providers
   TWITTER_CLIENT_ID: z.string().optional(),
   TWITTER_CLIENT_SECRET: z.string().optional(),
@@ -103,6 +109,14 @@ const config = {
     webhookSecret: env.STRIPE_WEBHOOK_SECRET,
     paymentSuccessUrl: `${env.BASE_URL}/cloud/payment/success?session_id={CHECKOUT_SESSION_ID}`,
     paymentCancelUrl: `${env.BASE_URL}/cloud`,
+  },
+  plaid: {
+    clientId: env.PLAID_CLIENT_ID,
+    secret: env.PLAID_SECRET,
+    env: env.PLAID_ENV,
+    webhookSecret: env.PLAID_WEBHOOK_SECRET,
+    encryptionKey: env.PLAID_ENCRYPTION_KEY,
+    countryCodes: ["US", "CA", "GB"],
   },
   email: {
     driver: env.MAIL_DRIVER,

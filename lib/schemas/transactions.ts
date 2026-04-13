@@ -4,6 +4,10 @@ export const transactionFormSchema = z
   .object({
     name: z.string().max(128).optional(),
     merchant: z.string().max(128).optional(),
+    contactId: z
+      .string()
+      .optional()
+      .transform((val) => (val && val.trim() !== "" ? val : undefined)),
     description: z.string().max(256).optional(),
     type: z.string().optional(),
     total: z
@@ -34,6 +38,27 @@ export const transactionFormSchema = z
     convertedCurrencyCode: z.string().max(5).optional(),
     categoryCode: z.string().optional(),
     projectCode: z.string().optional(),
+    chartAccountId: z
+      .string()
+      .optional()
+      .transform((val) => (val && val.trim() !== "" ? val : undefined)),
+    bankAccountId: z
+      .string()
+      .optional()
+      .transform((val) => (val && val.trim() !== "" ? val : undefined)),
+    paymentMethod: z.string().max(32).optional(),
+    taxAmount: z
+      .string()
+      .optional()
+      .transform((val) => {
+        if (!val || val.trim() === "") return null
+        const num = parseFloat(val)
+        if (isNaN(num)) return null
+        return Math.round(num * 100)
+      }),
+    taxRate: z.string().max(32).optional(),
+    number: z.string().max(64).optional(),
+    reference: z.string().max(128).optional(),
     issuedAt: z
       .union([
         z.date(),

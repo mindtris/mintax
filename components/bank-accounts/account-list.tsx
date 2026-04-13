@@ -30,8 +30,18 @@ export function AccountList({ accounts }: { accounts: BankAccount[] }) {
             <Landmark className="h-5 w-5 text-primary" />
           </div>
           <div className="flex flex-col">
-            <span className="font-semibold text-foreground">{account.name}</span>
-            <span className="text-[11px] text-muted-foreground">{account.bankName}</span>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-foreground">{account.name}</span>
+              {(account as any).source === "plaid" && (
+                <Badge variant="outline" className="text-[9px] font-medium border-primary/30 bg-primary/5 text-primary">
+                  Plaid
+                </Badge>
+              )}
+            </div>
+            <span className="text-[11px] text-muted-foreground">
+              {account.bankName}
+              {(account as any).mask ? ` •••• ${(account as any).mask}` : ""}
+            </span>
           </div>
         </div>
       ),

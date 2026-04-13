@@ -8,6 +8,7 @@ export type TransactionData = {
   name?: string | null
   description?: string | null
   merchant?: string | null
+  contactId?: string | null
   total?: number | null
   currencyCode?: string | null
   convertedTotal?: number | null
@@ -24,6 +25,11 @@ export type TransactionData = {
   paymentMethod?: string | null
   taxAmount?: number | null
   taxRate?: string | null
+  number?: string | null
+  reference?: string | null
+  status?: string | null
+  source?: string | null
+  aiConfidence?: Record<string, number> | null
   issuedAt?: Date | string | null
   text?: string | null
   [key: string]: unknown
@@ -39,6 +45,7 @@ export type TransactionFilters = {
   type?: string
   reconciled?: boolean
   bankAccountId?: string
+  status?: string
   page?: number
 }
 
@@ -130,6 +137,10 @@ export function buildTransactionsWhere(orgId: string, filters?: TransactionFilte
       where.reconciled = filters.reconciled
     }
 
+    if (filters.status) {
+      where.status = filters.status
+    }
+
     if (filters.bankAccountId) {
       where.bankAccountId = filters.bankAccountId
     }
@@ -162,6 +173,36 @@ export const getTransactionsByFileId = cache(async (fileId: string, orgId: strin
   })
 })
 
+/**
+ * Generate the next transaction number for an org, e.g. "TRA-00001".
+ * Reads optional prefix/digits from settings (transaction_number_prefix,
+ * transaction_number_digits) with sensible defaults.
+ */
+export async function getNextTransactionNumber(orgId: string): Promise<string> {
+  const settings = await prisma.setting.findMany({
+    where: {
+      organizationId: orgId,
+      code: { in: ["transaction_number_prefix", "transaction_number_digits"] },
+    },
+  })
+  const settingsMap = Object.fromEntries(settings.map((s) => [s.code, s.value || ""]))
+  const prefix = settingsMap.transaction_number_prefix || "TRA"
+  const digits = parseInt(settingsMap.transaction_number_digits || "5") || 5
+
+  const lastTransaction = await prisma.transaction.findFirst({
+    where: { organizationId: orgId, number: { not: null } },
+    orderBy: { createdAt: "desc" },
+    select: { number: true },
+  })
+
+  if (!lastTransaction?.number) {
+    return `${prefix}-${String(1).padStart(digits, "0")}`
+  }
+
+  const lastNumber = parseInt(lastTransaction.number.replace(/\D/g, "")) || 0
+  return `${prefix}-${String(lastNumber + 1).padStart(digits, "0")}`
+}
+
 export const createTransaction = async (orgId: string, userId: string, data: TransactionData): Promise<Transaction> => {
   const { standard, extra } = await splitTransactionDataExtraFields(data, orgId)
 
@@ -172,7 +213,7 @@ export const createTransaction = async (orgId: string, userId: string, data: Tra
       items: data.items as Prisma.InputJsonValue,
       organizationId: orgId,
       userId,
-    },
+    } as any,
   })
 }
 
@@ -185,7 +226,7 @@ export const updateTransaction = async (id: string, orgId: string, data: Transac
       ...standard,
       extra: extra,
       items: data.items ? (data.items as Prisma.InputJsonValue) : [],
-    },
+    } as any,
   })
 }
 
@@ -220,6 +261,23 @@ export const bulkDeleteTransactions = async (ids: string[], orgId: string) => {
   })
 }
 
+// Schema-level FK/relation fields that are always "standard" and never
+// "extra" — they map directly to Prisma columns on Transaction regardless
+// of whether an org has them seeded in its Field registry.
+const ALWAYS_STANDARD_FIELDS = new Set([
+  "contactId",
+  "chartAccountId",
+  "bankAccountId",
+  "paymentMethod",
+  "taxAmount",
+  "taxRate",
+  "number",
+  "reference",
+  "status",
+  "source",
+  "aiConfidence",
+])
+
 const splitTransactionDataExtraFields = async (
   data: TransactionData,
   orgId: string
@@ -237,6 +295,10 @@ const splitTransactionDataExtraFields = async (
   const extra: Record<string, unknown> = {}
 
   Object.entries(data).forEach(([key, value]) => {
+    if (ALWAYS_STANDARD_FIELDS.has(key)) {
+      standard[key] = value
+      return
+    }
     const fieldDef = fieldMap[key]
     if (fieldDef) {
       if (fieldDef.isExtra) {

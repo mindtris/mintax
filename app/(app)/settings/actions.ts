@@ -257,7 +257,10 @@ export async function addCategoryAction(orgId: string, data: Prisma.CategoryCrea
       llm_prompt: validatedForm.data.llm_prompt,
       color: validatedForm.data.color || "",
       parentId: validatedForm.data.parentId === "none" ? null : (validatedForm.data.parentId || null),
-    })
+      defaultChartAccountId: validatedForm.data.defaultChartAccountId,
+      defaultTaxId: validatedForm.data.defaultTaxId,
+      defaultProjectCode: validatedForm.data.defaultProjectCode,
+    } as any)
     revalidatePath("/settings")
 
     return { success: true, category }
@@ -285,7 +288,10 @@ export async function editCategoryAction(orgId: string, code: string, data: Pris
     llm_prompt: validatedForm.data.llm_prompt,
     color: validatedForm.data.color || "",
     parentId: validatedForm.data.parentId === "none" ? null : (validatedForm.data.parentId || null),
-  })
+    defaultChartAccountId: validatedForm.data.defaultChartAccountId,
+    defaultTaxId: validatedForm.data.defaultTaxId,
+    defaultProjectCode: validatedForm.data.defaultProjectCode,
+  } as any)
   revalidatePath("/settings")
 
   return { success: true, category }
@@ -351,6 +357,75 @@ export async function deleteFieldAction(orgId: string, code: string) {
   }
   revalidatePath("/settings")
   return { success: true }
+}
+
+// --- Categorization Rules ---
+
+export async function addCategorizationRuleAction(orgId: string, data: any) {
+  try {
+    const { prisma } = await import("@/lib/core/db")
+    await prisma.categorizationRule.create({
+      data: {
+        organizationId: orgId,
+        name: data.name || "Unnamed rule",
+        priority: data.priority ? Number(data.priority) : 100,
+        enabled: data.enabled !== false && data.enabled !== "false",
+        merchantContains: data.merchantContains || null,
+        amountMin: data.amountMin ? Math.round(parseFloat(data.amountMin) * 100) : null,
+        amountMax: data.amountMax ? Math.round(parseFloat(data.amountMax) * 100) : null,
+        paymentMethod: data.paymentMethod || null,
+        contactId: data.contactId || null,
+        setCategoryCode: data.setCategoryCode || null,
+        setChartAccountId: data.setChartAccountId || null,
+        setProjectCode: data.setProjectCode || null,
+        setTaxId: data.setTaxId || null,
+      },
+    })
+    revalidatePath("/settings")
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to add rule" }
+  }
+}
+
+export async function editCategorizationRuleAction(orgId: string, id: string, data: any) {
+  try {
+    const { prisma } = await import("@/lib/core/db")
+    await prisma.categorizationRule.update({
+      where: { id, organizationId: orgId },
+      data: {
+        name: data.name,
+        priority: data.priority ? Number(data.priority) : undefined,
+        enabled: data.enabled !== false && data.enabled !== "false",
+        merchantContains: data.merchantContains || null,
+        amountMin: data.amountMin != null && data.amountMin !== "" ? Math.round(parseFloat(data.amountMin) * 100) : null,
+        amountMax: data.amountMax != null && data.amountMax !== "" ? Math.round(parseFloat(data.amountMax) * 100) : null,
+        paymentMethod: data.paymentMethod || null,
+        contactId: data.contactId || null,
+        setCategoryCode: data.setCategoryCode || null,
+        setChartAccountId: data.setChartAccountId || null,
+        setProjectCode: data.setProjectCode || null,
+        setTaxId: data.setTaxId || null,
+      },
+    })
+    revalidatePath("/settings")
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to update rule" }
+  }
+}
+
+export async function deleteCategorizationRuleAction(orgId: string, id: string) {
+  try {
+    const { prisma } = await import("@/lib/core/db")
+    await prisma.categorizationRule.delete({
+      where: { id, organizationId: orgId },
+    })
+    revalidatePath("/settings")
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to delete rule" }
+  }
 }
 
 // --- Tax Actions ---

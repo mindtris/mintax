@@ -193,17 +193,34 @@ export async function uploadAndCreateFile(
   file: globalThis.File,
   storagePath: string,
 ) {
+  const { createHash, randomUUID } = await import("crypto")
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
+  const contentHash = createHash("sha256").update(buffer).digest("hex")
+
+  // Duplicate detection: if a File with the same hash already exists in this
+  // org, return it instead of uploading again. Saves storage and avoids
+  // creating duplicate transactions from re-uploaded receipts.
+  const existing = await prisma.file.findFirst({
+    where: { organizationId: orgId, contentHash },
+  })
+  if (existing) return existing
+
   await getStorage().put(storagePath, buffer)
 
   return createFile(orgId, userId, {
-    id: require("crypto").randomUUID(),
+    id: randomUUID(),
     filename: file.name,
     path: storagePath,
     mimetype: file.type,
     size: file.size,
+    contentHash,
     isReviewed: true,
     metadata: { size: file.size, lastModified: file.lastModified },
   })
+}
+
+/** Lookup a file by content hash (used for duplicate warnings) */
+export async function findFileByHash(orgId: string, contentHash: string) {
+  return prisma.file.findFirst({ where: { organizationId: orgId, contentHash } })
 }

@@ -315,6 +315,7 @@ export const DEFAULT_FIELDS = [
   { code: "name", name: "Name", type: "string", llm_prompt: "human readable name, summarize what is bought or paid for in the invoice", isVisibleInList: true, isVisibleInAnalysis: true, isRequired: true, isExtra: false },
   { code: "description", name: "Description", type: "string", llm_prompt: "description of the transaction", isVisibleInList: false, isVisibleInAnalysis: false, isRequired: false, isExtra: false },
   { code: "merchant", name: "Merchant", type: "string", llm_prompt: "merchant name, use the original spelling and language", isVisibleInList: true, isVisibleInAnalysis: true, isRequired: false, isExtra: false },
+  { code: "contactId", name: "Vendor / Contact", type: "string", llm_prompt: "", isVisibleInList: false, isVisibleInAnalysis: false, isRequired: false, isExtra: false },
   { code: "issuedAt", name: "Issued At", type: "string", llm_prompt: "issued at date (YYYY-MM-DD format)", isVisibleInList: true, isVisibleInAnalysis: true, isRequired: true, isExtra: false },
   { code: "projectCode", name: "Project", type: "string", llm_prompt: "project code, one of: {projects.code}", isVisibleInList: true, isVisibleInAnalysis: true, isRequired: false, isExtra: false },
   { code: "categoryCode", name: "Category", type: "string", llm_prompt: "category code, one of: {categories.code}", isVisibleInList: true, isVisibleInAnalysis: true, isRequired: false, isExtra: false },

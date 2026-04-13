@@ -1,7 +1,9 @@
 import { AccountList } from "@/components/bank-accounts/account-list"
 import { NewBankAccountSheet } from "@/components/bank-accounts/new-account-sheet"
+import { PlaidItemsSection } from "@/components/bank-accounts/plaid-items-section"
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { createBankAccount, getBankAccounts } from "@/lib/services/bank-accounts"
+import { prisma } from "@/lib/core/db"
 import { revalidatePath } from "next/cache"
 
 export async function BankAccountsView({ searchParams }: { searchParams: Promise<any> }) {
@@ -9,6 +11,19 @@ export async function BankAccountsView({ searchParams }: { searchParams: Promise
   const org = await getActiveOrg(user)
   const params = await searchParams
   const accounts = await getBankAccounts(org.id, params)
+
+  const plaidItemsRaw = await prisma.plaidItem.findMany({
+    where: { organizationId: org.id, status: { not: "disconnected" } },
+    include: { _count: { select: { accounts: true } } },
+    orderBy: { createdAt: "desc" },
+  })
+  const plaidItems = plaidItemsRaw.map((i) => ({
+    id: i.id,
+    institutionName: i.institutionName,
+    status: i.status,
+    lastSyncedAt: i.lastSyncedAt,
+    accountsCount: i._count.accounts,
+  }))
 
   async function addBankAccountAction(data: {
     name: string
@@ -37,6 +52,8 @@ export async function BankAccountsView({ searchParams }: { searchParams: Promise
         </div>
         <NewBankAccountSheet baseCurrency={org.baseCurrency} onAdd={addBankAccountAction} />
       </header>
+
+      <PlaidItemsSection items={plaidItems} />
 
       <AccountList accounts={accounts} />
     </div>

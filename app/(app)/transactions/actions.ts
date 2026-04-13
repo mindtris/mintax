@@ -10,17 +10,19 @@ import {
   isEnoughStorageToUploadFile,
 } from "@/lib/files"
 import { updateField } from "@/lib/services/fields"
-import { createFile, deleteFile, attachFileToTransaction } from "@/lib/services/files"
+import { createFile, deleteFile, attachFileToTransaction, uploadAndCreateFile } from "@/lib/services/files"
 import {
   bulkDeleteTransactions,
   createTransaction,
   deleteTransaction,
+  getNextTransactionNumber,
   getTransactionById,
   updateTransaction,
   updateTransactionFiles,
 } from "@/lib/services/transactions"
 import { updateUser } from "@/lib/services/users"
 import { Transaction } from "@/lib/prisma/client"
+import { prisma } from "@/lib/core/db"
 import { getStorage } from "@/lib/storage"
 import { randomUUID } from "crypto"
 import { revalidatePath } from "next/cache"
@@ -32,15 +34,67 @@ export async function createTransactionAction(
   try {
     const user = await getCurrentUser()
     const org = await getActiveOrg(user)
-    const validatedForm = transactionFormSchema.safeParse(Object.fromEntries(formData.entries()))
 
+    // Pull files out before validation — they're handled separately.
+    const receiptFiles = formData.getAll("receipts") as File[]
+    formData.delete("receipts")
+
+    // Validate the rest of the form
+    const validatedForm = transactionFormSchema.safeParse(Object.fromEntries(formData.entries()))
     if (!validatedForm.success) {
       return { success: false, error: validatedForm.error.message }
     }
 
-    const transaction = await createTransaction(org.id, user.id, validatedForm.data)
+    // Auto-generate the transaction number if the user didn't supply one
+    const data = { ...validatedForm.data }
+    if (!data.number || data.number.trim() === "") {
+      data.number = await getNextTransactionNumber(org.id)
+    }
+
+    // Apply category defaults, categorization rules, and vendor memory
+    const { resolveTransactionDefaults } = await import("@/lib/services/transaction-intelligence")
+    const resolved = await resolveTransactionDefaults(org.id, {
+      merchant: data.merchant,
+      total: data.total,
+      paymentMethod: data.paymentMethod,
+      contactId: data.contactId,
+      categoryCode: data.categoryCode,
+      chartAccountId: data.chartAccountId,
+      projectCode: data.projectCode,
+      taxRate: data.taxRate,
+    })
+    Object.assign(data, {
+      categoryCode: resolved.categoryCode,
+      chartAccountId: resolved.chartAccountId,
+      projectCode: resolved.projectCode,
+      taxRate: resolved.taxRate,
+    })
+
+    const transaction = await createTransaction(org.id, user.id, data)
+
+    // Attach receipt files via storage abstraction
+    const validReceipts = receiptFiles.filter((f) => f && f.size > 0)
+    if (validReceipts.length > 0) {
+      const { getTransactionFilePath } = await import("@/lib/files")
+      for (const file of validReceipts) {
+        try {
+          const { randomUUID } = await import("crypto")
+          const storagePath = getTransactionFilePath(
+            org.id,
+            randomUUID(),
+            file.name,
+            transaction.issuedAt || undefined,
+          )
+          const fileRecord = await uploadAndCreateFile(org.id, user.id, file, storagePath)
+          await attachFileToTransaction(transaction.id, fileRecord.id)
+        } catch (uploadErr) {
+          console.error("Receipt upload failed:", uploadErr)
+        }
+      }
+    }
 
     revalidatePath("/accounts")
+    revalidatePath(`/transactions/${transaction.id}`)
     return { success: true, data: transaction }
   } catch (error) {
     console.error("Failed to create transaction:", error)
@@ -90,6 +144,33 @@ export async function deleteTransactionAction(
   } catch (error) {
     console.error("Failed to delete transaction:", error)
     return { success: false, error: "Failed to delete transaction" }
+  }
+}
+
+export async function approveTransactionsAction(
+  transactionIds: string[],
+): Promise<ActionState<{ count: number }>> {
+  if (!transactionIds || transactionIds.length === 0) {
+    return { success: false, error: "No transactions selected" }
+  }
+  try {
+    const user = await getCurrentUser()
+    const org = await getActiveOrg(user)
+
+    const result = await prisma.transaction.updateMany({
+      where: {
+        id: { in: transactionIds },
+        organizationId: org.id,
+      },
+      data: { status: "posted" },
+    })
+
+    revalidatePath("/accounts")
+    revalidatePath("/transactions/needs-review")
+    return { success: true, data: { count: result.count } }
+  } catch (error) {
+    console.error("Failed to approve transactions:", error)
+    return { success: false, error: "Failed to approve transactions" }
   }
 }
 

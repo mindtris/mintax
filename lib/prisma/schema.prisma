@@ -120,6 +120,7 @@ model Organization {
   members       OrgMember[]
   settings      Setting[]
   categories    Category[]
+  categorizationRules CategorizationRule[]
   projects      Project[]
   fields        Field[]
   files         File[]
@@ -128,6 +129,7 @@ model Organization {
   recurringTransactions  RecurringTransaction[]
   schedules              Schedule[]
   bankAccounts           BankAccount[]
+  plaidItems             PlaidItem[]
   invoices               Invoice[]
   reminders              Reminder[]
   chartAccounts    ChartAccount[]
@@ -185,6 +187,7 @@ model ChartAccount {
   createdAt      DateTime      @default(now()) @map("created_at")
 
   transactions   Transaction[]
+  defaultForCategories Category[] @relation("CategoryDefaultChart")
 
   @@unique([organizationId, code])
   @@index([organizationId])
@@ -208,6 +211,13 @@ model BankAccount {
   currency       String       @default("INR")
   currentBalance Int          @default(0) @map("current_balance") // in cents/paise
   isActive       Boolean      @default(true) @map("is_active")
+  source         String       @default("manual") // "manual" | "plaid"
+  plaidItemId    String?      @map("plaid_item_id") @db.Uuid
+  plaidItem      PlaidItem?   @relation(fields: [plaidItemId], references: [id], onDelete: SetNull)
+  plaidAccountId String?      @unique @map("plaid_account_id")
+  mask           String?
+  officialName   String?      @map("official_name")
+  subtype        String?
   createdAt      DateTime     @default(now()) @map("created_at")
   updatedAt      DateTime     @updatedAt @map("updated_at")
 
@@ -215,7 +225,29 @@ model BankAccount {
   transactions Transaction[]
 
   @@index([organizationId])
+  @@index([plaidItemId])
   @@map("bank_accounts")
+}
+
+model PlaidItem {
+  id              String       @id @default(uuid()) @db.Uuid
+  organizationId  String       @map("organization_id") @db.Uuid
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  itemId          String       @unique @map("item_id") // Plaid item_id
+  accessToken     String       @map("access_token") // encrypted at rest (AES-GCM)
+  institutionId   String?      @map("institution_id")
+  institutionName String?      @map("institution_name")
+  cursor          String?      // /transactions/sync cursor
+  status          String       @default("active") // "active" | "login_required" | "error" | "disconnected"
+  lastSyncedAt    DateTime?    @map("last_synced_at")
+  lastError       String?      @map("last_error")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  accounts BankAccount[]
+
+  @@index([organizationId])
+  @@map("plaid_items")
 }
 
 model BankStatement {
@@ -383,11 +415,19 @@ model Transaction {
   taxRate               String?       @map("tax_rate") // "GST_18", "GST_5", "VAT_20", etc.
   reconciled            Boolean       @default(false)
   invoiceId             String?       @map("invoice_id") @db.Uuid
+  number                String?       // human-readable transaction number, e.g. TRA-00001
+  reference             String?       // free-text reference (PO number, check number, etc.)
+  status                String        @default("posted") // "draft" | "needs_review" | "posted"
+  aiConfidence          Json?         @map("ai_confidence") // per-field confidence scores from AI extraction
+  source                String        @default("manual") // "manual" | "plaid" | "csv" | "ai"
+  plaidTransactionId    String?       @unique @map("plaid_transaction_id")
+  pending               Boolean       @default(false)
   issuedAt              DateTime?     @map("issued_at")
   createdAt             DateTime      @default(now()) @map("created_at")
   updatedAt             DateTime      @updatedAt @map("updated_at")
   text                  String?
 
+  @@unique([organizationId, number])
   @@index([organizationId])
   @@index([userId])
   @@index([contactId])
@@ -399,6 +439,7 @@ model Transaction {
   @@index([total])
   @@index([reconciled])
   @@index([bankAccountId])
+  @@index([status])
   @@map("transactions")
 }
 
@@ -483,17 +524,24 @@ model Category {
   id             String        @id @default(uuid()) @db.Uuid
   organizationId String        @map("organization_id") @db.Uuid
   organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  
+
   type           String        @default("transaction") // "transaction" | "item" | "quicklink" | "post"
   code           String?
   name           String
   color          String        @default("#c96442")
   llm_prompt     String?
   enabled        Boolean       @default(true)
-  
+
   parentId       String?       @map("parent_id") @db.Uuid
   parent         Category?     @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children       Category[]    @relation("CategoryHierarchy")
+
+  // Smart defaults — auto-applied when this category is selected on a transaction
+  defaultChartAccountId String?       @map("default_chart_account_id") @db.Uuid
+  defaultChartAccount   ChartAccount? @relation("CategoryDefaultChart", fields: [defaultChartAccountId], references: [id], onDelete: SetNull)
+  defaultTaxId          String?       @map("default_tax_id") @db.Uuid
+  defaultTax            Tax?          @relation("CategoryDefaultTax", fields: [defaultTaxId], references: [id], onDelete: SetNull)
+  defaultProjectCode    String?       @map("default_project_code")
 
   transactions   Transaction[]
   items          Item[]
@@ -506,6 +554,37 @@ model Category {
   @@index([organizationId])
   @@index([type])
   @@map("categories")
+}
+
+// Categorization rules — apply automatically to new transactions (manual or AI-imported)
+// to set category, chart account, project, etc. based on conditions.
+model CategorizationRule {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name           String       // user-facing rule name
+  priority       Int          @default(100) // lower = higher priority
+  enabled        Boolean      @default(true)
+
+  // Conditions (all must match — AND)
+  merchantContains String?    @map("merchant_contains") // case-insensitive substring
+  amountMin        Int?       @map("amount_min")        // in cents
+  amountMax        Int?       @map("amount_max")        // in cents
+  paymentMethod    String?    @map("payment_method")
+  contactId        String?    @map("contact_id") @db.Uuid
+
+  // Actions (any subset)
+  setCategoryCode    String? @map("set_category_code")
+  setChartAccountId  String? @map("set_chart_account_id") @db.Uuid
+  setProjectCode     String? @map("set_project_code")
+  setTaxId           String? @map("set_tax_id") @db.Uuid
+
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  @@index([organizationId, enabled, priority])
+  @@map("categorization_rules")
 }
 
 model Project {
@@ -555,6 +634,7 @@ model File {
   path              String
   mimetype          String
   size              Int          @default(0)
+  contentHash       String?      @map("content_hash") // SHA-256 of file bytes for dedup
   metadata          Json?
   isReviewed        Boolean      @default(false) @map("is_reviewed")
   isSplitted        Boolean      @default(false) @map("is_splitted")
@@ -987,6 +1067,7 @@ model Tax {
   items          Item[]
   invoiceItems   InvoiceItem[]
   billItems      BillItem[]
+  defaultForCategories Category[] @relation("CategoryDefaultTax")
 
   createdAt      DateTime     @default(now()) @map("created_at")
   updatedAt      DateTime     @updatedAt @map("updated_at")

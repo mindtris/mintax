@@ -35,6 +35,7 @@ import {
   addCurrencyAction, editCurrencyAction, deleteCurrencyAction,
   addFieldAction, editFieldAction, deleteFieldAction,
   addLlmPromptAction, editLlmPromptAction, deleteLlmPromptAction,
+  addCategorizationRuleAction, editCategorizationRuleAction, deleteCategorizationRuleAction,
 } from "@/app/(app)/settings/actions"
 import { resetLLMSettings, resetFieldsAndCategories } from "@/app/(app)/settings/danger/actions"
 import BackupSettingsPage from "@/app/(app)/settings/backups/page"
@@ -255,12 +256,24 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
   // Categories tab
   if (tab === "categories") {
-    const categories = await getCategories(org.id)
+    const { getChartAccounts } = await import("@/lib/services/chart-accounts")
+    const [categories, chartAccounts, taxes, projects] = await Promise.all([
+      getCategories(org.id),
+      getChartAccounts(org.id),
+      getTaxes(org.id),
+      getProjects(org.id),
+    ])
     const categoriesWithActions = categories.map((category) => ({
       ...category,
       isEditable: true,
       isDeletable: true,
     }))
+    const chartAccountOptions = chartAccounts.map((c: any) => ({
+      label: c.code ? `${c.code} - ${c.name}` : c.name,
+      value: c.id,
+    }))
+    const taxOptionsForCat = taxes.map((t) => ({ label: `${t.name} (${t.rate}%)`, value: t.id }))
+    const projectOptions = projects.map((p) => ({ label: p.name, value: p.code }))
 
     const typeGroups = {
       financial: ["expense", "income"],
@@ -311,6 +324,27 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               editable: true,
               filterable: true,
             },
+            {
+              key: "defaultChartAccountId",
+              label: "Default chart account",
+              type: "select",
+              complexOptions: [{ label: "None", value: "" }, ...chartAccountOptions],
+              editable: true,
+            },
+            {
+              key: "defaultTaxId",
+              label: "Default tax",
+              type: "select",
+              complexOptions: [{ label: "None", value: "" }, ...taxOptionsForCat],
+              editable: true,
+            },
+            {
+              key: "defaultProjectCode",
+              label: "Default project",
+              type: "select",
+              complexOptions: [{ label: "None", value: "" }, ...projectOptions],
+              editable: true,
+            },
             { key: "llm_prompt", label: "LLM prompt", editable: true },
             { key: "color", label: "Color", type: "color", defaultValue: randomHexColor(), editable: true },
           ]}
@@ -347,6 +381,95 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           <TabsContent value="system" className="mt-0">{renderTable(typeGroups.system)}</TabsContent>
         </Tabs>
       </div>
+    )
+  }
+
+  // Categorization rules tab
+  if (tab === "rules") {
+    const { prisma } = await import("@/lib/core/db")
+    const { getChartAccounts } = await import("@/lib/services/chart-accounts")
+    const [rules, allCategories, chartAccounts, allTaxes, allProjects] = await Promise.all([
+      prisma.categorizationRule.findMany({
+        where: { organizationId: org.id },
+        orderBy: { priority: "asc" },
+      }),
+      getCategories(org.id),
+      getChartAccounts(org.id),
+      getTaxes(org.id),
+      getProjects(org.id),
+    ])
+    const txCategoryOptions = allCategories
+      .filter((c) => c.type === "expense" || c.type === "income")
+      .map((c) => ({ label: c.name, value: c.code || "" }))
+    const ruleChartOptions = chartAccounts.map((c: any) => ({
+      label: c.code ? `${c.code} - ${c.name}` : c.name,
+      value: c.id,
+    }))
+    const ruleTaxOptions = allTaxes.map((t) => ({ label: `${t.name} (${t.rate}%)`, value: t.id }))
+    const ruleProjectOptions = allProjects.map((p) => ({ label: p.name, value: p.code }))
+    const rulesWithActions = rules.map((r) => ({ ...r, isEditable: true, isDeletable: true }))
+
+    return (
+      <CrudTable
+        title="Categorization rules"
+        description="Auto-apply category, chart account, project, and tax to incoming transactions based on conditions. Lower priority numbers run first."
+        items={rulesWithActions}
+        columns={[
+          { key: "name", label: "Name", editable: true, type: "text" },
+          { key: "priority", label: "Priority", editable: true, type: "number", defaultValue: 100 },
+          { key: "merchantContains", label: "Merchant contains", editable: true, type: "text" },
+          { key: "amountMin", label: "Amount min", editable: true, type: "number" },
+          { key: "amountMax", label: "Amount max", editable: true, type: "number" },
+          {
+            key: "paymentMethod",
+            label: "Payment method",
+            type: "select",
+            options: ["", "cash", "bank_transfer", "upi", "card", "cheque", "other"],
+            editable: true,
+          },
+          {
+            key: "setCategoryCode",
+            label: "→ Category",
+            type: "select",
+            complexOptions: [{ label: "None", value: "" }, ...txCategoryOptions],
+            editable: true,
+          },
+          {
+            key: "setChartAccountId",
+            label: "→ Chart account",
+            type: "select",
+            complexOptions: [{ label: "None", value: "" }, ...ruleChartOptions],
+            editable: true,
+          },
+          {
+            key: "setProjectCode",
+            label: "→ Project",
+            type: "select",
+            complexOptions: [{ label: "None", value: "" }, ...ruleProjectOptions],
+            editable: true,
+          },
+          {
+            key: "setTaxId",
+            label: "→ Tax",
+            type: "select",
+            complexOptions: [{ label: "None", value: "" }, ...ruleTaxOptions],
+            editable: true,
+          },
+          { key: "enabled", label: "Active", type: "checkbox", defaultValue: true, editable: true },
+        ]}
+        onAdd={async (data) => {
+          "use server"
+          return await addCategorizationRuleAction(org.id, data)
+        }}
+        onEdit={async (id, data) => {
+          "use server"
+          return await editCategorizationRuleAction(org.id, id, data)
+        }}
+        onDelete={async (id) => {
+          "use server"
+          return await deleteCategorizationRuleAction(org.id, id)
+        }}
+      />
     )
   }
 

@@ -6,7 +6,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import { Category, Currency, Project } from "@/lib/prisma/client"
+import { BankAccount, Category, Currency, Project, Tax } from "@/lib/prisma/client"
 import { useState } from "react"
 import TransactionCreateForm from "./create"
 import { AddTransactionMenu } from "./add-transaction-menu"
@@ -16,9 +16,18 @@ interface NewTransactionSheetProps {
   currencies: Currency[]
   settings: Record<string, string>
   projects: Project[]
+  bankAccounts: BankAccount[]
+  taxes: Tax[]
 }
 
-export function NewTransactionSheet({ categories, currencies, settings, projects }: NewTransactionSheetProps) {
+export function NewTransactionSheet({
+  categories,
+  currencies,
+  settings,
+  projects,
+  bankAccounts,
+  taxes,
+}: NewTransactionSheetProps) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -29,7 +38,7 @@ export function NewTransactionSheet({ categories, currencies, settings, projects
           side="right"
           className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] rounded-lg w-[95vw] sm:max-w-xl flex flex-col gap-0 p-0"
         >
-          <SheetHeader className="px-6 pt-6 pb-4 shrink-0">
+          <SheetHeader className="px-6 pt-6 pb-4 shrink-0 border-b">
             <SheetTitle>New transaction</SheetTitle>
           </SheetHeader>
 
@@ -39,6 +48,9 @@ export function NewTransactionSheet({ categories, currencies, settings, projects
               currencies={currencies}
               settings={settings}
               projects={projects}
+              bankAccounts={bankAccounts}
+              taxes={taxes}
+              onSuccess={() => setOpen(false)}
             />
           </div>
         </SheetContent>

@@ -19,6 +19,7 @@ const settingsGroups: NavGroup[] = [
     items: [
       { title: "LLM settings", href: "/settings?tab=llm", icon: "brain-circuit" },
       { title: "Schedules", href: "/settings?tab=schedule", icon: "calendar-clock" },
+      { title: "Categorization rules", href: "/settings?tab=rules", icon: "list-checks" },
     ],
   },
   {

@@ -3,16 +3,29 @@ import { getCategories } from "@/lib/services/categories"
 import { getCurrencies } from "@/lib/services/currencies"
 import { getProjects } from "@/lib/services/projects"
 import { getSettings } from "@/lib/services/settings"
+import { getBankAccounts } from "@/lib/services/bank-accounts"
+import { getTaxes } from "@/lib/services/taxes"
 import { NewTransactionSheet } from "./new-sheet"
 
 export async function NewTransactionDialog() {
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
-  const allCategories = await getCategories(org.id)
+  const [
+    allCategories,
+    currencies,
+    settings,
+    projects,
+    bankAccounts,
+    taxes,
+  ] = await Promise.all([
+    getCategories(org.id),
+    getCurrencies(org.id),
+    getSettings(org.id),
+    getProjects(org.id),
+    getBankAccounts(org.id),
+    getTaxes(org.id),
+  ])
   const categories = allCategories.filter((c) => c.type === "expense" || c.type === "income")
-  const currencies = await getCurrencies(org.id)
-  const settings = await getSettings(org.id)
-  const projects = await getProjects(org.id)
 
   return (
     <NewTransactionSheet
@@ -20,6 +33,8 @@ export async function NewTransactionDialog() {
       currencies={currencies}
       settings={settings}
       projects={projects}
+      bankAccounts={bankAccounts}
+      taxes={taxes}
     />
   )
 }

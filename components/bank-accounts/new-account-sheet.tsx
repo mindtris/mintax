@@ -20,6 +20,7 @@ import {
 import { Plus } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import { PlaidLinkButton } from "@/components/bank-accounts/plaid-link-button"
 
 const ACCOUNT_TYPES = [
   { label: "Checking", value: "checking" },
@@ -108,6 +109,26 @@ export function NewBankAccountSheet({ baseCurrency = "INR", onAdd, children }: N
             <SheetTitle>Add bank account</SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
+            <div className="space-y-2 rounded-lg border bg-[#f5f4ef] p-4 shadow-sm">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-[#141413]">Connect a bank automatically</p>
+                <p className="text-xs text-muted-foreground">
+                  Link a US, Canada, or UK bank via Plaid to pull transactions and balances automatically.
+                </p>
+              </div>
+              <PlaidLinkButton onLinked={() => setOpen(false)} />
+              <p className="text-[11px] text-muted-foreground">
+                Indian banks: use manual entry or CSV import below.
+              </p>
+            </div>
+
+            <div className="relative py-1">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t" /></div>
+              <div className="relative flex justify-center">
+                <span className="bg-background px-2 text-xs text-muted-foreground">Or add manually</span>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="ba-name">Account name</Label>
               <Input
