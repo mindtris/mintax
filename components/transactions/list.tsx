@@ -7,9 +7,9 @@ import { DataGrid, DataGridColumn, SortState } from "@/components/ui/data-grid"
 import { SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet"
 import { calcNetTotalPerCurrency, calcTotalPerCurrency, isTransactionIncomplete } from "@/lib/stats"
 import { cn, formatCurrency } from "@/lib/utils"
-import { Category, Field, Project, Transaction } from "@/lib/prisma/client"
+import { BankAccount, Category, ChartAccount, Contact, Field, Project, Transaction } from "@/lib/prisma/client"
 import { formatDate } from "date-fns"
-import { ExternalLink, File } from "lucide-react"
+import { Bot, CheckCircle2, Circle, ExternalLink, File, Hash, Sparkles, Upload } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
@@ -167,6 +167,204 @@ export const standardFieldRenderers: Record<string, FieldRenderer> = {
     classes: "text-right",
     sortable: true,
   },
+  number: {
+    name: "Number",
+    code: "number",
+    classes: "min-w-[110px] font-mono text-xs text-muted-foreground",
+    sortable: true,
+    formatValue: (transaction: Transaction) =>
+      transaction.number ? (
+        <span className="inline-flex items-center gap-1">
+          <Hash className="h-3 w-3 shrink-0 opacity-50" />
+          {transaction.number}
+        </span>
+      ) : (
+        "-"
+      ),
+  },
+  contactId: {
+    name: "Vendor",
+    code: "contactId",
+    classes: "min-w-[140px] max-w-[220px] overflow-hidden",
+    sortable: false,
+    formatValue: (transaction: Transaction & { contact?: Contact | null }) =>
+      transaction.contact?.name ? (
+        <span className="truncate text-sm">{transaction.contact.name}</span>
+      ) : transaction.merchant ? (
+        <span className="text-sm text-muted-foreground italic">{transaction.merchant}</span>
+      ) : (
+        "-"
+      ),
+  },
+  chartAccountId: {
+    name: "Chart account",
+    code: "chartAccountId",
+    classes: "min-w-[160px] max-w-[240px] overflow-hidden",
+    sortable: false,
+    formatValue: (transaction: Transaction & { chartAccount?: ChartAccount | null }) =>
+      transaction.chartAccount ? (
+        <span className="text-xs font-mono">
+          <span className="text-muted-foreground">{transaction.chartAccount.code}</span>{" "}
+          {transaction.chartAccount.name}
+        </span>
+      ) : (
+        "-"
+      ),
+  },
+  bankAccountId: {
+    name: "Account",
+    code: "bankAccountId",
+    classes: "min-w-[120px] max-w-[200px] overflow-hidden",
+    sortable: true,
+    formatValue: (transaction: Transaction & { bankAccount?: BankAccount | null }) =>
+      transaction.bankAccount ? (
+        <span className="text-xs">
+          {transaction.bankAccount.name}
+          {transaction.bankAccount.currency ? (
+            <span className="text-muted-foreground"> ({transaction.bankAccount.currency})</span>
+          ) : null}
+        </span>
+      ) : (
+        "-"
+      ),
+  },
+  status: {
+    name: "Status",
+    code: "status",
+    classes: "min-w-[110px]",
+    sortable: true,
+    formatValue: (transaction: Transaction) => {
+      const status = (transaction as any).status || "posted"
+      const styles: Record<string, string> = {
+        posted: "bg-green-500/10 text-green-700 border-green-500/20",
+        needs_review: "bg-amber-500/10 text-amber-700 border-amber-500/20",
+        draft: "bg-muted text-muted-foreground border-border",
+      }
+      const labels: Record<string, string> = {
+        posted: "Posted",
+        needs_review: "Needs review",
+        draft: "Draft",
+      }
+      return (
+        <span
+          className={cn(
+            "inline-flex items-center px-2 py-0.5 rounded-md border text-[10px] font-medium uppercase tracking-wide",
+            styles[status] || styles.posted,
+          )}
+        >
+          {labels[status] || status}
+        </span>
+      )
+    },
+  },
+  reconciled: {
+    name: "Reconciled",
+    code: "reconciled",
+    classes: "text-center w-[90px]",
+    sortable: true,
+    formatValue: (transaction: Transaction) =>
+      transaction.reconciled ? (
+        <CheckCircle2 className="h-4 w-4 text-green-600 mx-auto" />
+      ) : (
+        <Circle className="h-4 w-4 text-muted-foreground/40 mx-auto" />
+      ),
+  },
+  source: {
+    name: "Source",
+    code: "source",
+    classes: "min-w-[80px]",
+    sortable: true,
+    formatValue: (transaction: Transaction) => {
+      const source = (transaction as any).source || "manual"
+      const config: Record<string, { icon: any; label: string; className: string }> = {
+        manual: { icon: null, label: "Manual", className: "text-muted-foreground" },
+        ai: { icon: Sparkles, label: "AI", className: "text-purple-600" },
+        plaid: { icon: Upload, label: "Plaid", className: "text-blue-600" },
+        csv: { icon: Upload, label: "CSV", className: "text-cyan-600" },
+        bank: { icon: Upload, label: "Bank", className: "text-blue-600" },
+      }
+      const c = config[source] || config.manual
+      const Icon = c.icon
+      return (
+        <span className={cn("inline-flex items-center gap-1 text-[10px] uppercase font-medium", c.className)}>
+          {Icon && <Icon className="h-3 w-3" />}
+          {c.label}
+        </span>
+      )
+    },
+  },
+  paymentMethod: {
+    name: "Payment method",
+    code: "paymentMethod",
+    classes: "min-w-[120px]",
+    sortable: true,
+    formatValue: (transaction: Transaction) => {
+      const method = (transaction as any).paymentMethod
+      if (!method) return "-"
+      const labels: Record<string, string> = {
+        cash: "Cash",
+        bank_transfer: "Bank transfer",
+        upi: "UPI",
+        card: "Card",
+        cheque: "Cheque",
+        other: "Other",
+      }
+      return <span className="text-xs">{labels[method] || method}</span>
+    },
+  },
+  reference: {
+    name: "Reference",
+    code: "reference",
+    classes: "min-w-[110px] max-w-[180px] overflow-hidden font-mono text-xs",
+    sortable: false,
+    formatValue: (transaction: Transaction) =>
+      (transaction as any).reference ? (
+        <span className="truncate">{(transaction as any).reference}</span>
+      ) : (
+        "-"
+      ),
+  },
+  taxAmount: {
+    name: "Tax",
+    code: "taxAmount",
+    classes: "text-right min-w-[90px]",
+    sortable: true,
+    formatValue: (transaction: Transaction) => {
+      const amt = (transaction as any).taxAmount
+      if (!amt) return "-"
+      return (
+        <span className="text-xs text-muted-foreground">
+          {formatCurrency(amt, transaction.currencyCode || "INR")}
+        </span>
+      )
+    },
+  },
+  taxRate: {
+    name: "Tax rate",
+    code: "taxRate",
+    classes: "min-w-[90px] text-xs",
+    sortable: false,
+    formatValue: (transaction: Transaction) => {
+      const rate = (transaction as any).taxRate
+      return rate ? <span className="text-xs">{rate}</span> : "-"
+    },
+  },
+  createdAt: {
+    name: "Created",
+    code: "createdAt",
+    classes: "min-w-[100px] text-xs text-muted-foreground",
+    sortable: true,
+    formatValue: (transaction: Transaction) =>
+      transaction.createdAt ? formatDate(transaction.createdAt, "yyyy-MM-dd") : "-",
+  },
+  updatedAt: {
+    name: "Last modified",
+    code: "updatedAt",
+    classes: "min-w-[100px] text-xs text-muted-foreground",
+    sortable: true,
+    formatValue: (transaction: Transaction) =>
+      transaction.updatedAt ? formatDate(transaction.updatedAt, "yyyy-MM-dd") : "-",
+  },
 }
 
 const getFieldRenderer = (field: Field): FieldRenderer => {
@@ -194,7 +392,13 @@ function TransactionDetailSheet({
   fields,
   onClose,
 }: {
-  transaction: Transaction & { category?: Category; project?: Project }
+  transaction: Transaction & {
+    category?: Category
+    project?: Project
+    contact?: Contact | null
+    chartAccount?: ChartAccount | null
+    bankAccount?: BankAccount | null
+  }
   fields: Field[]
   onClose: () => void
 }) {
@@ -203,27 +407,76 @@ function TransactionDetailSheet({
     (f) => f.isRequired && !transaction[f.code as keyof Transaction] && !(transaction.extra as any)?.[f.code]
   )
 
+  const status = (transaction as any).status || "posted"
+  const source = (transaction as any).source || "manual"
+  const aiConfidence = (transaction as any).aiConfidence as Record<string, number> | null
+  const lowConfidenceFields = aiConfidence
+    ? Object.entries(aiConfidence)
+        .filter(([, c]) => c < 0.8)
+        .map(([k]) => k)
+    : []
+
+  const statusBadge: Record<string, string> = {
+    posted: "bg-green-500/10 text-green-700 border-green-500/20",
+    needs_review: "bg-amber-500/10 text-amber-700 border-amber-500/20",
+    draft: "bg-muted text-muted-foreground border-border",
+  }
+  const statusLabel: Record<string, string> = {
+    posted: "Posted",
+    needs_review: "Needs review",
+    draft: "Draft",
+  }
+
   return (
     <div className="flex flex-col h-full">
       <SheetHeader className="shrink-0 pb-4">
-        <SheetTitle className="text-lg">{transaction.name || "Untitled transaction"}</SheetTitle>
-        <p className="text-sm text-muted-foreground">
-          {transaction.merchant && <span>{transaction.merchant} &middot; </span>}
-          <span className={typeInfo.color}>{typeInfo.label}</span>
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <SheetTitle className="text-lg truncate">{transaction.name || "Untitled transaction"}</SheetTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {(transaction as any).number && (
+                <span className="font-mono">{(transaction as any).number} &middot; </span>
+              )}
+              <span className={typeInfo.color}>{typeInfo.label}</span>
+              {transaction.reconciled && (
+                <span className="ml-2 inline-flex items-center gap-0.5 text-green-600">
+                  <CheckCircle2 className="h-3 w-3" /> Reconciled
+                </span>
+              )}
+            </p>
+          </div>
+          <span
+            className={cn(
+              "shrink-0 inline-flex items-center px-2 py-0.5 rounded-md border text-[10px] font-medium uppercase tracking-wide",
+              statusBadge[status] || statusBadge.posted,
+            )}
+          >
+            {statusLabel[status] || status}
+          </span>
+        </div>
       </SheetHeader>
 
       <div className="flex-1 overflow-y-auto space-y-5 py-4">
         {/* Incomplete fields warning */}
         {incompleteFields.length > 0 && (
-          <div className="rounded-md bg-muted p-3 text-sm">
-            Missing: <strong>{incompleteFields.map((f) => f.name).join(", ")}</strong>
+          <div className="rounded-md bg-amber-500/10 border border-amber-500/20 p-3 text-sm text-amber-700">
+            Missing required fields: <strong>{incompleteFields.map((f) => f.name).join(", ")}</strong>
+          </div>
+        )}
+
+        {/* Low-confidence AI fields */}
+        {lowConfidenceFields.length > 0 && (
+          <div className="rounded-md bg-purple-500/10 border border-purple-500/20 p-3 text-sm text-purple-700">
+            <div className="flex items-center gap-1 font-medium">
+              <Sparkles className="h-3.5 w-3.5" /> AI extracted these with low confidence
+            </div>
+            <p className="text-xs mt-1">{lowConfidenceFields.join(", ")} — please double-check before posting.</p>
           </div>
         )}
 
         {/* Amount */}
         <div className="space-y-1">
-          <p className="text-sm text-muted-foreground">Amount</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Amount</p>
           <p className={cn("text-2xl font-bold", typeInfo.color)}>
             {transaction.total && transaction.currencyCode
               ? formatCurrency(transaction.total, transaction.currencyCode)
@@ -241,17 +494,29 @@ function TransactionDetailSheet({
         {/* Key details grid */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-muted-foreground">Date</p>
-            <p className="font-medium">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Date</p>
+            <p className="text-sm font-medium">
               {transaction.issuedAt ? formatDate(transaction.issuedAt, "MMM dd, yyyy") : "-"}
             </p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Currency</p>
-            <p className="font-medium">{transaction.currencyCode || "-"}</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Currency</p>
+            <p className="text-sm font-medium">{transaction.currencyCode || "-"}</p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Category</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Vendor</p>
+            <p className="text-sm font-medium">
+              {transaction.contact?.name || transaction.merchant || "-"}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Account</p>
+            <p className="text-sm font-medium">
+              {transaction.bankAccount?.name || "-"}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Category</p>
             {transaction.categoryCode && (transaction as any).category ? (
               <Badge
                 className="whitespace-nowrap"
@@ -260,11 +525,23 @@ function TransactionDetailSheet({
                 {(transaction as any).category?.name}
               </Badge>
             ) : (
-              <p className="font-medium text-muted-foreground">-</p>
+              <p className="text-sm font-medium text-muted-foreground">-</p>
             )}
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Project</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Chart account</p>
+            <p className="text-sm font-medium">
+              {transaction.chartAccount ? (
+                <span className="font-mono text-xs">
+                  {transaction.chartAccount.code} {transaction.chartAccount.name}
+                </span>
+              ) : (
+                "-"
+              )}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Project</p>
             {transaction.projectCode && (transaction as any).project ? (
               <Badge
                 className="whitespace-nowrap"
@@ -273,15 +550,36 @@ function TransactionDetailSheet({
                 {(transaction as any).project?.name}
               </Badge>
             ) : (
-              <p className="font-medium text-muted-foreground">-</p>
+              <p className="text-sm font-medium text-muted-foreground">-</p>
             )}
           </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Payment method</p>
+            <p className="text-sm font-medium">{(transaction as any).paymentMethod || "-"}</p>
+          </div>
+          {(transaction as any).taxRate && (
+            <div>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Tax</p>
+              <p className="text-sm font-medium">
+                {(transaction as any).taxRate}
+                {(transaction as any).taxAmount
+                  ? ` · ${formatCurrency((transaction as any).taxAmount, transaction.currencyCode || "INR")}`
+                  : ""}
+              </p>
+            </div>
+          )}
+          {(transaction as any).reference && (
+            <div>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Reference</p>
+              <p className="text-sm font-medium font-mono">{(transaction as any).reference}</p>
+            </div>
+          )}
         </div>
 
         {/* Description */}
         {transaction.description && (
           <div>
-            <p className="text-sm text-muted-foreground mb-1">Description</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Description</p>
             <p className="text-sm">{transaction.description}</p>
           </div>
         )}
@@ -289,7 +587,7 @@ function TransactionDetailSheet({
         {/* Note */}
         {transaction.note && (
           <div>
-            <p className="text-sm text-muted-foreground mb-1">Note</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Note</p>
             <p className="text-sm whitespace-pre-line">{transaction.note}</p>
           </div>
         )}
@@ -301,13 +599,50 @@ function TransactionDetailSheet({
             {(transaction.files as string[]).length} file(s) attached
           </div>
         )}
+
+        {/* Linked invoice */}
+        {transaction.invoiceId && (
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Linked invoice</p>
+            <Link href={`/invoices/${transaction.invoiceId}`} className="text-sm text-primary hover:underline">
+              View invoice →
+            </Link>
+          </div>
+        )}
+
+        {/* Audit trail */}
+        <div className="pt-4 border-t border-border/50 space-y-1.5">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-semibold">Audit trail</p>
+          <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+            <div>
+              <span className="opacity-60">Source:</span>{" "}
+              <span className="font-medium uppercase">{source}</span>
+            </div>
+            <div>
+              <span className="opacity-60">Status:</span>{" "}
+              <span className="font-medium">{statusLabel[status] || status}</span>
+            </div>
+            {transaction.createdAt && (
+              <div>
+                <span className="opacity-60">Created:</span>{" "}
+                <span className="font-medium">{formatDate(transaction.createdAt, "MMM dd, yyyy HH:mm")}</span>
+              </div>
+            )}
+            {transaction.updatedAt && (
+              <div>
+                <span className="opacity-60">Modified:</span>{" "}
+                <span className="font-medium">{formatDate(transaction.updatedAt, "MMM dd, yyyy HH:mm")}</span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <SheetFooter className="shrink-0 pt-4 mt-2">
         <Link href={`/transactions/${transaction.id}`} className="w-full">
           <Button className="w-full" onClick={onClose}>
             <ExternalLink className="h-4 w-4 mr-2" />
-            Open & Edit
+            Open & edit
           </Button>
         </Link>
       </SheetFooter>

@@ -149,7 +149,7 @@ export async function PeopleWidget() {
             {recentActivity.length > 0 ? (
               <div className="space-y-3">
                 {recentActivity.map((tx) => {
-                  const actorName = userMap.get(tx.userId)?.name || "Unknown"
+                  const actorName = (tx.userId ? userMap.get(tx.userId)?.name : null) || "Unknown"
                   return (
                     <div key={tx.id} className="flex items-center justify-between p-2 -mx-2">
                       <div className="flex-1 min-w-0 mr-3">

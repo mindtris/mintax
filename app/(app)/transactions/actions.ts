@@ -147,6 +147,36 @@ export async function deleteTransactionAction(
   }
 }
 
+export async function reconcileTransactionsAction(
+  transactionIds: string[],
+  reconciled: boolean = true,
+): Promise<ActionState<{ count: number }>> {
+  if (!transactionIds || transactionIds.length === 0) {
+    return { success: false, error: "No transactions selected" }
+  }
+  try {
+    const user = await getCurrentUser()
+    const org = await getActiveOrg(user)
+
+    const result = await prisma.transaction.updateMany({
+      where: {
+        id: { in: transactionIds },
+        organizationId: org.id,
+      },
+      data: reconciled
+        ? { reconciled: true, reconciledAt: new Date(), reconciledBy: user.id }
+        : { reconciled: false, reconciledAt: null, reconciledBy: null },
+    })
+
+    revalidatePath("/accounts")
+    revalidatePath("/reconciliation")
+    return { success: true, data: { count: result.count } }
+  } catch (error) {
+    console.error("Failed to reconcile transactions:", error)
+    return { success: false, error: "Failed to reconcile transactions" }
+  }
+}
+
 export async function approveTransactionsAction(
   transactionIds: string[],
 ): Promise<ActionState<{ count: number }>> {

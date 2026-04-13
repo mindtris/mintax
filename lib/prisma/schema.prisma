@@ -188,6 +188,7 @@ model ChartAccount {
 
   transactions   Transaction[]
   defaultForCategories Category[] @relation("CategoryDefaultChart")
+  defaultForBankAccounts BankAccount[] @relation("BankAccountDefaultGL")
 
   @@unique([organizationId, code])
   @@index([organizationId])
@@ -212,6 +213,8 @@ model BankAccount {
   currentBalance Int          @default(0) @map("current_balance") // in cents/paise
   isActive       Boolean      @default(true) @map("is_active")
   source         String       @default("manual") // "manual" | "plaid"
+  defaultChartAccountId String?  @map("default_chart_account_id") @db.Uuid
+  defaultChartAccount   ChartAccount? @relation("BankAccountDefaultGL", fields: [defaultChartAccountId], references: [id], onDelete: SetNull)
   plaidItemId    String?      @map("plaid_item_id") @db.Uuid
   plaidItem      PlaidItem?   @relation(fields: [plaidItemId], references: [id], onDelete: SetNull)
   plaidAccountId String?      @unique @map("plaid_account_id")
@@ -240,6 +243,7 @@ model PlaidItem {
   cursor          String?      // /transactions/sync cursor
   status          String       @default("active") // "active" | "login_required" | "error" | "disconnected"
   lastSyncedAt    DateTime?    @map("last_synced_at")
+  syncingAt       DateTime?    @map("syncing_at") // advisory lock: set at start of sync, cleared on finish (NULL = free)
   lastError       String?      @map("last_error")
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
@@ -385,7 +389,7 @@ model Transaction {
   id                    String        @id @default(uuid()) @db.Uuid
   organizationId        String        @map("organization_id") @db.Uuid
   organization          Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  userId                String        @map("user_id") @db.Uuid // who created/modified
+  userId                String?       @map("user_id") @db.Uuid // who created/modified (null = system, e.g. Plaid sync)
   // Optional link to Contact (vendor you paid, client who paid you)
   contactId             String?       @map("contact_id") @db.Uuid
   contact               Contact?      @relation(fields: [contactId], references: [id], onDelete: SetNull)
@@ -414,6 +418,8 @@ model Transaction {
   taxAmount             Int?          @map("tax_amount")
   taxRate               String?       @map("tax_rate") // "GST_18", "GST_5", "VAT_20", etc.
   reconciled            Boolean       @default(false)
+  reconciledAt          DateTime?     @map("reconciled_at")
+  reconciledBy          String?       @map("reconciled_by") @db.Uuid
   invoiceId             String?       @map("invoice_id") @db.Uuid
   number                String?       // human-readable transaction number, e.g. TRA-00001
   reference             String?       // free-text reference (PO number, check number, etc.)

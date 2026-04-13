@@ -1,16 +1,25 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/core/db"
 import { syncPlaidItem } from "@/lib/services/plaid-sync"
+import { verifyPlaidWebhook } from "@/lib/integrations/plaid-webhook-verify"
 
 /**
- * Plaid webhooks. Verification via JWT (plaid-verification header) is recommended
- * for production; for now we accept and look up by item_id (which is Plaid-issued
- * and unique per row). Add JWT verification before enabling in production.
+ * Plaid webhooks. Every request is verified via JWT (plaid-verification header).
+ * We read the raw body as text so the sha256 check in the JWT payload matches
+ * byte-for-byte — do not swap in request.json() above the verify call.
  */
 export async function POST(request: Request) {
+  const rawBody = await request.text()
+  const verificationHeader = request.headers.get("plaid-verification")
+
+  const verified = await verifyPlaidWebhook(rawBody, verificationHeader)
+  if (!verified) {
+    return new NextResponse("Invalid signature", { status: 401 })
+  }
+
   let payload: any
   try {
-    payload = await request.json()
+    payload = JSON.parse(rawBody)
   } catch {
     return new NextResponse("Invalid JSON", { status: 400 })
   }

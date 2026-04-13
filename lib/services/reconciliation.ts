@@ -32,7 +32,7 @@ export const getUnreconciledTransactions = cache(async (orgId: string, accountId
   })
 })
 
-export async function matchEntry(entryId: string, transactionId: string) {
+export async function matchEntry(entryId: string, transactionId: string, userId?: string) {
   await prisma.bankEntry.update({
     where: { id: entryId },
     data: { transactionId, status: "matched" },
@@ -40,7 +40,11 @@ export async function matchEntry(entryId: string, transactionId: string) {
 
   await prisma.transaction.update({
     where: { id: transactionId },
-    data: { reconciled: true },
+    data: {
+      reconciled: true,
+      reconciledAt: new Date(),
+      reconciledBy: userId || null,
+    },
   })
 }
 
@@ -56,7 +60,7 @@ export async function unmatchEntry(entryId: string) {
   if (entry.transactionId) {
     await prisma.transaction.update({
       where: { id: entry.transactionId },
-      data: { reconciled: false },
+      data: { reconciled: false, reconciledAt: null, reconciledBy: null },
     })
   }
 }
@@ -161,4 +165,53 @@ export async function getReconciliationStats(accountId: string) {
   ])
 
   return { unmatched, matched, reconciled, excluded, total: unmatched + matched + reconciled + excluded }
+}
+
+/**
+ * Discrepancy report:
+ *   - bankOnly: bank statement entries with no matching book transaction
+ *   - booksOnly: book transactions for this account with no matching bank entry
+ *   - balance: difference between book balance and bank statement closing balance
+ */
+export async function getDiscrepancyReport(orgId: string, accountId: string) {
+  const [bankOnly, booksOnly, account] = await Promise.all([
+    prisma.bankEntry.findMany({
+      where: { statement: { bankAccountId: accountId }, status: "unmatched" },
+      orderBy: { date: "desc" },
+    }),
+    prisma.transaction.findMany({
+      where: {
+        organizationId: orgId,
+        bankAccountId: accountId,
+        reconciled: false,
+      },
+      orderBy: { issuedAt: "desc" },
+    }),
+    prisma.bankAccount.findUnique({
+      where: { id: accountId },
+      select: {
+        id: true,
+        name: true,
+        currency: true,
+        currentBalance: true,
+      },
+    }),
+  ])
+
+  // Sum unmatched bank entries (in cents)
+  const bankOnlyTotal = bankOnly.reduce((sum, e) => sum + (e.amount || 0), 0)
+  // Sum unreconciled book entries (in cents)
+  const booksOnlyTotal = booksOnly.reduce((sum, t) => {
+    const amount = t.total || 0
+    return sum + (t.type === "income" ? amount : -amount)
+  }, 0)
+
+  return {
+    account,
+    bankOnly,
+    booksOnly,
+    bankOnlyTotal,
+    booksOnlyTotal,
+    discrepancy: bankOnlyTotal - booksOnlyTotal,
+  }
 }

@@ -128,6 +128,9 @@ importers:
       date-fns:
         specifier: ^3.6.0
         version: 3.6.0
+      jose:
+        specifier: ^6.2.2
+        version: 6.2.2
       jszip:
         specifier: ^3.10.1
         version: 3.10.1

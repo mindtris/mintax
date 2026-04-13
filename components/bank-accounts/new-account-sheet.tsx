@@ -30,16 +30,9 @@ const ACCOUNT_TYPES = [
   { label: "Wallet", value: "wallet" },
 ]
 
-const CURRENCIES = [
-  { label: "INR", value: "INR" },
-  { label: "USD", value: "USD" },
-  { label: "EUR", value: "EUR" },
-  { label: "GBP", value: "GBP" },
-  { label: "AED", value: "AED" },
-]
-
 interface NewBankAccountSheetProps {
   baseCurrency?: string
+  currencies?: Array<{ code: string; name: string }>
   onAdd: (data: {
     name: string
     accountNumber?: string
@@ -51,7 +44,10 @@ interface NewBankAccountSheetProps {
   children?: React.ReactNode
 }
 
-export function NewBankAccountSheet({ baseCurrency = "INR", onAdd, children }: NewBankAccountSheetProps) {
+export function NewBankAccountSheet({ baseCurrency = "INR", currencies, onAdd, children }: NewBankAccountSheetProps) {
+  const currencyOptions = currencies && currencies.length > 0
+    ? currencies
+    : [{ code: baseCurrency, name: baseCurrency }]
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
@@ -186,8 +182,11 @@ export function NewBankAccountSheet({ baseCurrency = "INR", onAdd, children }: N
               <Select value={form.currency} onValueChange={(v) => setForm((p) => ({ ...p, currency: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {CURRENCIES.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                  {currencyOptions.map((c) => (
+                    <SelectItem key={c.code} value={c.code}>
+                      {c.code}
+                      {c.name && c.name !== c.code ? ` — ${c.name}` : ""}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
