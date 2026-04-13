@@ -10,7 +10,6 @@ import {
   Blocks,
   BookOpen,
   BriefcaseBusiness,
-  Building2,
   CalendarOff,
   ChevronDown,
   ClockArrowUp,
@@ -360,7 +359,7 @@ export function TopNav({
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="px-3 cursor-pointer">
                 <Link href="/settings?tab=business" className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <ShipWheel className="h-4 w-4 text-muted-foreground" />
                   <span>Organization settings</span>
                 </Link>
               </DropdownMenuItem>

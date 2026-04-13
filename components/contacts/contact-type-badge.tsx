@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils"
 import {
   Building2,
   Handshake,
-  Package,
   Settings,
+  ShipWheel,
   Wrench,
 } from "lucide-react"
 
@@ -28,7 +28,7 @@ const CONFIG: Record<
   },
   vendor: {
     label: "Vendor",
-    icon: Package,
+    icon: ShipWheel,
     className:
       "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:border-violet-800",
   },

@@ -12,6 +12,9 @@ export const FormSelectCategory = ({
   placeholder,
   hideIfEmpty = false,
   isRequired = false,
+  triggerClassName,
+  addNewHref,
+  addNewLabel,
   ...props
 }: {
   title: string
@@ -20,6 +23,9 @@ export const FormSelectCategory = ({
   placeholder?: string
   hideIfEmpty?: boolean
   isRequired?: boolean
+  triggerClassName?: string
+  addNewHref?: string
+  addNewLabel?: string
 } & SelectProps) => {
   const items = useMemo(
     () => categories.map((category) => ({ code: category.code || category.id, name: category.name, color: category.color })),
@@ -33,6 +39,9 @@ export const FormSelectCategory = ({
       placeholder={placeholder}
       hideIfEmpty={hideIfEmpty}
       isRequired={isRequired}
+      triggerClassName={triggerClassName}
+      addNewHref={addNewHref}
+      addNewLabel={addNewLabel}
       {...props}
     />
   )

@@ -39,6 +39,19 @@ export async function createTransactionAction(
     const receiptFiles = formData.getAll("receipts") as File[]
     formData.delete("receipts")
 
+    // Pre-uploaded file IDs to attach (from receipt-first drop flow)
+    const attachFileIdsRaw = formData.get("attachFileIds") as string | null
+    formData.delete("attachFileIds")
+    let attachFileIds: string[] = []
+    if (attachFileIdsRaw) {
+      try {
+        const parsed = JSON.parse(attachFileIdsRaw)
+        if (Array.isArray(parsed)) attachFileIds = parsed.filter((x) => typeof x === "string")
+      } catch {
+        // ignore malformed JSON
+      }
+    }
+
     // Validate the rest of the form
     const validatedForm = transactionFormSchema.safeParse(Object.fromEntries(formData.entries()))
     if (!validatedForm.success) {
@@ -93,7 +106,40 @@ export async function createTransactionAction(
       }
     }
 
+    // Move + attach files that were pre-uploaded to unsorted/ during AI analysis
+    if (attachFileIds.length > 0) {
+      const { getTransactionFilePath } = await import("@/lib/files")
+      const { getStorage } = await import("@/lib/storage")
+      const { updateFile } = await import("@/lib/services/files")
+      const storage = getStorage()
+      for (const fileId of attachFileIds) {
+        try {
+          const file = await prisma.file.findFirst({
+            where: { id: fileId, organizationId: org.id },
+          })
+          if (!file) continue
+          const newStoragePath = getTransactionFilePath(
+            org.id,
+            file.id,
+            file.filename,
+            transaction.issuedAt || undefined,
+          )
+          // Move from unsorted/ → transactions/{YYYY}/{MM}/
+          if (file.path !== newStoragePath) {
+            await storage.move(file.path, newStoragePath)
+            await updateFile(file.id, org.id, { path: newStoragePath, isReviewed: true })
+          } else {
+            await updateFile(file.id, org.id, { isReviewed: true })
+          }
+          await attachFileToTransaction(transaction.id, file.id)
+        } catch (attachErr) {
+          console.error("Failed to attach pre-uploaded file:", attachErr)
+        }
+      }
+    }
+
     revalidatePath("/accounts")
+    revalidatePath("/unsorted")
     revalidatePath(`/transactions/${transaction.id}`)
     return { success: true, data: transaction }
   } catch (error) {

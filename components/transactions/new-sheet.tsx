@@ -42,16 +42,18 @@ export function NewTransactionSheet({
             <SheetTitle>New transaction</SheetTitle>
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto px-6 py-4">
-            <TransactionCreateForm
-              categories={categories}
-              currencies={currencies}
-              settings={settings}
-              projects={projects}
-              bankAccounts={bankAccounts}
-              taxes={taxes}
-              onSuccess={() => setOpen(false)}
-            />
+          <div className="flex-1 overflow-y-auto">
+            <div className="px-6 py-4">
+              <TransactionCreateForm
+                categories={categories}
+                currencies={currencies}
+                settings={settings}
+                projects={projects}
+                bankAccounts={bankAccounts}
+                taxes={taxes}
+                onSuccess={() => setOpen(false)}
+              />
+            </div>
           </div>
         </SheetContent>
       </Sheet>

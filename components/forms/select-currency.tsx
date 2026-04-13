@@ -9,6 +9,9 @@ export const FormSelectCurrency = ({
   placeholder,
   hideIfEmpty = false,
   isRequired = false,
+  triggerClassName,
+  addNewHref,
+  addNewLabel,
   ...props
 }: {
   currencies: { code: string; name: string }[]
@@ -17,13 +20,15 @@ export const FormSelectCurrency = ({
   placeholder?: string
   hideIfEmpty?: boolean
   isRequired?: boolean
+  triggerClassName?: string
+  addNewHref?: string
+  addNewLabel?: string
 } & SelectProps) => {
   const items = useMemo(
     () =>
       currencies.map((currency) => ({
         code: currency.code,
-        name: `${currency.code}`,
-        badge: currency.name,
+        name: currency.code,
       })),
     [currencies]
   )
@@ -35,6 +40,9 @@ export const FormSelectCurrency = ({
       placeholder={placeholder}
       hideIfEmpty={hideIfEmpty}
       isRequired={isRequired}
+      triggerClassName={triggerClassName}
+      addNewHref={addNewHref}
+      addNewLabel={addNewLabel}
       {...props}
     />
   )

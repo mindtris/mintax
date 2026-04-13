@@ -9,6 +9,9 @@ export const FormSelectProject = ({
   placeholder,
   hideIfEmpty = false,
   isRequired = false,
+  triggerClassName,
+  addNewHref,
+  addNewLabel,
   ...props
 }: {
   title: string
@@ -17,6 +20,9 @@ export const FormSelectProject = ({
   placeholder?: string
   hideIfEmpty?: boolean
   isRequired?: boolean
+  triggerClassName?: string
+  addNewHref?: string
+  addNewLabel?: string
 } & SelectProps) => {
   return (
     <FormSelect
@@ -26,6 +32,9 @@ export const FormSelectProject = ({
       placeholder={placeholder}
       hideIfEmpty={hideIfEmpty}
       isRequired={isRequired}
+      triggerClassName={triggerClassName}
+      addNewHref={addNewHref}
+      addNewLabel={addNewLabel}
       {...props}
     />
   )

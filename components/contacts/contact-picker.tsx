@@ -6,7 +6,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { Building2, Check, ChevronsUpDown, Search } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Building2, Check, ChevronsUpDown, Plus, Search, ShipWheel } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
 interface ContactOption {
@@ -29,6 +30,8 @@ interface ContactPickerProps {
   defaultContactId?: string
   /** Filter by contact type (e.g. 'vendor', 'client') */
   type?: string
+  /** Override the trigger button height (defaults to h-9) */
+  triggerClassName?: string
 }
 
 export function ContactPicker({
@@ -36,6 +39,7 @@ export function ContactPicker({
   defaultName = "",
   defaultContactId = "",
   type = "all",
+  triggerClassName,
 }: ContactPickerProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
@@ -107,10 +111,14 @@ export function ContactPicker({
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className="flex-1 justify-between font-normal h-9"
+              className={cn("flex-1 justify-between font-normal h-9", triggerClassName)}
             >
               <span className="flex items-center gap-2 truncate">
-                <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                {type === "vendor" ? (
+                  <ShipWheel className="h-4 w-4 text-muted-foreground shrink-0" />
+                ) : (
+                  <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                )}
                 <span className="truncate">
                   {selected
                     ? selected.name
@@ -174,6 +182,26 @@ export function ContactPicker({
                   </span>
                 </button>
               ))}
+            </div>
+
+            {/* Add new */}
+            <div className="border-t">
+              <button
+                type="button"
+                onClick={() => {
+                  const path =
+                    type === "vendor"
+                      ? "/customers?type=vendor"
+                      : type === "client"
+                        ? "/customers?type=client"
+                        : "/customers"
+                  window.open(path, "_blank")
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-primary hover:bg-primary/10 transition-colors text-left font-medium"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add a new {labelText.toLowerCase()}
+              </button>
             </div>
           </PopoverContent>
         </Popover>

@@ -6,12 +6,19 @@ import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { SelectProps } from "@radix-ui/react-select"
 import { format } from "date-fns"
-import { CalendarIcon, Upload } from "lucide-react"
+import { CalendarIcon, Plus, Upload } from "lucide-react"
 import { InputHTMLAttributes, TextareaHTMLAttributes, useEffect, useRef, useState } from "react"
 
 type FormInputProps = InputHTMLAttributes<HTMLInputElement> & {
@@ -93,6 +100,9 @@ export const FormSelect = ({
   onValueChange,
   name,
   id,
+  triggerClassName,
+  addNewHref,
+  addNewLabel,
   ...props
 }: {
   items: Array<{ code: string; name: string; color?: string; badge?: string; logo?: string }>
@@ -103,6 +113,9 @@ export const FormSelect = ({
   isRequired?: boolean
   name?: string
   id?: string
+  triggerClassName?: string
+  addNewHref?: string
+  addNewLabel?: string
 } & SelectProps) => {
   const [internalValue, setInternalValue] = useState<string | undefined>(
     (props.value as string | undefined) || (props.defaultValue as string | undefined)
@@ -115,6 +128,10 @@ export const FormSelect = ({
   const controlId = id || name
 
   const handleChange = (v: string) => {
+    if (v === "__add_new__" && addNewHref) {
+      window.open(addNewHref, "_blank")
+      return
+    }
     if (!isControlled) setInternalValue(v)
     onValueChange?.(v)
   }
@@ -140,24 +157,44 @@ export const FormSelect = ({
         <SelectTrigger
           id={controlId}
           aria-labelledby={labelId}
-          className={cn("w-full min-w-[150px] bg-background h-11", isRequired && isEmpty && "bg-muted")}
+          className={cn(
+            "w-full min-w-[150px] bg-background h-11",
+            isRequired && isEmpty && "bg-muted",
+            triggerClassName,
+          )}
         >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
           {emptyValue && <SelectItem value="-">{emptyValue}</SelectItem>}
-          {items.map((item) => (
-            <SelectItem key={item.code} value={item.code}>
-              <div className="flex items-center gap-2 text-base pr-2">
-                {item.logo && <Image src={item.logo} alt={item.name} width={20} height={20} className="rounded-full" />}
-                {item.badge && <Badge className="px-2">{item.badge}</Badge>}
-                {!item.badge && item.color && (
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                )}
-                {item.name}
-              </div>
-            </SelectItem>
-          ))}
+          {items
+            .filter((item) => item.code && item.code.trim() !== "")
+            .map((item) => (
+              <SelectItem key={item.code} value={item.code}>
+                <div className="flex items-center gap-2 text-base pr-2">
+                  {item.logo && <Image src={item.logo} alt={item.name} width={20} height={20} className="rounded-full" />}
+                  {item.badge && <Badge className="px-2">{item.badge}</Badge>}
+                  {!item.badge && item.color && (
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                  )}
+                  {item.name}
+                </div>
+              </SelectItem>
+            ))}
+          {addNewHref && (
+            <>
+              <SelectSeparator />
+              <SelectItem
+                value="__add_new__"
+                className="text-primary focus:text-primary focus:bg-primary/10"
+              >
+                <span className="flex items-center gap-2 text-sm">
+                  <Plus className="h-3.5 w-3.5" />
+                  {addNewLabel || "Add new"}
+                </span>
+              </SelectItem>
+            </>
+          )}
         </SelectContent>
       </Select>
     </span>
