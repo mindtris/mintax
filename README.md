@@ -32,6 +32,13 @@
 
 Built for **sovereignty** and **scalability**, Mintax can be self-hosted on your own infrastructure, giving you complete control over your business data.
 
+## Visual tour
+
+| Enterprise Landing | Seamless Auth | Mission Control |
+| :---: | :---: | :---: |
+| ![Landing](public/screenshots/1.png) | ![Auth](public/screenshots/2.png) | ![Dashboard](public/screenshots/3.png) |
+| *Intelligent front door* | *Secure access* | *Core dashboard* |
+
 ## Core modules
 
 | Module | What it does |
