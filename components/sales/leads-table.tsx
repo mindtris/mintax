@@ -8,6 +8,10 @@ import { Button } from "@/components/ui/button"
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { MoreVertical, Pencil, Trash2, UserCheck, Target } from "lucide-react"
@@ -43,14 +47,14 @@ export type LeadRow = {
   expectedCloseAt: string | Date | null
 }
 
-const stageStyles: Record<string, string> = {
-  new: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-  contacted: "bg-sky-500/10 text-sky-600 border-sky-500/20",
-  qualified: "bg-purple-500/10 text-purple-600 border-purple-500/20",
-  proposal: "bg-orange-500/10 text-orange-600 border-orange-500/20",
-  negotiation: "bg-amber-500/10 text-amber-600 border-amber-500/20",
-  won: "bg-green-500/10 text-green-600 border-green-500/20",
-  lost: "bg-red-500/10 text-red-600 border-red-500/20",
+const STAGE_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  new: "outline",
+  contacted: "secondary",
+  qualified: "secondary",
+  proposal: "secondary",
+  negotiation: "secondary",
+  won: "default",
+  lost: "destructive",
 }
 
 export function LeadsTable({ leads, visibleColumns, currency, categories }: { leads: LeadRow[]; visibleColumns?: string[]; currency?: string; categories?: any[] }) {
@@ -101,7 +105,7 @@ export function LeadsTable({ leads, visibleColumns, currency, categories }: { le
       label: "Stage",
       sortable: true,
       render: (row) => (
-        <Badge variant="outline" className={cn("text-[10px] font-medium capitalize", stageStyles[row.stage] || "bg-secondary text-secondary-foreground border-border")}>
+        <Badge variant={STAGE_VARIANTS[row.stage] || "outline"} className="text-[10px] capitalize">
           {categories?.find(c => c.code === row.stage)?.name || row.stage}
         </Badge>
       ),
@@ -110,8 +114,8 @@ export function LeadsTable({ leads, visibleColumns, currency, categories }: { le
       key: "source",
       label: "Source",
       render: (row) => (
-        <span className="text-sm text-muted-foreground capitalize">
-          {row.source ? (SOURCE_LABELS[row.source] || row.source) : "—"}
+        <span className={cn("text-sm text-muted-foreground capitalize", !row.source && "text-muted-foreground/50 italic text-[11px]")}>
+          {row.source ? (SOURCE_LABELS[row.source] || row.source) : "Not available"}
         </span>
       ),
     },
@@ -121,10 +125,10 @@ export function LeadsTable({ leads, visibleColumns, currency, categories }: { le
       align: "right",
       sortable: true,
       render: (row) => (
-        <span className="font-mono font-bold text-sm">
+        <span className={cn("font-mono font-bold text-sm", row.value <= 0 && "text-muted-foreground/50 font-normal italic text-[11px]")}>
           {row.value > 0
             ? (row.value / 100).toLocaleString(undefined, { minimumFractionDigits: 2, style: "currency", currency: row.currency || "INR" })
-            : "—"
+            : "Not available"
           }
         </span>
       ),
@@ -164,54 +168,58 @@ export function LeadsTable({ leads, visibleColumns, currency, categories }: { le
         sort={sorting}
         onSortChange={setSorting}
         renderDetailSheet={(row, onClose) => (
-          <div className="flex flex-col gap-4 p-1">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">{row.title}</h3>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => { setEditingLead(row); onClose() }}>
-                    <Pencil className="h-4 w-4" /> Edit
-                  </DropdownMenuItem>
-                  {row.stage !== "won" && (
-                    <DropdownMenuItem
-                      onClick={async () => {
-                        const res = await convertLeadAction(row.id)
-                        if (res.success) {
-                          toast.success("Lead converted to contact")
-                          router.refresh()
-                          onClose()
-                        } else {
-                          toast.error(res.error || "Failed to convert lead")
-                        }
-                      }}
-                    >
-                      <UserCheck className="h-4 w-4" /> Convert to contact
+          <div className="flex flex-col h-full gap-0">
+            <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
+              <div className="flex items-center justify-between">
+                <SheetTitle className="text-lg font-semibold leading-none">{row.title}</SheetTitle>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => { setEditingLead(row); onClose() }}>
+                      <Pencil className="h-4 w-4" /> Edit
                     </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem
-                    className="text-destructive"
-                    onClick={() => setDeleteConfirmId(row.id)}
-                  >
-                    <Trash2 className="h-4 w-4" /> Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div><span className="text-muted-foreground">Contact:</span> {row.contactName}</div>
-              <div><span className="text-muted-foreground">Company:</span> {row.company || "—"}</div>
-              <div><span className="text-muted-foreground">Email:</span> {row.email || "—"}</div>
-              <div><span className="text-muted-foreground">Phone:</span> {row.phone || "—"}</div>
-              <div><span className="text-muted-foreground">Stage:</span> {categories?.find(c => c.code === row.stage)?.name || row.stage}</div>
-              <div><span className="text-muted-foreground">Source:</span> {row.source ? SOURCE_LABELS[row.source] : "—"}</div>
-              <div><span className="text-muted-foreground">Value:</span> {row.value > 0 ? (row.value / 100).toLocaleString(undefined, { minimumFractionDigits: 2, style: "currency", currency: row.currency }) : "—"}</div>
-              <div><span className="text-muted-foreground">Probability:</span> {row.probability}%</div>
-              {row.expectedCloseAt && (
-                <div><span className="text-muted-foreground">Expected close:</span> {format(new Date(row.expectedCloseAt), "MMM dd, yyyy")}</div>
-              )}
+                    {row.stage !== "won" && (
+                      <DropdownMenuItem
+                        onClick={async () => {
+                          const res = await convertLeadAction(row.id)
+                          if (res.success) {
+                            toast.success("Lead converted to contact")
+                            router.refresh()
+                            onClose()
+                          } else {
+                            toast.error(res.error || "Failed to convert lead")
+                          }
+                        }}
+                      >
+                        <UserCheck className="h-4 w-4" /> Convert to contact
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={() => setDeleteConfirmId(row.id)}
+                    >
+                      <Trash2 className="h-4 w-4" /> Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </SheetHeader>
+            <div className="flex-1 overflow-y-auto px-6 py-6">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><span className="text-muted-foreground">Contact:</span> {row.contactName}</div>
+                <div><span className="text-muted-foreground">Company:</span> {row.company || <span className="text-muted-foreground/50 italic text-[11px]">Not available</span>}</div>
+                <div><span className="text-muted-foreground">Email:</span> {row.email || <span className="text-muted-foreground/50 italic text-[11px]">Not available</span>}</div>
+                <div><span className="text-muted-foreground">Phone:</span> {row.phone || <span className="text-muted-foreground/50 italic text-[11px]">Not available</span>}</div>
+                <div><span className="text-muted-foreground">Stage:</span> {categories?.find(c => c.code === row.stage)?.name || row.stage}</div>
+                <div><span className="text-muted-foreground">Source:</span> {row.source ? (SOURCE_LABELS[row.source] || row.source) : <span className="text-muted-foreground/50 italic text-[11px]">Not available</span>}</div>
+                <div><span className="text-muted-foreground">Value:</span> {row.value > 0 ? (row.value / 100).toLocaleString(undefined, { minimumFractionDigits: 2, style: "currency", currency: row.currency || "INR" }) : <span className="text-muted-foreground/50 italic text-[11px]">Not available</span>}</div>
+                <div><span className="text-muted-foreground">Probability:</span> {row.probability}%</div>
+                {row.expectedCloseAt && (
+                  <div><span className="text-muted-foreground">Expected close:</span> {format(new Date(row.expectedCloseAt), "MMM dd, yyyy")}</div>
+                )}
+              </div>
             </div>
           </div>
         )}

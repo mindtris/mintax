@@ -2,10 +2,10 @@
 
 import { cn } from "@/lib/utils"
 import {
-  AlertTriangle,
+  AlertCircle,
   CheckCircle2,
-  Clock,
-  TrendingUp,
+  Timer,
+  ReceiptText,
 } from "lucide-react"
 
 interface StatCardProps {
@@ -17,19 +17,21 @@ interface StatCardProps {
 }
 
 function StatCard({ label, value, icon: Icon, iconClassName, className }: StatCardProps) {
+  // Extract text color from iconClassName if possible, or just use it directly on the icon
+  // The iconClassName usually contains "text-..."
   return (
     <div
       className={cn(
-        "rounded-xl border bg-card p-4 flex items-start gap-3",
+        "rounded-2xl border bg-card p-5 flex items-center gap-4 shadow-sm shadow-black/[0.01] transition-all hover:border-primary/20 hover:shadow-md",
         className
       )}
     >
-      <div className={cn("rounded-lg p-2", iconClassName)}>
-        <Icon className="h-4 w-4" />
+      <div className="shrink-0">
+        <Icon className={cn("h-8 w-8 opacity-80", iconClassName.split(" ").find(c => c.startsWith("text-")))} />
       </div>
       <div className="min-w-0">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="mt-0.5 text-lg font-semibold tracking-tight truncate">{value}</p>
+        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">{label}</p>
+        <p className="mt-0.5 text-xl font-bold tracking-tight truncate text-foreground">{value}</p>
       </div>
     </div>
   )
@@ -57,30 +59,30 @@ export function ContactStatsCards({ stats, currency = "INR" }: ContactStatsCards
   const fmt = (n: number) => formatCurrency(n, currency)
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
       <StatCard
         label="Total invoiced"
         value={fmt(stats.totalInvoiced)}
-        icon={TrendingUp}
-        iconClassName="bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400"
+        icon={ReceiptText}
+        iconClassName="text-primary"
       />
       <StatCard
         label="Paid"
         value={fmt(stats.totalPaid)}
         icon={CheckCircle2}
-        iconClassName="bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400"
+        iconClassName="text-primary"
       />
       <StatCard
         label="Outstanding"
         value={fmt(stats.totalOutstanding)}
-        icon={Clock}
-        iconClassName="bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400"
+        icon={Timer}
+        iconClassName="text-primary"
       />
       <StatCard
         label="Overdue"
         value={fmt(stats.totalOverdue)}
-        icon={AlertTriangle}
-        iconClassName="bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400"
+        icon={AlertCircle}
+        iconClassName="text-primary"
       />
     </div>
   )

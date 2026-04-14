@@ -5,9 +5,19 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { DataGrid, DataGridColumn, SortState } from "@/components/ui/data-grid"
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
-import { Receipt } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { ShipWheel, EllipsisVertical, Edit, Trash2 } from "lucide-react"
 import Image from "next/image"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { deleteInvoiceAction } from "@/app/(app)/invoices/actions"
+import { toast } from "sonner"
+
+import { EditInvoiceSheet } from "@/components/invoices/edit-invoice-sheet"
 
 export type InvoiceRow = {
   id: string
@@ -20,17 +30,20 @@ export type InvoiceRow = {
   dueAt: string | Date | null
 }
 
-const statusStyles: Record<string, string> = {
-  paid: "bg-green-500/10 text-green-600 border-green-500/20",
-  overdue: "bg-red-500/10 text-red-600 border-red-500/20",
-  sent: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-  draft: "bg-muted text-muted-foreground border-border",
+const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  paid: "default",
+  sent: "secondary",
+  draft: "outline",
+  overdue: "destructive",
+  cancelled: "destructive",
 }
 
 export function InvoicesTable({ invoices, visibleColumns }: { invoices: InvoiceRow[]; visibleColumns?: string[] }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
 
   const [sorting, setSorting] = useState<SortState>(() => {
     const ordering = searchParams.get("ordering")
@@ -61,7 +74,7 @@ export function InvoicesTable({ invoices, visibleColumns }: { invoices: InvoiceR
       render: (row) => (
         <div className="flex items-center gap-3 py-1">
           <div className="h-9 w-9 rounded-md bg-primary/5 flex items-center justify-center shrink-0 border border-primary/10">
-            <Receipt className="h-4 w-4 text-primary" />
+            <ShipWheel className="h-4 w-4 text-primary" />
           </div>
           <div className="flex flex-col">
             <span className="font-semibold text-foreground">{row.invoiceNumber}</span>
@@ -75,7 +88,7 @@ export function InvoicesTable({ invoices, visibleColumns }: { invoices: InvoiceR
       label: "Status",
       sortable: true,
       render: (row) => (
-        <Badge variant="outline" className={cn("text-[10px] font-medium capitalize", statusStyles[row.status] || statusStyles.draft)}>
+        <Badge variant={STATUS_VARIANTS[row.status] || "outline"} className="text-[10px] font-medium capitalize">
           {row.status}
         </Badge>
       ),
@@ -101,27 +114,76 @@ export function InvoicesTable({ invoices, visibleColumns }: { invoices: InvoiceR
         </span>
       ),
     },
-  ], [])
+    {
+      key: "actions",
+      label: "",
+      align: "right",
+      render: (row) => (
+        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <EllipsisVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleRowClick(row)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={async () => {
+                  if (confirm("Are you sure you want to delete this invoice?")) {
+                    const res = await deleteInvoiceAction(row.id)
+                    if (res?.error) toast.error(res.error)
+                    else toast.success("Invoice deleted")
+                  }
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+  ], [router, searchParams])
 
   const filteredColumns = visibleColumns
     ? columns.filter((col) => visibleColumns.includes(col.key))
     : columns
 
+  const handleRowClick = (row: InvoiceRow) => {
+    setSelectedInvoiceId(row.id)
+    setIsSheetOpen(true)
+  }
+
   return (
-    <DataGrid
-      data={invoices}
-      columns={filteredColumns}
-      selectable
-      selectedIds={selectedIds}
-      onSelectionChange={setSelectedIds}
-      sort={sorting}
-      onSortChange={setSorting}
-      onRowClick={(row) => router.push(`/invoices/${row.id}`)}
-      emptyIcon={
-        <Image src="/empty-state.svg" alt="No invoices" width={120} height={120} priority />
-      }
-      emptyTitle="Invoices"
-      emptyDescription="No invoices yet. Create your first one to get started."
-    />
+    <>
+      <DataGrid
+        data={invoices}
+        columns={filteredColumns}
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        sort={sorting}
+        onSortChange={setSorting}
+        onRowClick={handleRowClick}
+        emptyIcon={
+          <Image src="/empty-state.svg" alt="No invoices" width={120} height={120} priority />
+        }
+        emptyTitle="Invoices"
+        emptyDescription="No invoices yet. Create your first one to get started."
+      />
+
+      <EditInvoiceSheet 
+        invoiceId={selectedInvoiceId}
+        open={isSheetOpen}
+        onOpenChange={setIsSheetOpen}
+      />
+    </>
   )
 }
+

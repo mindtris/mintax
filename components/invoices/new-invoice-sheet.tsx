@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import {
   Sheet,
   SheetContent,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -20,9 +21,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { FileText, Plus, Trash2, Upload } from "lucide-react"
-import { useActionState, useCallback, useState } from "react"
+import { FileText, Loader2, Plus, Trash2, Upload } from "lucide-react"
+import { useActionState, useCallback, useEffect, useState } from "react"
 import { createInvoiceAction } from "@/app/(app)/invoices/actions"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { EditInvoiceForm } from "@/app/(app)/invoices/[invoiceId]/edit-invoice-form"
 
 interface LineItem {
   name: string
@@ -37,9 +40,12 @@ interface LineItem {
 
 interface NewInvoiceSheetProps {
   children?: React.ReactNode
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
   defaultContactId?: string
   defaultClientName?: string
   baseCurrency?: string
+  taxId?: string
   defaultType?: string
   invoiceSettings?: Record<string, string>
   currencies?: { code: string; name: string }[]
@@ -53,23 +59,73 @@ function emptyLine(): LineItem {
 
 export function NewInvoiceSheet({
   children,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
   defaultContactId = "",
   defaultClientName = "",
   baseCurrency = "INR",
+  taxId = "",
   defaultType = "sales",
   invoiceSettings = {},
   currencies = [],
   items: settingsItems = [],
   taxes: settingsTaxes = [],
 }: NewInvoiceSheetProps) {
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = controlledOpen ?? internalOpen
+  const setOpen = controlledOnOpenChange ?? setInternalOpen
+
   const [state, formAction, pending] = useActionState(createInvoiceAction, null)
+  
+  const [managedId, setManagedId] = useState<string | null>(null)
+  const [managedData, setManagedData] = useState<{ invoice: any; files: any[]; org?: any; invoiceSettings?: any } | null>(null)
+  const [activeTab, setActiveTab] = useState("details")
+  const [loadingManaged, setLoadingManaged] = useState(false)
+
+  // Handle successful creation
+  useEffect(() => {
+    if (state?.success && state?.id && !managedId) {
+      setManagedId(state.id)
+      setActiveTab("preview") // Switch to preview after creation
+    }
+  }, [state, managedId])
+
+  // Fetch data when we have a managed ID
+  useEffect(() => {
+    if (managedId && open) {
+      fetchManagedData()
+    } else if (!open) {
+      setManagedId(null)
+      setManagedData(null)
+      setActiveTab("details")
+    }
+  }, [managedId, open])
+
+  async function fetchManagedData() {
+    if (!managedId) return
+    setLoadingManaged(true)
+    try {
+      const res = await fetch(`/api/invoices/${managedId}`)
+      if (res.ok) {
+        const json = await res.json()
+        setManagedData(json)
+      }
+    } catch (e) {
+      console.error("Failed to fetch managed data", e)
+    } finally {
+      setLoadingManaged(false)
+    }
+  }
 
   const paymentTermsDays = parseInt(invoiceSettings.invoice_payment_terms || "30") || 30
   const today = new Date().toISOString().split("T")[0]
   const defaultDueDate = new Date(Date.now() + paymentTermsDays * 24 * 60 * 60 * 1000)
     .toISOString()
     .split("T")[0]
+
+  const isEstimate = defaultType === "estimate"
+  const formLabel = isEstimate ? "Estimate" : "Invoice"
+  const formLabelLower = isEstimate ? "estimate" : "invoice"
 
   const [clientName, setClientName] = useState(defaultClientName)
   const [clientEmail, setClientEmail] = useState("")
@@ -119,29 +175,97 @@ export function NewInvoiceSheet({
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => { if (e.target.files) setFiles((prev) => [...prev, ...Array.from(e.target.files!)]) }
 
   const currencyList = currencies.length > 0
-    ? currencies
-    : [{ code: "INR", name: "INR" }, { code: "USD", name: "USD" }, { code: "EUR", name: "EUR" }, { code: "GBP", name: "GBP" }, { code: "AED", name: "AED" }]
+    ? currencies.map(c => ({ 
+        code: c.code, 
+        name: c.name.startsWith(c.code) ? c.name : `${c.code} ${c.name}` 
+      }))
+    : [
+        { code: "INR", name: "INR Indian rupee" },
+        { code: "USD", name: "USD US dollar" },
+        { code: "EUR", name: "EUR Euro" },
+        { code: "GBP", name: "GBP British pound" },
+        { code: "AED", name: "AED UAE dirham" },
+        { code: "SGD", name: "SGD Singapore dollar" },
+        { code: "AUD", name: "AUD Australian dollar" },
+        { code: "CAD", name: "CAD Canadian dollar" },
+      ]
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        {children ?? (<Button><Plus className="h-4 w-4" /> New invoice</Button>)}
+        {children ?? (<Button><Plus className="h-4 w-4" /> New {formLabelLower}</Button>)}
       </SheetTrigger>
 
       <SheetContent
         side="right"
-        className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] w-[95vw] sm:max-w-xl flex flex-col gap-0 p-0 overflow-hidden border-border shadow-2xl"
+        className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] w-[95vw] sm:max-w-5xl flex flex-col gap-0 p-0 overflow-hidden border border-border shadow-2xl rounded-2xl"
       >
-        <SheetHeader className="px-8 pt-8 pb-6 shrink-0 bg-muted/5 border-b border-border/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-md"><FileText className="h-5 w-5 text-primary" /></div>
-            <SheetTitle className="text-xl font-bold tracking-tight">New invoice</SheetTitle>
-          </div>
-        </SheetHeader>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+          <SheetHeader className="px-8 pt-8 pb-6 shrink-0 bg-muted/5 border-b border-border/50">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-[200px]">
+                <div className="p-2 bg-primary/10 rounded-md"><FileText className="h-5 w-5 text-primary" /></div>
+                <SheetTitle className="text-xl font-bold tracking-tight">
+                  {managedId ? (loadingManaged ? "Loading..." : managedData?.invoice ? `Edit ${managedData.invoice.type === 'estimate' ? 'Estimate' : 'Invoice'} #${managedData.invoice.invoiceNumber}` : "Updating...") : `New ${formLabelLower}`}
+                </SheetTitle>
+              </div>
 
-        <div className="flex-1 overflow-y-auto px-8 py-8">
-          <form
-            action={(formData) => {
+              {managedId && (
+                <div className="flex-1 flex justify-center">
+                  <TabsList>
+                    <TabsTrigger value="details">Details</TabsTrigger>
+                    <TabsTrigger value="preview">Preview</TabsTrigger>
+                  </TabsList>
+                </div>
+              )}
+              
+              <div className="min-w-[100px]" />
+            </div>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-hidden relative">
+            {managedId && loadingManaged ? (
+              <div className="flex flex-col items-center justify-center h-full gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Getting your document ready...</p>
+              </div>
+            ) : managedId && managedData ? (
+              <>
+                <TabsContent value="details" className="h-full m-0 p-0 overflow-y-auto focus-visible:ring-0">
+                  <div className="px-8 py-8">
+                    <EditInvoiceForm 
+                      invoice={managedData.invoice} 
+                      files={managedData.files} 
+                      baseCurrency={baseCurrency} 
+                      isSheet={true}
+                      onClose={() => setOpen(false)}
+                      activeTab={activeTab}
+                      setActiveTab={setActiveTab}
+                      org={managedData.org}
+                      invoiceSettings={managedData.invoiceSettings}
+                    />
+                  </div>
+                </TabsContent>
+                <TabsContent value="preview" className="h-full m-0 p-0 focus-visible:ring-0">
+                  <EditInvoiceForm 
+                    invoice={managedData.invoice} 
+                    files={managedData.files} 
+                    baseCurrency={baseCurrency} 
+                    isSheet={true}
+                    onClose={() => setOpen(false)}
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    onlyPreview={true}
+                    org={managedData.org}
+                    invoiceSettings={managedData.invoiceSettings}
+                  />
+                </TabsContent>
+              </>
+            ) : (
+              <div className="h-full overflow-y-auto px-8 py-8">
+                <form
+                  id="new-invoice-form"
+                  action={(formData) => {
               const validItems = lineItems.filter(l => l.name.trim() !== "" || l.itemId !== "");
               if (validItems.length === 0) {
                 return; // Prevent submission of empty invoices
@@ -152,35 +276,34 @@ export function NewInvoiceSheet({
             }}
             className="flex flex-col gap-8"
           >
-            {/* Client */}
+            {/* Client Section */}
             <div className="space-y-4">
-              <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Client</h4>
               <ContactPicker onSelect={handleContactSelect} defaultName={defaultClientName} defaultContactId={defaultContactId} type="client" />
               <input type="hidden" name="clientName" value={clientName} />
               <input type="hidden" name="clientEmail" value={clientEmail} />
-              <input type="hidden" name="clientTaxId" value={clientTaxId} />
+              <input type="hidden" name="clientTaxId" value={clientTaxId || taxId} />
               <input type="hidden" name="clientAddress" value={clientAddress} />
 
               {hasSelectedContact ? (
-                <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-1">
-                  <p className="text-sm font-semibold">{clientName}</p>
+                <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1">
+                  <p className="text-sm font-bold text-foreground">{clientName}</p>
                   {clientEmail && <p className="text-xs text-muted-foreground">{clientEmail}</p>}
-                  {clientTaxId && <p className="text-xs text-muted-foreground">Tax ID: {clientTaxId}</p>}
-                  {clientAddress && <p className="text-xs text-muted-foreground">{clientAddress}</p>}
+                  {(clientTaxId || taxId) && <p className="text-xs text-muted-foreground font-mono uppercase tracking-tighter">Tax ID: {clientTaxId || taxId}</p>}
+                  {clientAddress && <p className="text-xs text-muted-foreground leading-relaxed">{clientAddress}</p>}
                 </div>
               ) : (
                 <>
-                  <div className="flex flex-col gap-2">
-                    <Label className="text-xs font-semibold">Client name *</Label>
+                  <div className="flex flex-col gap-1">
+                    <Label className="text-sm font-medium">Client name *</Label>
                     <Input placeholder="Enter client name" value={clientName} onChange={(e) => setClientName(e.target.value)} required />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-2">
-                      <Label className="text-xs font-semibold">Email</Label>
+                    <div className="flex flex-col gap-1">
+                      <Label className="text-sm font-medium">Email</Label>
                       <Input type="email" placeholder="client@email.com" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} />
                     </div>
-                    <div className="flex flex-col gap-2">
-                      <Label className="text-xs font-semibold">Tax ID</Label>
+                    <div className="flex flex-col gap-1">
+                      <Label className="text-sm font-medium">Tax ID</Label>
                       <Input placeholder="Optional" value={clientTaxId} onChange={(e) => setClientTaxId(e.target.value)} />
                     </div>
                   </div>
@@ -188,14 +311,13 @@ export function NewInvoiceSheet({
               )}
             </div>
 
-            {/* Details */}
+            {/* Details Section */}
             <div className="space-y-4">
-              <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Details</h4>
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs font-semibold">Type</Label>
+                <div className="flex flex-col gap-1">
+                  <Label className="text-sm font-medium">Type</Label>
                   <Select name="type" defaultValue={defaultType}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="sales">Sales invoice</SelectItem>
                       <SelectItem value="purchase">Purchase invoice</SelectItem>
@@ -203,98 +325,102 @@ export function NewInvoiceSheet({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs font-semibold">Currency</Label>
+                <div className="flex flex-col gap-1">
+                  <Label className="text-sm font-medium">Currency</Label>
                   <Select name="currency" defaultValue={baseCurrency}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {currencyList.map((c) => (<SelectItem key={c.code} value={c.code}>{c.code}</SelectItem>))}
+                      {currencyList.map((c) => (
+                        <SelectItem key={c.code} value={c.code}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs font-semibold">Issue date</Label>
+                <div className="flex flex-col gap-1">
+                  <Label className="text-sm font-medium">Issue date</Label>
                   <DatePicker name="issuedAt" defaultValue={today} placeholder="Issue date" />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <Label className="text-xs font-semibold">Due date</Label>
+                <div className="flex flex-col gap-1">
+                  <Label className="text-sm font-medium">Due date</Label>
                   <DatePicker name="dueAt" defaultValue={defaultDueDate} placeholder="Due date" />
                 </div>
               </div>
             </div>
 
-            {/* Line Items */}
+            {/* Line Items Section */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Line items</h4>
-                <Button type="button" variant="secondary" size="sm" onClick={addLine}><Plus className="h-3 w-3 mr-1" /> Add item</Button>
+              <div className="flex items-center justify-between border-b border-border/40 pb-2 mb-2">
+                <span className="text-sm font-bold text-foreground">Line items</span>
+                <Button type="button" variant="ghost" size="sm" onClick={addLine} className="h-7 text-[10px] font-bold uppercase tracking-tight text-primary"><Plus className="h-3.5 w-3.5 mr-1" /> Add item</Button>
               </div>
               <div className="space-y-3">
                 {lineItems.map((line, idx) => (
-                  <div key={idx} className="rounded-lg border border-border p-4 space-y-3 relative">
+                  <div key={idx} className="rounded-xl border border-border/50 bg-card/40 p-4 space-y-3 relative overflow-hidden">
                     {lineItems.length > 1 && (
-                      <button type="button" onClick={() => removeLine(idx)} className="absolute top-3 right-3 text-muted-foreground hover:text-destructive transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
+                      <button type="button" onClick={() => removeLine(idx)} className="absolute top-3 right-3 text-muted-foreground/40 hover:text-destructive transition-colors"><Trash2 className="h-4 w-4" /></button>
                     )}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex flex-col gap-1">
-                        <Label className="text-[10px] text-muted-foreground">Item</Label>
+                        <Label className="text-sm font-medium">Item</Label>
                         {settingsItems.length > 0 ? (
                           <Select value={line.itemId || "custom"} onValueChange={(v) => updateLine(idx, "itemId", v === "custom" ? "" : v)}>
-                            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select item" /></SelectTrigger>
+                            <SelectTrigger className="h-8 text-xs font-medium"><SelectValue placeholder="Select item" /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="custom">Custom item</SelectItem>
                               {settingsItems.map((item) => (<SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>))}
                             </SelectContent>
                           </Select>
                         ) : (
-                          <Input className="h-8 text-xs" placeholder="Item name" value={line.name} onChange={(e) => updateLine(idx, "name", e.target.value)} />
+                          <Input className="h-8 text-xs font-medium" placeholder="Item name" value={line.name} onChange={(e) => updateLine(idx, "name", e.target.value)} />
                         )}
                       </div>
                       <div className="flex flex-col gap-1">
-                        <Label className="text-[10px] text-muted-foreground">Description</Label>
-                        <Input className="h-8 text-xs" placeholder="Optional" value={line.description} onChange={(e) => updateLine(idx, "description", e.target.value)} />
+                        <Label className="text-sm font-medium">Description</Label>
+                        <Input className="h-8 text-xs font-medium" placeholder="Optional" value={line.description} onChange={(e) => updateLine(idx, "description", e.target.value)} />
                       </div>
                     </div>
                     {!line.itemId && settingsItems.length > 0 && (
                       <div className="flex flex-col gap-1">
-                        <Label className="text-[10px] text-muted-foreground">Custom name</Label>
-                        <Input className="h-8 text-xs" placeholder="Item name" value={line.name} onChange={(e) => updateLine(idx, "name", e.target.value)} />
+                        <Label className="text-sm font-medium">Custom name</Label>
+                        <Input className="h-8 text-xs font-medium" placeholder="Item name" value={line.name} onChange={(e) => updateLine(idx, "name", e.target.value)} />
                       </div>
                     )}
                     <div className="grid grid-cols-4 gap-3">
                       <div className="flex flex-col gap-1">
-                        <Label className="text-[10px] text-muted-foreground">Qty</Label>
-                        <Input className="h-8 text-xs" type="number" min={1} value={line.quantity} onChange={(e) => updateLine(idx, "quantity", parseInt(e.target.value) || 1)} />
+                        <Label className="text-sm font-medium">Qty</Label>
+                        <Input className="h-8 text-xs font-medium" type="number" min={1} value={line.quantity} onChange={(e) => updateLine(idx, "quantity", parseInt(e.target.value) || 1)} />
                       </div>
                       <div className="flex flex-col gap-1">
-                        <Label className="text-[10px] text-muted-foreground">Price</Label>
-                        <Input className="h-8 text-xs" type="number" step="0.01" value={(line.price / 100).toFixed(2)} onChange={(e) => updateLine(idx, "price", Math.round(parseFloat(e.target.value || "0") * 100))} />
+                        <Label className="text-sm font-medium">Price</Label>
+                        <Input className="h-8 text-xs font-medium" type="number" step="0.01" value={(line.price / 100)} onChange={(e) => updateLine(idx, "price", Math.round(parseFloat(e.target.value || "0") * 100))} />
                       </div>
                       <div className="flex flex-col gap-1">
-                        <Label className="text-[10px] text-muted-foreground">Tax</Label>
+                        <Label className="text-sm font-medium">Tax</Label>
                         <Select value={line.taxId || "none"} onValueChange={(v) => updateLine(idx, "taxId", v === "none" ? "" : v)}>
-                          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="None" /></SelectTrigger>
+                          <SelectTrigger className="h-8 text-xs font-medium"><SelectValue placeholder="None" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">None</SelectItem>
-                            {settingsTaxes.map((tax) => (<SelectItem key={tax.id} value={tax.id}>{tax.name} ({tax.rate}%)</SelectItem>))}
+                            {settingsTaxes.map((tax) => (<SelectItem key={tax.id} value={tax.id}>{tax.name}</SelectItem>))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="flex flex-col gap-1">
-                        <Label className="text-[10px] text-muted-foreground">Total</Label>
-                        <div className="h-8 flex items-center text-xs font-semibold tabular-nums">{(line.total / 100).toFixed(2)}</div>
+                        <Label className="text-sm font-medium" >Total</Label>
+                        <div className="h-8 flex items-center text-xs font-bold tabular-nums">{(line.total / 100).toFixed(2)}</div>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="flex justify-end">
-                <div className="w-1/2 space-y-1 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="font-mono">{(subtotal / 100).toFixed(2)}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span className="font-mono">{(taxTotal / 100).toFixed(2)}</span></div>
-                  <div className="flex justify-between font-bold border-t pt-1"><span>Total</span><span className="font-mono">{(total / 100).toFixed(2)}</span></div>
+              <div className="flex justify-end pt-2">
+                <div className="w-1/2 space-y-1.5 text-xs font-medium">
+                  <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span className="font-mono tabular-nums">{(subtotal / 100).toFixed(2)}</span></div>
+                  <div className="flex justify-between text-muted-foreground"><span>Tax</span><span className="font-mono tabular-nums">{(taxTotal / 100).toFixed(2)}</span></div>
+                  <div className="flex justify-between font-bold text-foreground border-t border-border/60 pt-1.5"><span>Total</span><span className="font-mono tabular-nums text-sm">{(total / 100).toFixed(2)}</span></div>
                 </div>
               </div>
               <input type="hidden" name="subtotal" value={(subtotal / 100).toFixed(2)} />
@@ -303,46 +429,91 @@ export function NewInvoiceSheet({
               <input type="hidden" name="itemsJson" value={JSON.stringify(lineItems.filter(l => l.name.trim() !== "" || l.itemId !== ""))} />
             </div>
 
-            {/* Attachments */}
+            {/* Attachments Section */}
             <div className="space-y-4">
-              <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Attachments</h4>
+              <span className="text-sm font-bold text-foreground block border-b border-border/40 pb-2">Attachments</span>
               <div onDragOver={(e) => e.preventDefault()} onDrop={handleFileDrop}
-                className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/40 transition-colors cursor-pointer"
+                className="border-2 border-dashed border-border/60 bg-muted/5 rounded-xl p-6 text-center hover:border-primary/40 hover:bg-primary/[0.02] transition-all cursor-pointer group"
                 onClick={() => document.getElementById("inv-file-input")?.click()}>
-                <Upload className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Drop files here or click to upload</p>
-                <p className="text-[10px] text-muted-foreground/60 mt-1">PDF, images, or documents</p>
+                <div className="h-10 w-10 bg-muted rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-primary/10 transition-colors">
+                  <Upload className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
+                <p className="text-sm font-semibold text-foreground">Click to upload or drag and drop</p>
+                <p className="text-[11px] text-muted-foreground mt-1">PDF, images or spreadsheets</p>
                 <input id="inv-file-input" name="files" type="file" multiple className="hidden" onChange={handleFileSelect} accept="image/*,.pdf,.doc,.docx" />
               </div>
               {files.length > 0 && (
-                <div className="space-y-1">
+                <div className="grid gap-2">
                   {files.map((f, i) => (
-                    <div key={i} className="flex items-center justify-between text-xs bg-muted/30 rounded px-3 py-1.5">
-                      <span className="truncate">{f.name}</span>
-                      <button type="button" onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
+                    <div key={i} className="flex items-center justify-between text-xs bg-muted/30 border border-border/40 rounded-lg px-3 py-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <span className="truncate font-medium">{f.name}</span>
+                      </div>
+                      <button type="button" onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))} className="text-muted-foreground/60 hover:text-destructive transition-colors shrink-0"><Trash2 className="h-4 w-4" /></button>
                     </div>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Notes */}
+            {/* Notes Section */}
             <div className="space-y-4">
-              <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Notes</h4>
-              <Textarea name="notes" defaultValue={invoiceSettings.invoice_notes || ""} placeholder="Payment terms, notes…" rows={3} />
+              <span className="text-sm font-bold text-foreground block border-b border-border/40 pb-2">Notes & Terms</span>
+              <Textarea name="notes" className="px-3 pt-3 resize-none focus:bg-background" defaultValue={invoiceSettings.invoice_notes || ""} placeholder="Payment instructions, late fees, etc…" rows={3} />
             </div>
 
             {state?.error && (
-              <div className="p-4 bg-red-50 border border-red-100 rounded-md text-sm text-red-600 font-medium">{state.error}</div>
+              <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 font-semibold">{state.error}</div>
             )}
+            </form>
+          </div>
+        )}
+      </div>
 
-            <div className="pt-2 sticky bottom-0 bg-background">
-              <Button type="submit" disabled={pending} className="w-full h-12 text-md font-semibold shadow-lg shadow-primary/20 text-white leading-none">
-                {pending ? "Creating..." : "Create invoice"}
+          <SheetFooter className="px-6 py-4 border-t flex-row items-center gap-2 shrink-0 bg-background text-foreground">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => setOpen(false)}
+            className="px-4"
+          >
+            Cancel
+          </Button>
+          <div className="flex-1" />
+          
+          {managedId ? (
+            <>
+              <Button 
+                type="submit"
+                form="edit-invoice-form"
+                name="intent"
+                value="send"
+                variant="outline"
+                className="border-primary/20 hover:bg-primary/5 hover:text-primary"
+              >
+                Send to client
               </Button>
-            </div>
-          </form>
-        </div>
+              <Button 
+                form="edit-invoice-form"
+                type="submit" 
+                className="bg-primary text-primary-foreground font-bold px-8 shadow-lg shadow-primary/10"
+              >
+                Save changes
+              </Button>
+            </>
+          ) : (
+            <Button 
+              form="new-invoice-form"
+              type="submit" 
+              disabled={pending} 
+              className="bg-primary text-primary-foreground font-bold px-8 shadow-lg shadow-primary/10"
+            >
+              {pending ? `Creating ${formLabel}...` : `Create ${formLabel}`}
+            </Button>
+          )}
+        </SheetFooter>
+      </Tabs>
       </SheetContent>
     </Sheet>
   )

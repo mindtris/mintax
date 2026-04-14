@@ -19,6 +19,7 @@ interface ContactOption {
   address?: string | null
   city?: string | null
   country?: string | null
+  currency?: string | null
   type: string
 }
 
@@ -114,7 +115,7 @@ export function ContactPicker({
               className={cn("flex-1 justify-between font-normal h-9", triggerClassName)}
             >
               <span className="flex items-center gap-2 truncate">
-                {type === "vendor" ? (
+                {type === "vendor" || type === "client" ? (
                   <ShipWheel className="h-4 w-4 text-muted-foreground shrink-0" />
                 ) : (
                   <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />

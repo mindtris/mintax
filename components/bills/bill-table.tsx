@@ -132,7 +132,7 @@ function BillDetailSheet({ bill, onClose }: { bill: Bill; onClose: () => void })
 
   return (
     <div className="flex flex-col h-full">
-      <SheetHeader className="shrink-0 pb-4">
+      <SheetHeader className="shrink-0 px-6 pt-6 pb-4 border-b">
         <SheetTitle className="flex items-center gap-2">
           {bill.billNumber}
           <Badge variant={statusVariant[bill.status] || "outline"} className="capitalize font-medium">
@@ -141,7 +141,7 @@ function BillDetailSheet({ bill, onClose }: { bill: Bill; onClose: () => void })
         </SheetTitle>
       </SheetHeader>
 
-      <div className="flex-1 overflow-y-auto space-y-8 py-6">
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
         {/* Vendor info */}
         <div className="space-y-4">
           <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest font-display">Vendor details</h4>
@@ -213,7 +213,7 @@ function BillDetailSheet({ bill, onClose }: { bill: Bill; onClose: () => void })
         )}
       </div>
 
-      <SheetFooter className="shrink-0 pt-6 mt-4 border-t border-border">
+      <SheetFooter className="shrink-0 px-6 py-4 border-t">
         <div className="flex flex-col gap-3 w-full">
           {bill.status !== "paid" && (
             <Button onClick={handleMarkPaid} disabled={isLoading} className="w-full h-12 text-md font-semibold text-white">

@@ -954,7 +954,9 @@ model Contact {
   // Financial / tax
   taxId          String?      @map("tax_id")   // GSTIN, PAN, EIN, VAT, ABN
   currency       String       @default("INR")
-  reference      String?      // Internal code / account ref
+  reference      String?      @map("reference") // Internal code / account ref
+  paymentTerms   String?      @map("payment_terms") // Net-30, Due-on-receipt, etc.
+  isTaxExempt    Boolean      @default(false) @map("is_tax_exempt")
 
   // Address block
   address        String?

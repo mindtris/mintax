@@ -236,6 +236,7 @@ export const FormDate = ({
     <label className="flex flex-col gap-1">
       {title && <span className="text-sm font-medium">{title}</span>}
       <div className="relative">
+        <input type="hidden" name={name} value={manualInput} />
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -253,7 +254,6 @@ export const FormDate = ({
           <PopoverContent className="w-auto p-1 flex flex-col gap-2" align="start">
             <Input
               type="text"
-              name={name}
               value={manualInput}
               onChange={handleManualInputChange}
               className="text-center"

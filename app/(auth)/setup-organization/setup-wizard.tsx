@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { FormInput, FormSelect } from "@/components/forms/simple"
 import { setupOrganizationAction } from "../actions"
 import { 
-  Building2, 
+  ShipWheel, 
   ChevronRight, 
   ChevronLeft, 
   BadgeCent, 
@@ -14,7 +14,7 @@ import {
 } from "lucide-react"
 
 const STEPS = [
-  { id: "identity", title: "Identity", icon: Building2 },
+  { id: "identity", title: "Identity", icon: ShipWheel },
   { id: "financials", title: "Financials", icon: BadgeCent },
 ]
 

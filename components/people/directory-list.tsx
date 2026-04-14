@@ -67,9 +67,10 @@ type MemberRow = {
 
 type ColumnKey = "name" | "role"
 
-const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
+const ALL_COLUMNS: { key: ColumnKey | "actions"; label: string }[] = [
   { key: "name", label: "Name" },
   { key: "role", label: "Role" },
+  { key: "actions", label: "" },
 ]
 
 export function DirectoryList({ members }: { members: MemberRow[] }) {
@@ -150,19 +151,45 @@ export function DirectoryList({ members }: { members: MemberRow[] }) {
         </Badge>
       ),
     },
-  ], [])
+    {
+      key: "actions",
+      label: "",
+      className: "w-[40px]",
+      render: (row: MemberRow) => (
+        <div onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-accent transition-colors">
+                <MoreVertical className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem 
+                onClick={() => handleRemoveMember(row.id)}
+                className="text-destructive focus:text-destructive cursor-pointer"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Remove member
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+  ], [handleRemoveMember])
 
   const dynamicColumns = useMemo(() => {
-    return allColumns.filter((col) => visibleColumns.includes(col.key as ColumnKey))
+    const cols = allColumns.filter((col) => col.key === "actions" || visibleColumns.includes(col.key as ColumnKey))
+    return cols
   }, [visibleColumns, allColumns])
 
   const isFiltered = search || (roleFilter && roleFilter !== "-")
   const activeFilterCount = [roleFilter && roleFilter !== "-"].filter(Boolean).length
 
-  const toggleColumn = (key: ColumnKey) => {
-    if (key === "name") return
+  const toggleColumn = (key: ColumnKey | "actions") => {
+    if (key === "name" || key === "actions") return
     setVisibleColumns((prev) =>
-      prev.includes(key) ? prev.filter((c) => c !== key) : [...prev, key]
+      prev.includes(key as ColumnKey) ? prev.filter((c) => c !== key) : [...prev, key as ColumnKey]
     )
   }
 
@@ -215,11 +242,11 @@ export function DirectoryList({ members }: { members: MemberRow[] }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            {ALL_COLUMNS.map((col) => (
+            {ALL_COLUMNS.filter(c => c.key !== "actions").map((col) => (
               <DropdownMenuCheckboxItem
                 key={col.key}
-                checked={visibleColumns.includes(col.key)}
-                onCheckedChange={() => toggleColumn(col.key)}
+                checked={visibleColumns.includes(col.key as ColumnKey)}
+                onCheckedChange={() => toggleColumn(col.key as ColumnKey)}
                 disabled={col.key === "name"}
               >
                 {col.label}

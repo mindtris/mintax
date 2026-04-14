@@ -28,7 +28,7 @@ import { UserProfile } from "@/lib/core/auth"
 import config from "@/lib/core/config"
 import {
   Banknote,
-  Building2,
+  ShipWheel,
   ChevronRight,
   ClockArrowUp,
   FileText,
@@ -166,7 +166,7 @@ export function AppSidebar({
                         className={isCustomersActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "font-medium"}
                         tooltip="Contacts"
                       >
-                        <Building2 />
+                        <ShipWheel />
                         <span>Contacts</span>
                         <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                       </SidebarMenuButton>

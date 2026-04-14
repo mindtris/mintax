@@ -1,6 +1,7 @@
 "use client"
 
 import { FormDate, FormInput, FormSelect, FormTextarea } from "@/components/forms/simple"
+import { FormSelectCategory } from "@/components/forms/select-category"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -17,13 +18,14 @@ import { createReminderAction, updateReminderAction } from "../actions"
 import { toast } from "sonner"
 
 type Props = {
-  reminder?: any
+  initialData?: any // standardized prop name
   members: any[]
+  categories: any[]
   currentUserId: string
   onSuccess?: () => void
 }
 
-export function ReminderForm({ reminder, members, currentUserId, onSuccess }: Props) {
+export function ReminderForm({ initialData: reminder, members, categories, currentUserId, onSuccess }: Props) {
   const isEdit = !!reminder
   const action = isEdit ? updateReminderAction : createReminderAction
 
@@ -84,11 +86,13 @@ export function ReminderForm({ reminder, members, currentUserId, onSuccess }: Pr
           defaultValue={reminder?.dueAt ? new Date(reminder.dueAt) : undefined}
         />
 
-        <FormSelect
+        <FormSelectCategory
           name="category"
           title="Category"
-          items={categoryItems}
+          categories={categories}
           defaultValue={reminder?.category || "custom"}
+          addNewHref="/settings?tab=categories"
+          addNewLabel="Add a new category"
         />
       </div>
 
@@ -139,6 +143,7 @@ export function ReminderForm({ reminder, members, currentUserId, onSuccess }: Pr
       {/* Email notifications */}
       <div className="flex flex-col gap-3 rounded-md border p-3">
         <label className="flex items-center gap-2 cursor-pointer">
+          <input type="hidden" name="emailNotify" value="false" />
           <input
             type="checkbox"
             name="emailNotify"

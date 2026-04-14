@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { listContacts } from "@/lib/services/contacts"
 import { prisma } from "@/lib/core/db"
-import { Building2, HandCoins, Plus, Users, UsersRound } from "lucide-react"
+import { Building2, HandCoins, Plus, ShipWheel, Users, UsersRound } from "lucide-react"
 import Link from "next/link"
 import { formatCurrency } from "@/lib/utils"
 
@@ -80,7 +80,7 @@ export async function CustomersWidget() {
         <Card className={CARD}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <ShipWheel className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">Clients</span>
             </div>
             <div className="text-2xl font-bold mt-1">{clientCount}</div>

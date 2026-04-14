@@ -28,7 +28,7 @@ import {
 import { CATEGORY_LABELS, PRIORITY_LABELS, REMINDER_CATEGORIES, REMINDER_PRIORITIES } from "@/lib/schemas/reminders"
 import { cn } from "@/lib/utils"
 import { format, isPast } from "date-fns"
-import { Bell, Check, ColumnsIcon, Filter, MoreVertical, Search, Trash2, X } from "lucide-react"
+import { BellPlus, Calendar, Check, ColumnsIcon, Filter, MoreVertical, Search, Trash2, X } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useMemo, useState } from "react"
@@ -36,14 +36,26 @@ import { completeReminderAction, deleteReminderAction } from "@/app/(app)/apps/r
 import { ReminderForm } from "@/app/(app)/apps/reminders/components/reminder-form"
 import { RemindersBulkActions } from "./reminders-bulk-actions"
 
-const PRIORITY_COLORS: Record<string, string> = {
-  low: "bg-slate-100 text-slate-700",
-  medium: "bg-blue-100 text-blue-700",
-  high: "bg-orange-100 text-orange-700",
-  urgent: "bg-red-100 text-red-700",
+// Using standard Badge variants for priorities:
+// urgent -> destructive
+// high -> default (Primary)
+// medium -> secondary
+// low -> outline
+const PRIORITY_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  low: "outline",
+  medium: "secondary",
+  high: "default",
+  urgent: "destructive",
 }
 
-type ColumnKey = "title" | "category" | "priority" | "dueAt" | "status"
+const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  pending: "secondary",
+  completed: "default",
+  snoozed: "outline",
+  cancelled: "outline",
+}
+
+type ColumnKey = "title" | "category" | "priority" | "dueAt" | "status" | "actions"
 
 const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
   { key: "title", label: "Title" },
@@ -56,19 +68,20 @@ const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
 type Props = {
   reminders: any[]
   members: any[]
+  categories: any[]
   currentUserId: string
   createOpen: boolean
   setCreateOpen: (open: boolean) => void
 }
 
-export function RemindersList({ reminders, members, currentUserId, createOpen, setCreateOpen }: Props) {
+export function RemindersList({ reminders, members, categories, currentUserId, createOpen, setCreateOpen }: Props) {
   const router = useRouter()
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("-")
   const [categoryFilter, setCategoryFilter] = useState("-")
   const [priorityFilter, setPriorityFilter] = useState("-")
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
-  const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(["title", "category", "priority", "dueAt", "status"])
+  const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(["title", "category", "priority", "dueAt", "status", "actions"])
   const [editingReminder, setEditingReminder] = useState<any>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
 
@@ -99,11 +112,8 @@ export function RemindersList({ reminders, members, currentUserId, createOpen, s
         const isOverdue = isPast(new Date(row.dueAt)) && row.status === "pending"
         return (
           <div className="flex items-center gap-3 py-1">
-            <div className={cn(
-              "h-9 w-9 rounded-md flex items-center justify-center shrink-0 border",
-              isOverdue ? "bg-destructive/5 border-destructive/10" : "bg-primary/5 border-primary/10"
-            )}>
-              <Bell className={cn("h-4 w-4", isOverdue ? "text-destructive" : "text-primary")} />
+            <div className="h-9 w-9 rounded-md flex items-center justify-center shrink-0 border bg-primary/5 border-primary/10">
+              <BellPlus className="h-4 w-4 text-primary" />
             </div>
             <div className="flex flex-col">
               <span className={cn("font-semibold text-foreground", row.status === "completed" && "line-through opacity-60")}>
@@ -120,17 +130,20 @@ export function RemindersList({ reminders, members, currentUserId, createOpen, s
     {
       key: "category",
       label: "Category",
-      render: (row: any) => (
-        <Badge variant="outline" className="text-[10px] font-medium border-border bg-black/[0.02]">
-          {CATEGORY_LABELS[row.category] || row.category}
-        </Badge>
-      ),
+      render: (row: any) => {
+        const dynamicCategory = categories?.find(c => (c.code || c.id) === row.category);
+        return (
+          <Badge variant="secondary" className="text-[10px] font-medium border-border/50">
+            {dynamicCategory ? dynamicCategory.name : (CATEGORY_LABELS[row.category] || row.category)}
+          </Badge>
+        );
+      },
     },
     {
       key: "priority",
       label: "Priority",
       render: (row: any) => (
-        <Badge variant="outline" className={cn("text-[10px]", PRIORITY_COLORS[row.priority])}>
+        <Badge variant={PRIORITY_VARIANTS[row.priority] || "outline"} className="text-[10px] capitalize">
           {PRIORITY_LABELS[row.priority] || row.priority}
         </Badge>
       ),
@@ -142,9 +155,12 @@ export function RemindersList({ reminders, members, currentUserId, createOpen, s
       render: (row: any) => {
         const isOverdue = isPast(new Date(row.dueAt)) && row.status === "pending"
         return (
-          <span className={cn("text-sm", isOverdue && "text-destructive font-medium")}>
-            {format(new Date(row.dueAt), "MMM d, yyyy")}
-          </span>
+          <div className="flex items-center gap-2">
+            <Calendar className={cn("h-3.5 w-3.5", isOverdue ? "text-destructive" : "text-muted-foreground")} />
+            <span className={cn("text-sm", isOverdue && "text-destructive font-medium")}>
+              {format(new Date(row.dueAt), "MMM d, yyyy")}
+            </span>
+          </div>
         )
       },
     },
@@ -152,13 +168,43 @@ export function RemindersList({ reminders, members, currentUserId, createOpen, s
       key: "status",
       label: "Status",
       render: (row: any) => {
-        const variant = row.status === "completed" ? "default" : row.status === "pending" ? "secondary" : "outline"
+        const isOverdue = isPast(new Date(row.dueAt)) && row.status === "pending"
         return (
-          <Badge variant={variant} className="text-[10px] capitalize">
-            {row.status}
+          <Badge variant={isOverdue ? "destructive" : (STATUS_VARIANTS[row.status] || "outline")} className="text-[10px] capitalize">
+            {isOverdue ? "overdue" : row.status}
           </Badge>
         )
       },
+    },
+    {
+      key: "actions",
+      label: "",
+      className: "w-[40px]",
+      render: (row: any) => (
+        <div onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-accent transition-colors">
+                <MoreVertical className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem 
+                onClick={async () => {
+                  if (confirm("Delete this reminder?")) {
+                    await deleteReminderAction(row.id)
+                    router.refresh()
+                  }
+                }}
+                className="text-destructive focus:text-destructive cursor-pointer"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
     },
   ], [])
 
@@ -174,7 +220,7 @@ export function RemindersList({ reminders, members, currentUserId, createOpen, s
   ].filter(Boolean).length
 
   const toggleColumn = (key: ColumnKey) => {
-    if (key === "title") return
+    if (key === "title" || key === "actions") return
     setVisibleColumns((prev) =>
       prev.includes(key) ? prev.filter((c) => c !== key) : [...prev, key]
     )
@@ -313,29 +359,18 @@ export function RemindersList({ reminders, members, currentUserId, createOpen, s
             <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
               <div className="flex items-center justify-between">
                 <SheetTitle className="text-lg font-semibold leading-none">Edit reminder</SheetTitle>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {row.status !== "completed" && (
-                      <DropdownMenuItem onClick={async () => { await completeReminderAction(row.id); router.refresh(); onClose() }}>
-                        <Check className="h-4 w-4" /> Complete
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem className="text-destructive" onClick={async () => { if (confirm("Delete this reminder?")) { await deleteReminderAction(row.id); router.refresh(); onClose() } }}>
-                      <Trash2 className="h-4 w-4" /> Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </div>
             </SheetHeader>
             <div className="flex-1 overflow-y-auto px-6 py-6">
-              <ReminderForm
-                reminder={row}
-                members={members}
+              <ReminderForm 
+                initialData={row} 
+                onSuccess={() => {
+                  router.refresh(); 
+                  onClose() 
+                }} 
                 currentUserId={currentUserId}
-                onSuccess={() => { router.refresh(); onClose() }}
+                members={members}
+                categories={categories}
               />
             </div>
           </div>
@@ -363,10 +398,11 @@ export function RemindersList({ reminders, members, currentUserId, createOpen, s
             <SheetTitle>New reminder</SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-6 py-6">
-            <ReminderForm
+            <ReminderForm 
+              onSuccess={() => { setCreateOpen(false); router.refresh() }} 
+              currentUserId={currentUserId} 
               members={members}
-              currentUserId={currentUserId}
-              onSuccess={() => { setCreateOpen(false); router.refresh() }}
+              categories={categories}
             />
           </div>
         </SheetContent>

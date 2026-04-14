@@ -568,7 +568,7 @@ export function DataGrid<T extends Record<string, any>>({
           onOpenChange={(open) => !open && setDetailRow(null)}
         >
           <SheetContent side="right" className="inset-y-auto top-1/2 -translate-y-1/2 right-4 h-[96vh] rounded-lg w-[95vw] sm:max-w-lg flex flex-col gap-0 p-0">
-            <div className="flex flex-col h-full overflow-y-auto px-6 py-6">
+            <div className="flex flex-col h-full overflow-hidden">
               {detailRow && renderDetailSheet(detailRow, () => setDetailRow(null))}
             </div>
           </SheetContent>

@@ -94,7 +94,8 @@ export async function createInvoiceAction(_prevState: any, formData: FormData) {
 
   revalidatePath("/invoices")
   revalidatePath("/estimates")
-  redirect(type === "estimate" ? "/estimates" : "/invoices")
+  
+  return { success: true, id: invoice.id, message: `${type === "estimate" ? "Estimate" : "Invoice"} created successfully` }
 }
 
 export async function updateInvoiceAction(_prevState: any, formData: FormData) {
@@ -116,6 +117,7 @@ export async function updateInvoiceAction(_prevState: any, formData: FormData) {
   const issuedAt = formData.get("issuedAt") as string
   const dueAt = formData.get("dueAt") as string
   const notes = formData.get("notes") as string
+  const intent = formData.get("intent") as string
 
   if (!clientName || clientName.trim().length < 1) {
     return { error: "Client name is required" }
@@ -138,9 +140,22 @@ export async function updateInvoiceAction(_prevState: any, formData: FormData) {
     notes: notes || undefined,
   })
 
+  // Handle immediate send intent if requested from the UI
+  if (intent === "send") {
+    const sendResult = await sendInvoiceAction(invoiceId)
+    if (sendResult.error) {
+      return { error: `Saved, but failed to send: ${sendResult.error}` }
+    }
+  }
+
   revalidatePath("/invoices")
   revalidatePath("/estimates")
   revalidatePath(`/invoices/${invoiceId}`)
+  
+  if (intent === "send") {
+    return { success: true, message: "Invoice saved and sent successfully" }
+  }
+
   redirect(type === "estimate" ? "/estimates" : "/invoices")
 }
 
@@ -212,11 +227,18 @@ export async function markInvoicePaidAction(invoiceId: string) {
 }
 
 export async function deleteInvoiceAction(invoiceId: string) {
-  const user = await getCurrentUser()
-  const org = await getActiveOrg(user)
+  try {
+    const user = await getCurrentUser()
+    const org = await getActiveOrg(user)
 
-  await deleteInvoice(invoiceId, org.id)
-  revalidatePath("/invoices")
+    await deleteInvoice(invoiceId, org.id)
+    revalidatePath("/invoices")
+    revalidatePath("/estimates")
+    return { success: true }
+  } catch (error: any) {
+    console.error("Failed to delete invoice:", error)
+    return { error: error.message || "Failed to delete" }
+  }
 }
 
 export async function bulkDeleteInvoicesAction(invoiceIds: string[]) {
@@ -329,9 +351,9 @@ export async function sendInvoiceAction(invoiceId: string, attachPdf: boolean = 
     revalidatePath("/invoices")
     revalidatePath(`/invoices/${invoiceId}`)
     return { success: true }
-  } catch (error) {
-    console.error("Failed to send invoice:", error)
-    return { error: "Failed to send invoice email" }
+  } catch (error: any) {
+    console.error("Critical error in sendInvoiceAction:", error)
+    return { error: error.message || "Failed to send invoice email" }
   }
 }
 
@@ -346,6 +368,20 @@ export async function generateAndAttachInvoicePDFAction(invoiceId: string) {
   if (!invoice) return { error: "Invoice not found" }
 
   try {
+    // Clean up existing invoice PDFs to avoid duplicates
+    const invoiceFiles = await prisma.invoiceFile.findMany({
+      where: { invoiceId },
+      include: { file: true }
+    })
+    
+    const fileNamePattern = `${invoice.type === "estimate" ? "Estimate" : "Invoice"}-${invoice.invoiceNumber}.pdf`
+    const oldFiles = invoiceFiles.filter(row => row.file.filename === fileNamePattern)
+    
+    const { deleteFile } = await import("@/lib/services/files")
+    for (const old of oldFiles) {
+      await deleteFile(old.fileId, org.id)
+    }
+
     const formData = invoiceToFormData(invoice, org, settings)
     const pdfElement = createElement(InvoicePDF as any, { data: formData })
     const buffer = await renderToBuffer(pdfElement as any)

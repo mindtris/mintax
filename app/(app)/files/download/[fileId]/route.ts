@@ -18,8 +18,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ file
     // Find file in database
     const file = await getFileById(fileId, org.id)
 
-    if (!file || file.userId !== user.id) {
-      return new NextResponse("File not found or does not belong to the user", { status: 404 })
+    if (!file) {
+      return new NextResponse("File not found or does not belong to the organization", { status: 404 })
     }
 
     // Check if file exists

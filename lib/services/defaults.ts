@@ -91,6 +91,7 @@ export const PARENT_CATEGORIES: Record<string, { code: string; name: string; col
   work_auth:        { code: "_mod_work_auth",        name: "Work authorization",  color: "#10b981" },
   applicant_status: { code: "_mod_applicant_status", name: "Applicant status",    color: "#94a3b8" },
   engage:           { code: "_mod_engage",           name: "Content types",       color: "#0d9488" },
+  reminder:         { code: "_mod_reminder",         name: "Reminder types",      color: "#f43f5e" },
 }
 
 // --- Universal Type-Aware Categories ---
@@ -220,6 +221,19 @@ export const BUSINESS_DEFAULTS = {
       { code: "job_post", name: "Job posting", color: "#6366f1" },
       { code: "event", name: "Event", color: "#f97316" },
       { code: "newsletter", name: "Newsletter", color: "#10b981" },
+    ],
+    reminder: [
+      { code: "tax_filing", name: "Tax Filing", color: "#ef4444" },
+      { code: "gst_filing", name: "GST/VAT Filing", color: "#f97316" },
+      { code: "annual_audit", name: "Annual Audit", color: "#7e22ce" },
+      { code: "payroll_processing", name: "Payroll Processing", color: "#ec4899" },
+      { code: "invoice_payment", name: "Invoice Payment", color: "#1e3a8a" },
+      { code: "budget_review", name: "Budget Review", color: "#10b981" },
+      { code: "vendor_followup", name: "Vendor Follow-up", color: "#06b6d4" },
+      { code: "project_deadline", name: "Project Deadline", color: "#f59e0b" },
+      { code: "internal_sync", name: "Internal Sync", color: "#8b5cf6" },
+      { code: "contract_renewal", name: "Contract Renewal", color: "#0d9488" },
+      { code: "doc_filing", name: "Document Filing", color: "#94a3b8" },
     ],
   },
   chartAccounts: [
@@ -448,6 +462,35 @@ export async function createOrgDefaults(orgId: string, orgType = "business", opt
 
   // Regional Taxes based on org currency
   await seedDefaultTaxes(orgId, baseCurrency)
+}
+
+export async function seedReminderDefaults(orgId: string) {
+  const type = "reminder"
+  const parent = PARENT_CATEGORIES[type]
+  const list = BUSINESS_DEFAULTS.categories[type]
+
+  // Seed parent category
+  const parentRecord = await prisma.category.upsert({
+    where: { organizationId_code: { code: parent.code, organizationId: orgId } },
+    update: { name: parent.name, color: parent.color, type },
+    create: { organizationId: orgId, code: parent.code, name: parent.name, color: parent.color, type },
+  })
+
+  // Seed child categories
+  for (const category of list) {
+    await prisma.category.upsert({
+      where: { organizationId_code: { code: category.code, organizationId: orgId } },
+      update: { name: category.name, color: category.color, type, parentId: parentRecord.id },
+      create: {
+        organizationId: orgId,
+        code: category.code,
+        name: category.name,
+        color: category.color,
+        type,
+        parentId: parentRecord.id,
+      },
+    })
+  }
 }
 
 export async function isOrgEmpty(orgId: string) {

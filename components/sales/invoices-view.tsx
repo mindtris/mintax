@@ -28,6 +28,7 @@ export async function InvoicesView({ searchParams }: { searchParams: any }) {
       total={invoicesResult.total}
       stats={stats}
       baseCurrency={org.baseCurrency}
+      taxId={org.taxId || ""}
       invoiceSettings={settings}
       currencies={currencies.map((c) => ({ code: c.code, name: c.name }))}
       items={items.map((i) => ({ id: i.id, name: i.name, salePrice: i.salePrice || 0 }))}

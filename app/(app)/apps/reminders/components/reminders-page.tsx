@@ -14,10 +14,11 @@ import { ReminderForm } from "./reminder-form"
 type Props = {
   reminders: any[]
   members: any[]
+  categories: any[]
   currentUserId: string
 }
 
-export function RemindersPage({ reminders, members, currentUserId }: Props) {
+export function RemindersPage({ reminders, members, categories, currentUserId }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -114,7 +115,12 @@ export function RemindersPage({ reminders, members, currentUserId }: Props) {
               <DialogHeader>
                 <DialogTitle>Create Reminder</DialogTitle>
               </DialogHeader>
-              <ReminderForm members={members} currentUserId={currentUserId} onSuccess={() => setIsCreateOpen(false)} />
+              <ReminderForm
+                members={members}
+                categories={categories}
+                currentUserId={currentUserId}
+                onSuccess={() => setIsCreateOpen(false)}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -155,8 +161,9 @@ export function RemindersPage({ reminders, members, currentUserId }: Props) {
           </DialogHeader>
           {editingReminder && (
             <ReminderForm
-              reminder={editingReminder}
+              initialData={editingReminder}
               members={members}
+              categories={categories}
               currentUserId={currentUserId}
               onSuccess={() => setEditingReminder(null)}
             />

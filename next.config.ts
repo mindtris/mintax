@@ -14,6 +14,14 @@ const nextConfig: NextConfig = {
       bodySizeLimit: process.env.VERCEL ? "4mb" : "256mb",
     },
   },
+  serverExternalPackages: [
+    "prettier",
+    "@react-email/render",
+    "require-in-the-middle",
+    "import-in-the-middle",
+    "canvas",
+    "sharp"
+  ],
   webpack: (config) => {
     config.ignoreWarnings = [
       { module: /node_modules\/require-in-the-middle/ },

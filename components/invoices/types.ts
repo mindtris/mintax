@@ -50,4 +50,8 @@ export interface InvoiceFormData {
   subtotalLabel: string
   summarySubtotalLabel: string
   summaryTotalLabel: string
+  // Theming from invoice settings
+  accentColor?: string
+  template?: string
+  footerText?: string
 }

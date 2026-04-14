@@ -429,7 +429,7 @@ function TransactionDetailSheet({
 
   return (
     <div className="flex flex-col h-full">
-      <SheetHeader className="shrink-0 pb-4">
+      <SheetHeader className="shrink-0 px-6 pt-6 pb-4 border-b">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <SheetTitle className="text-lg truncate">{transaction.name || "Untitled transaction"}</SheetTitle>
@@ -456,7 +456,7 @@ function TransactionDetailSheet({
         </div>
       </SheetHeader>
 
-      <div className="flex-1 overflow-y-auto space-y-5 py-4">
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
         {/* Incomplete fields warning */}
         {incompleteFields.length > 0 && (
           <div className="rounded-md bg-amber-500/10 border border-amber-500/20 p-3 text-sm text-amber-700">
@@ -638,7 +638,7 @@ function TransactionDetailSheet({
         </div>
       </div>
 
-      <SheetFooter className="shrink-0 pt-4 mt-2">
+      <SheetFooter className="shrink-0 px-6 py-4 border-t">
         <Link href={`/transactions/${transaction.id}`} className="w-full">
           <Button className="w-full" onClick={onClose}>
             <ExternalLink className="h-4 w-4 mr-2" />

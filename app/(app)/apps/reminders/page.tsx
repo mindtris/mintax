@@ -1,6 +1,7 @@
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { getOrgMembers } from "@/lib/services/organizations"
 import { getReminders, ReminderFilters } from "@/lib/services/reminders"
+import { getCategoriesByType } from "@/lib/services/categories"
 import { RemindersPage } from "./components/reminders-page"
 import { manifest } from "./manifest"
 
@@ -12,6 +13,7 @@ export default async function RemindersApp({ searchParams }: { searchParams: Pro
   const org = await getActiveOrg(user)
   const { items: reminders, total: totalCount } = await getReminders(org.id, filters, { take: pageSize, skip: (currentPage - 1) * pageSize })
   const members = await getOrgMembers(org.id)
+  const categories = await getCategoriesByType(org.id, "reminders")
 
   return (
     <div>
@@ -23,7 +25,7 @@ export default async function RemindersApp({ searchParams }: { searchParams: Pro
           <span className="text-3xl tracking-tight opacity-20">{totalCount}</span>
         </h2>
       </header>
-      <RemindersPage reminders={reminders} members={members} currentUserId={user.id} />
+      <RemindersPage reminders={reminders} members={members} currentUserId={user.id} categories={categories} />
     </div>
   )
 }

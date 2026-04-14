@@ -16,7 +16,7 @@ export const reminderFormSchema = z.object({
         .refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date format" })
         .transform((val) => new Date(val)),
     ]),
-  category: z.enum(REMINDER_CATEGORIES).default("custom"),
+  category: z.string().min(1, "Category is required").default("custom"),
   priority: z.enum(REMINDER_PRIORITIES).default("medium"),
   recurrence: z.enum(REMINDER_RECURRENCES).default("one_time"),
   recurrenceEndAt: z

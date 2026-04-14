@@ -2,10 +2,10 @@
 
 import { EstimatesTable } from "./estimates-table"
 import { SalesSearchAndFilters } from "./filters"
+import { NewInvoiceSheet } from "@/components/invoices/new-invoice-sheet"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
-import Link from "next/link"
 import { useState } from "react"
 
 const ALL_COLUMNS = [
@@ -13,16 +13,29 @@ const ALL_COLUMNS = [
   { key: "status", label: "Status" },
   { key: "issuedAt", label: "Issued" },
   { key: "total", label: "Amount" },
+  { key: "actions", label: "" },
 ]
 
 export function EstimatesViewClient({
   estimates,
   total,
   stats,
+  baseCurrency = "INR",
+  taxId = "",
+  invoiceSettings = {},
+  currencies = [],
+  items = [],
+  taxes = [],
 }: {
   estimates: any[]
   total: number
   stats: any
+  baseCurrency?: string
+  taxId?: string
+  invoiceSettings?: Record<string, string>
+  currencies?: { code: string; name: string }[]
+  items?: { id: string; name: string; salePrice: number }[]
+  taxes?: { id: string; name: string; rate: number; type: string }[]
 }) {
   const [visibleColumns, setVisibleColumns] = useState(ALL_COLUMNS.map((c) => c.key))
 
@@ -42,12 +55,20 @@ export function EstimatesViewClient({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button asChild>
-            <Link href="/invoices/new?type=estimate">
+          <NewInvoiceSheet
+            baseCurrency={baseCurrency}
+            taxId={taxId}
+            invoiceSettings={invoiceSettings}
+            currencies={currencies}
+            items={items}
+            taxes={taxes}
+            defaultType="estimate"
+          >
+            <Button>
               <Plus className="h-4 w-4" />
               <span className="hidden md:block">New estimate</span>
-            </Link>
-          </Button>
+            </Button>
+          </NewInvoiceSheet>
         </div>
       </header>
 

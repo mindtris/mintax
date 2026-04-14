@@ -14,6 +14,7 @@ const ALL_COLUMNS = [
   { key: "status", label: "Status" },
   { key: "issuedAt", label: "Issued" },
   { key: "total", label: "Amount" },
+  { key: "actions", label: "" },
 ]
 
 export function InvoicesViewClient({
@@ -21,6 +22,7 @@ export function InvoicesViewClient({
   total,
   stats,
   baseCurrency = "INR",
+  taxId = "",
   invoiceSettings = {},
   currencies = [],
   items = [],
@@ -30,6 +32,7 @@ export function InvoicesViewClient({
   total: number
   stats: any
   baseCurrency?: string
+  taxId?: string
   invoiceSettings?: Record<string, string>
   currencies?: { code: string; name: string }[]
   items?: { id: string; name: string; salePrice: number }[]
@@ -58,6 +61,7 @@ export function InvoicesViewClient({
           </Button>
           <NewInvoiceSheet
             baseCurrency={baseCurrency}
+            taxId={taxId}
             invoiceSettings={invoiceSettings}
             currencies={currencies}
             items={items}

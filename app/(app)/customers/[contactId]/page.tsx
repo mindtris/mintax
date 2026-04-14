@@ -1,24 +1,34 @@
 import { ContactStatsCards } from "@/components/contacts/contact-stats-cards"
 import { ContactTypeBadge } from "@/components/contacts/contact-type-badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { getContact, getContactStats } from "@/lib/services/contacts"
 import {
-  Building2,
+  CreditCard,
   ExternalLink,
   FileText,
   Globe,
+  History,
   Mail,
   MapPin,
   Pencil,
   Phone,
   Receipt,
+  Settings2,
+  ShieldCheck,
+  ShipWheel,
+  User,
 } from "lucide-react"
 import { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { ContactDetailActions } from "@/components/contacts/contact-detail-actions"
+import { getCurrencies } from "@/lib/services/currencies"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { cn } from "@/lib/utils"
 
 type Params = { params: Promise<{ contactId: string }> }
 
@@ -57,11 +67,11 @@ function formatCurrency(amount: number, currency = "INR") {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  draft: "bg-muted text-muted-foreground",
-  sent: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
-  paid: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-  overdue: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
-  cancelled: "bg-muted text-muted-foreground line-through",
+  draft: "bg-muted/50 text-muted-foreground border-border/50",
+  sent: "bg-secondary/40 text-secondary-foreground border-secondary/20",
+  paid: "bg-primary/10 text-primary border-primary/20",
+  overdue: "bg-destructive/10 text-destructive border-destructive/20",
+  cancelled: "bg-muted text-muted-foreground/50 border-border/50 line-through opacity-60",
 }
 
 export default async function ContactDetailPage({ params }: Params) {
@@ -69,9 +79,10 @@ export default async function ContactDetailPage({ params }: Params) {
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
 
-  const [contact, stats] = await Promise.all([
+  const [contact, stats, currencies] = await Promise.all([
     getContact(org.id, contactId),
     getContactStats(org.id, contactId),
+    getCurrencies(org.id),
   ])
 
   if (!contact) notFound()
@@ -130,177 +141,248 @@ export default async function ContactDetailPage({ params }: Params) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/invoices">
-              <Receipt className="h-4 w-4" /> New invoice
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/customers/${contact.id}/edit`}>
-              <Pencil className="h-4 w-4" /> Edit
-            </Link>
-          </Button>
-        </div>
+        <ContactDetailActions
+          contactId={contact.id}
+          currencies={currencies}
+        />
       </header>
 
       {/* ── Stats ── */}
       <ContactStatsCards stats={stats} currency={contact.currency} />
 
-      {/* ── Two-column layout ── */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Left: Info + Contact Persons */}
-        <div className="flex flex-col gap-4 lg:col-span-1">
-          {/* Profile Info */}
-          <div className="rounded-xl border bg-card p-4 flex flex-col gap-3">
-            <h2 className="text-sm font-semibold">Details</h2>
-            <Separator />
-            <dl className="flex flex-col gap-2 text-sm">
-              {contact.taxId && (
-                <Row label="Tax ID" value={contact.taxId} />
-              )}
-              {contact.currency && (
-                <Row label="Currency" value={contact.currency} />
-              )}
-              {contact.reference && (
-                <Row label="Reference" value={contact.reference} />
-              )}
-              {(contact.address || contact.city || contact.country) && (
-                <div className="flex gap-2">
-                  <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
-                  <div className="text-muted-foreground">
-                    {[
-                      contact.address,
-                      contact.city,
-                      contact.state,
-                      contact.zipCode,
-                      contact.country,
-                    ]
-                      .filter(Boolean)
-                      .join(", ")}
-                  </div>
-                </div>
-              )}
-              <Row label="Added" value={formatDate(contact.createdAt)} />
-            </dl>
-          </div>
+      {/* ── Tabs Content ── */}
+      <Tabs defaultValue="invoices" className="w-full">
+        <TabsList className="bg-muted/50 p-1 h-11 mb-6">
+          <TabsTrigger value="invoices" className="px-6 h-9 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <Receipt className="h-4 w-4 mr-2" />
+            Invoices
+          </TabsTrigger>
+          <TabsTrigger value="estimates" className="px-6 h-9 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <FileText className="h-4 w-4 mr-2" />
+            Estimates
+          </TabsTrigger>
+          <TabsTrigger value="details" className="px-6 h-9 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <MapPin className="h-4 w-4 mr-2" />
+            Details
+          </TabsTrigger>
+        </TabsList>
 
-          {/* Contact persons */}
-          {contact.persons.length > 0 && (
-            <div className="rounded-xl border bg-card p-4 flex flex-col gap-3">
-              <h2 className="text-sm font-semibold">Contact persons</h2>
-              <Separator />
-              <ul className="flex flex-col gap-3">
-                {contact.persons.map((p) => (
-                  <li key={p.id} className="flex flex-col gap-0.5">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{p.name}</span>
-                      {p.isPrimary && (
-                        <span className="text-xs text-emerald-600 font-semibold">
-                          Primary
-                        </span>
-                      )}
-                      {p.role && (
-                        <span className="text-xs text-muted-foreground capitalize">
-                          · {p.role}
-                        </span>
-                      )}
-                    </div>
-                    {p.email && (
-                      <a
-                        href={`mailto:${p.email}`}
-                        className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
-                      >
-                        <Mail className="h-3 w-3" /> {p.email}
-                      </a>
-                    )}
-                    {p.phone && (
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Phone className="h-3 w-3" /> {p.phone}
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Notes */}
-          {contact.notes && (
-            <div className="rounded-xl border bg-card p-4 flex flex-col gap-3">
-              <h2 className="text-sm font-semibold">Notes</h2>
-              <Separator />
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                {contact.notes}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Right: Invoices */}
-        <div className="lg:col-span-2 flex flex-col gap-4">
-          <div className="rounded-xl border bg-card p-4 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Invoices</h2>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/invoices">
-                  <FileText className="h-3.5 w-3.5" /> New invoice
-                </Link>
-              </Button>
-            </div>
-            <Separator />
-
-            {contact.invoices.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 text-center gap-2">
-                <FileText className="h-8 w-8 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">No invoices yet</p>
+        <TabsContent value="invoices" className="mt-0 focus-visible:ring-0">
+          <div className="rounded-2xl border bg-card p-6 shadow-sm shadow-black/[0.02]">
+            <h2 className="text-sm font-bold text-foreground mb-4">Invoice History</h2>
+            {contact.invoices.filter(i => i.type !== 'estimate').length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center gap-2">
+                <Receipt className="h-10 w-10 text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground">No invoices recorded yet</p>
               </div>
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-muted-foreground border-b">
-                    <th className="text-left font-medium pb-2">Invoice</th>
-                    <th className="text-left font-medium pb-2 hidden sm:table-cell">Date</th>
-                    <th className="text-right font-medium pb-2">Amount</th>
-                    <th className="text-center font-medium pb-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {contact.invoices.map((inv) => (
-                    <tr key={inv.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                      <td className="py-2.5">
-                        <Link
-                          href={`/invoices/${inv.id}`}
-                          className="font-medium hover:text-primary transition-colors"
-                        >
-                          {inv.invoiceNumber}
-                        </Link>
-                      </td>
-                      <td className="py-2.5 text-muted-foreground hidden sm:table-cell">
-                        {formatDate(inv.issuedAt)}
-                      </td>
-                      <td className="py-2.5 text-right font-medium tabular-nums">
-                        {formatCurrency(inv.total, inv.currency)}
-                      </td>
-                      <td className="py-2.5 text-center">
-                        <span
-                          className={[
-                            "inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize",
-                            STATUS_COLOR[inv.status] ?? "bg-muted text-muted-foreground",
-                          ].join(" ")}
-                        >
-                          {inv.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <TransactionTable items={contact.invoices.filter(i => i.type !== 'estimate')} />
             )}
           </div>
-        </div>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="estimates" className="mt-0 focus-visible:ring-0">
+          <div className="rounded-2xl border bg-card p-6 shadow-sm shadow-black/[0.02]">
+            <h2 className="text-sm font-bold text-foreground mb-4">Active Estimates</h2>
+            {contact.invoices.filter(i => i.type === 'estimate').length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center gap-2">
+                <FileText className="h-10 w-10 text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground">No estimates created yet</p>
+              </div>
+            ) : (
+              <TransactionTable items={contact.invoices.filter(i => i.type === 'estimate')} />
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="details" className="mt-0 focus-visible:ring-0">
+          <div className="flex flex-col gap-6">
+            {/* Payment History - Full Width */}
+            <div className="rounded-2xl border bg-card p-6 flex flex-col gap-4 shadow-sm shadow-black/[0.02]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <History className="h-5 w-5 text-primary" />
+                  <div className="flex flex-col">
+                    <h2 className="text-sm font-bold text-foreground">Payment History</h2>
+                  </div>
+                </div>
+                {contact.transactions.length > 0 && (
+                  <Badge variant="secondary" className="bg-muted text-muted-foreground text-[10px] px-2 py-0 border-transparent">
+                    LATEST {contact.transactions.length}
+                  </Badge>
+                )}
+              </div>
+              <Separator className="-mx-6 opacity-50" />
+              
+              {contact.transactions.length === 0 ? (
+                <div className="flex flex-col items-center justify-center flex-1 text-center gap-2 opacity-50 py-12">
+                  <CreditCard className="h-10 w-10 text-muted-foreground/30" />
+                  <p className="text-sm text-muted-foreground">No payment records found</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-0 border rounded-xl overflow-hidden">
+                  {contact.transactions.map((t, idx) => (
+                    <div key={t.id} className={cn(
+                      "flex items-center justify-between p-4 hover:bg-muted/30 transition-colors",
+                      idx !== contact.transactions.length - 1 && "border-b"
+                    )}>
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-bold",
+                          t.type === 'income' ? "bg-emerald-500/10 text-emerald-600" : "bg-orange-500/10 text-orange-600"
+                        )}>
+                          {t.type === 'income' ? "+" : "-"}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-foreground capitalize">
+                            {t.paymentMethod?.replace(/_/g, ' ') || "Payment"}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground tabular-nums">
+                            {formatDate(t.issuedAt || t.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        {t.total !== null && (
+                          <span className={cn(
+                            "text-sm font-bold tabular-nums",
+                            t.type === 'income' ? "text-emerald-600" : "text-foreground"
+                          )}>
+                            {t.type === 'income' ? "+" : "-"}{formatCurrency(t.total, t.currencyCode || "INR")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* People & Team */}
+              <div className="rounded-2xl border bg-card p-6 flex flex-col gap-4 shadow-sm shadow-black/[0.02]">
+                <div className="flex items-center gap-3">
+                  <User className="h-5 w-5 text-primary" />
+                  <div className="flex flex-col">
+                    <h2 className="text-sm font-bold text-foreground">Points of Contact</h2>
+                    <p className="text-[11px] text-muted-foreground">Team members and key stakeholders</p>
+                  </div>
+                </div>
+                <Separator className="opacity-50" />
+                {contact.persons.length === 0 ? (
+                  <div className="text-center py-10 rounded-xl border-dashed border-2 flex flex-col items-center gap-2 opacity-40">
+                    <User className="h-6 w-6" />
+                    <p className="text-xs">No secondary contacts listed</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {contact.persons.map((p) => (
+                      <div key={p.id} className="p-4 rounded-2xl bg-muted/20 border border-border/50 group hover:border-primary/30 transition-all hover:shadow-sm">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex flex-col gap-1">
+                            <span className="font-bold text-sm text-foreground">{p.name}</span>
+                            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest bg-muted/50 px-1.5 rounded w-fit">
+                              {p.role || "Contact"}
+                            </span>
+                          </div>
+                          {p.isPrimary && (
+                            <Badge className="bg-primary text-primary-foreground text-[9px] font-black h-4 px-1.5 uppercase tracking-tighter">
+                              Primary
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-2 pt-2 border-t border-border/40 text-[11px]">
+                          {p.email && (
+                            <a href={`mailto:${p.email}`} className="text-muted-foreground hover:text-primary flex items-center gap-2 transition-colors">
+                              <Mail className="h-3 w-3" /> {p.email}
+                            </a>
+                          )}
+                          {p.phone && (
+                            <span className="text-muted-foreground flex items-center gap-2">
+                              <Phone className="h-3 w-3" /> {p.phone}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Internal Notes */}
+              <div className="rounded-2xl border bg-card p-6 flex flex-col gap-4 shadow-sm shadow-black/[0.02]">
+                <div className="flex items-center gap-3">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <h2 className="text-sm font-bold text-foreground">Internal Notes</h2>
+                </div>
+                <Separator className="opacity-50" />
+                {contact.notes ? (
+                  <div className="p-4 rounded-xl bg-muted/30 border border-border/50 flex-1">
+                    <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
+                      {contact.notes}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-muted-foreground/40 italic text-xs">
+                    No active notes for this customer.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
+  )
+}
+
+function TransactionTable({ items }: { items: any[] }) {
+  return (
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="text-muted-foreground border-b border-border/50">
+          <th className="text-left font-semibold pb-3 text-xs uppercase tracking-wider">Document</th>
+          <th className="text-left font-semibold pb-3 hidden sm:table-cell text-xs uppercase tracking-wider">Date</th>
+          <th className="text-right font-semibold pb-3 text-xs uppercase tracking-wider">Amount</th>
+          <th className="text-center font-semibold pb-3 text-xs uppercase tracking-wider">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((inv) => (
+          <tr key={inv.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors group">
+            <td className="py-4">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-md bg-primary/5 flex items-center justify-center shrink-0 border border-primary/10">
+                  <ShipWheel className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <Link
+                  href={`/invoices/${inv.id}`}
+                  className="font-bold text-foreground hover:text-primary transition-colors"
+                >
+                  {inv.invoiceNumber}
+                </Link>
+              </div>
+            </td>
+            <td className="py-4 text-muted-foreground hidden sm:table-cell tabular-nums text-xs">
+              {formatDate(inv.issuedAt)}
+            </td>
+            <td className="py-4 text-right font-bold tabular-nums text-foreground/80 text-xs">
+              {formatCurrency(inv.total, inv.currency)}
+            </td>
+            <td className="py-4 text-center">
+              <span
+                className={cn(
+                  "inline-flex border rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                  STATUS_COLOR[inv.status] ?? "bg-muted text-muted-foreground"
+                )}
+              >
+                {inv.status}
+              </span>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   )
 }
 

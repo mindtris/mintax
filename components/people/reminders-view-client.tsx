@@ -8,11 +8,12 @@ import { RemindersList } from "./reminders-list"
 type Props = {
   reminders: any[]
   members: any[]
+  categories: any[]
   currentUserId: string
   count: number
 }
 
-export function RemindersViewClient({ reminders, members, currentUserId, count }: Props) {
+export function RemindersViewClient({ reminders, members, categories, currentUserId, count }: Props) {
   const [createOpen, setCreateOpen] = useState(false)
 
   return (
@@ -33,6 +34,7 @@ export function RemindersViewClient({ reminders, members, currentUserId, count }
       <RemindersList
         reminders={reminders}
         members={members}
+        categories={categories}
         currentUserId={currentUserId}
         createOpen={createOpen}
         setCreateOpen={setCreateOpen}

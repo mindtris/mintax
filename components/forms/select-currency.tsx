@@ -28,7 +28,7 @@ export const FormSelectCurrency = ({
     () =>
       currencies.map((currency) => ({
         code: currency.code,
-        name: currency.code,
+        name: `${currency.code} ${currency.name}`,
       })),
     [currencies]
   )

@@ -117,5 +117,9 @@ export function invoiceToFormData(
     subtotalLabel: "Subtotal",
     summarySubtotalLabel: "Subtotal:",
     summaryTotalLabel: "Total:",
+    // Theming
+    accentColor: settings.invoice_color || "#6366f1",
+    template: settings.invoice_template || "default",
+    footerText: settings.invoice_footer || "",
   }
 }

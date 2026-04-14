@@ -44,6 +44,8 @@ export interface ContactInput {
   country?: string | null
   avatar?: string | null
   notes?: string | null
+  paymentTerms?: string | null
+  isTaxExempt?: boolean
   persons?: ContactPersonInput[]
 }
 

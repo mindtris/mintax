@@ -124,7 +124,7 @@ function EstimateDetailSheet({ estimate, onClose }: { estimate: Estimate; onClos
 
   return (
     <div className="flex flex-col h-full">
-      <SheetHeader className="shrink-0 pb-4">
+      <SheetHeader className="shrink-0 px-6 pt-6 pb-4 border-b">
         <SheetTitle className="flex items-center gap-2">
           {estimate.invoiceNumber}
           <Badge variant={statusVariant[estimate.status] || "outline"} className="capitalize">
@@ -133,7 +133,7 @@ function EstimateDetailSheet({ estimate, onClose }: { estimate: Estimate; onClos
         </SheetTitle>
       </SheetHeader>
 
-      <div className="flex-1 overflow-y-auto space-y-6 py-4">
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
         {/* Client info */}
         <div className="space-y-3">
           <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Client</h4>
@@ -194,7 +194,7 @@ function EstimateDetailSheet({ estimate, onClose }: { estimate: Estimate; onClos
         )}
       </div>
 
-      <SheetFooter className="shrink-0 pt-4 mt-2">
+      <SheetFooter className="shrink-0 px-6 py-4 border-t">
         <div className="flex flex-col gap-2 w-full">
           {estimate.status === "draft" || estimate.status === "sent" && (
             <Button onClick={handleMarkAccepted} disabled={isLoading} className="w-full">

@@ -35,15 +35,15 @@ const MONTHS = [
 ]
 
 const CURRENCIES = [
-  { code: "INR", name: "INR - Indian Rupee" },
-  { code: "USD", name: "USD - US Dollar" },
-  { code: "EUR", name: "EUR - Euro" },
-  { code: "GBP", name: "GBP - British Pound" },
-  { code: "AUD", name: "AUD - Australian Dollar" },
-  { code: "CAD", name: "CAD - Canadian Dollar" },
-  { code: "SGD", name: "SGD - Singapore Dollar" },
-  { code: "JPY", name: "JPY - Japanese Yen" },
-  { code: "AED", name: "AED - UAE Dirham" },
+  { code: "INR", name: "INR Indian Rupee" },
+  { code: "USD", name: "USD US Dollar" },
+  { code: "EUR", name: "EUR Euro" },
+  { code: "GBP", name: "GBP British Pound" },
+  { code: "AUD", name: "AUD Australian Dollar" },
+  { code: "CAD", name: "CAD Canadian Dollar" },
+  { code: "SGD", name: "SGD Singapore Dollar" },
+  { code: "JPY", name: "JPY Japanese Yen" },
+  { code: "AED", name: "AED UAE Dirham" },
 ]
 
 export default function BusinessSettingsForm({ org, user, settings, currencies, categories }: { org: any; user: User; settings: Record<string, string>; currencies: Currency[]; categories: Category[] }) {

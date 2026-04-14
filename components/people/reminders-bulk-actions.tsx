@@ -67,7 +67,7 @@ export function RemindersBulkActions({ selectedIds, onActionComplete }: Reminder
           <Button 
             variant="destructive" 
             size="sm" 
-            className="h-8 shadow-sm border border-input gap-1.5 font-bold text-[11px] bg-red-600 hover:bg-red-700 text-white" 
+            className="h-8 shadow-sm gap-1.5 font-bold text-[11px]" 
             disabled={isLoading} 
             onClick={handleDelete}
           >

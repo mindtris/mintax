@@ -58,6 +58,8 @@ interface ContactFormProps {
     zipCode?: string
     country?: string
     notes?: string
+    paymentTerms?: string
+    isTaxExempt?: boolean
     persons?: PersonField[]
   }
   currencies?: Array<{ code: string; name: string }>
@@ -95,10 +97,10 @@ export function ContactForm({
     currencies.length > 0
       ? currencies
       : [
-          { code: "INR", name: "Indian Rupee (INR)" },
-          { code: "USD", name: "US Dollar (USD)" },
-          { code: "EUR", name: "Euro (EUR)" },
-          { code: "GBP", name: "British Pound (GBP)" },
+          { code: "INR", name: "INR Indian Rupee" },
+          { code: "USD", name: "USD US Dollar" },
+          { code: "EUR", name: "EUR Euro" },
+          { code: "GBP", name: "GBP British Pound" },
         ]
 
   function addPerson() {
@@ -138,6 +140,8 @@ export function ContactForm({
       zipCode: fd.get("zipCode") as string || null,
       country: fd.get("country") as string || null,
       notes: fd.get("notes") as string || null,
+      paymentTerms: fd.get("paymentTerms") as string || null,
+      isTaxExempt: fd.get("isTaxExempt") === "exempt",
       persons: persons.map((p) => ({
         name: p.name,
         email: p.email || null,
@@ -183,7 +187,7 @@ export function ContactForm({
     <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-6">
       {/* ── Identity ── */}
       <section className="flex flex-col gap-4">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <h3 className="text-sm font-bold text-foreground">
           Identity
         </h3>
         <div className="grid grid-cols-2 gap-3">
@@ -231,7 +235,7 @@ export function ContactForm({
 
       {/* ── Financial / Tax ── */}
       <section className="flex flex-col gap-4">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <h3 className="text-sm font-bold text-foreground">
           Financial &amp; Tax
         </h3>
         <div className="grid grid-cols-2 gap-3">
@@ -254,13 +258,35 @@ export function ContactForm({
           placeholder="CUST-001"
           defaultValue={defaultValues?.reference ?? ""}
         />
+        <div className="grid grid-cols-2 gap-3">
+          <FormSelect
+            name="paymentTerms"
+            title="Payment terms"
+            items={[
+              { code: "due_on_receipt", name: "Due on receipt" },
+              { code: "net_15", name: "Net 15" },
+              { code: "net_30", name: "Net 30" },
+              { code: "net_60", name: "Net 60" },
+            ]}
+            defaultValue={defaultValues?.paymentTerms ?? "due_on_receipt"}
+          />
+          <FormSelect
+            name="isTaxExempt"
+            title="Tax status"
+            items={[
+              { code: "taxable", name: "Taxable" },
+              { code: "exempt", name: "Tax exempt" },
+            ]}
+            defaultValue={defaultValues?.isTaxExempt ? "exempt" : "taxable"}
+          />
+        </div>
       </section>
 
       <Separator />
 
       {/* ── Address ── */}
       <section className="flex flex-col gap-4">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <h3 className="text-sm font-bold text-foreground">
           Address
         </h3>
         <FormInput
@@ -304,7 +330,7 @@ export function ContactForm({
       {/* ── Contact persons ── */}
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          <h3 className="text-sm font-bold text-foreground">
             Contact persons
           </h3>
           <Button

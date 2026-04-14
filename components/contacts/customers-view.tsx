@@ -98,7 +98,7 @@ export function CustomersView({
 
       <ContactSearchAndFilters countries={countries} categories={categories} />
 
-      <ContactsGrid contacts={data} activeTab={tab} />
+      <ContactsGrid contacts={data} activeTab={tab} currencies={currencies} />
     </div>
   )
 }

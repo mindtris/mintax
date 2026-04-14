@@ -23,8 +23,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ file
     // Find file in database
     const file = await getFileById(fileId, org.id)
 
-    if (!file || file.userId !== user.id) {
-      return new NextResponse("File not found or does not belong to the user", { status: 404 })
+    if (!file) {
+      return new NextResponse("File not found or does not belong to the organization", { status: 404 })
     }
 
     // Check if file exists in storage
@@ -35,11 +35,22 @@ export async function GET(request: Request, { params }: { params: Promise<{ file
     }
 
     // Generate previews (works with storage-relative paths)
-    const { contentType, previews } = await generateFilePreviews(org.id, storagePath, file.mimetype)
-    if (page > previews.length) {
-      return new NextResponse("Page not found", { status: 404 })
+    const { contentType: previewContentType, previews } = await generateFilePreviews(org.id, storagePath, file.mimetype)
+    
+    // Fallback to original file if preview generation failed or returned no pages
+    let finalPreviewPath = storagePath
+    let finalContentType = file.mimetype
+
+    if (previews.length > 0) {
+      if (page > previews.length) {
+        return new NextResponse("Page not found", { status: 404 })
+      }
+      finalPreviewPath = previews[page - 1]
+      finalContentType = previewContentType
     }
-    const previewPath = previews[page - 1] || storagePath
+
+    const previewPath = finalPreviewPath
+    const contentType = finalContentType
 
     // Read preview from storage
     const fileBuffer = await getStorage().get(previewPath)
