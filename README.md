@@ -34,21 +34,26 @@ Built for **sovereignty** and **scalability**, Mintax can be self-hosted on your
 
 ## Visual tour
 
-### 1. Enterprise Landing Page
+<details>
+<summary>View Enterprise Landing Page</summary>
+<br>
 The intelligent front door designed for sovereignty and scale.
-![Landing](public/screenshots/1.png)
+<img src="public/screenshots/1.png" alt="Landing Page">
+</details>
 
----
-
-### 2. Seamless Authentication
+<details>
+<summary>View Authentication Flow</summary>
+<br>
 Secure, multi-layered session management with a premium feel.
-![Auth](public/screenshots/2.png)
+<img src="public/screenshots/2.png" alt="Authentication Flow">
+</details>
 
----
-
-### 3. Mission Control Dashboard
+<details>
+<summary>View Mission Control Dashboard</summary>
+<br>
 The central hub for all business modules—unified, accessible, and fast.
-![Dashboard](public/screenshots/3.png)
+<img src="public/screenshots/3.png" alt="Mission Control Dashboard">
+</details>
 
 ## Core modules
 
