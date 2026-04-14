@@ -28,7 +28,7 @@
 
 ## Overview
 
-**Mintax** is a comprehensive, multi-tenant business operating system for modern companies. It unifies accounting, sales, hiring, social engagement, and team operations in one open source platform — secured by enterprise-grade infrastructure and extended by a configurable AI engine.
+**Mintax** is a comprehensive, multi-tenant business operating system for modern companies. It unifies accounting, sales, hiring, social engagement, and team operations in one open source platform secured by enterprise-grade infrastructure and extended by a configurable AI engine.
 
 Built for **sovereignty** and **scalability**, Mintax can be self-hosted on your own infrastructure, giving you complete control over your business data.
 
