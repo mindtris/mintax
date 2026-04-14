@@ -34,7 +34,7 @@ Built for **sovereignty** and **scalability**, Mintax can be self-hosted on your
 
 ## Visual tour
 
-<details>
+<details open>
 <summary>View Enterprise Landing Page</summary>
 <br>
 The intelligent front door designed for sovereignty and scale.
