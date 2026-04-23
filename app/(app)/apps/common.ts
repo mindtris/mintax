@@ -13,7 +13,7 @@ export async function getApps(): Promise<{ id: string; manifest: AppManifest }[]
 
   const apps = await Promise.all(
     items
-      .filter((item) => item.isDirectory() && item.name !== "apps")
+      .filter((item) => item.isDirectory() && item.name !== "apps" && item.name !== "invoices")
       .map(async (item) => {
         const manifestModule = await import(`./${item.name}/manifest`)
         return {

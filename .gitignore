@@ -68,3 +68,6 @@ refer/
 
 # npm lockfile (using pnpm)
 package-lock.json
+
+# brain
+brain.md

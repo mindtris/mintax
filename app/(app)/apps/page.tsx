@@ -22,10 +22,6 @@ export default async function AppsPage({
     return <OutlookApp />
   }
 
-  if (tab === "invoices") {
-    const InvoicesPage = (await import("./invoices/page")).default
-    return <InvoicesPage />
-  }
 
   // Default: app gallery
   const filteredApps = apps.filter((app) => app.id !== "reminders")

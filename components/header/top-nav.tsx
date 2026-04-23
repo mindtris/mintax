@@ -157,8 +157,7 @@ const modules: NavModule[] = [
       { href: "/engage?tab=posts", label: "Posts", icon: HeartHandshake },
       { href: "/engage?tab=calendar", label: "Calendar", icon: CalendarOff },
       { href: "/engage?tab=content", label: "Content", icon: FileText },
-      { href: "/engage?tab=branding", label: "Branding", icon: Newspaper },
-      { href: "/engage?tab=analytics", label: "Analytics", icon: TrendingUp },
+      { href: "/engage?tab=branding", label: "Branding", icon: MessageCircleHeart },
     ],
   },
 ]

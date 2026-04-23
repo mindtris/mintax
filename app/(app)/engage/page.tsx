@@ -40,8 +40,6 @@ export default async function EngagePage({
       return <ContentView />
     case "branding":
       return <BrandingView />
-    case "analytics":
-      return <AnalyticsView />
     default: {
       const user = await getCurrentUser()
       const org = await getActiveOrg(user)

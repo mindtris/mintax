@@ -29,6 +29,20 @@ export async function addNewTemplateAction(orgId: string, template: InvoiceTempl
   const appData = (await getAppData(orgId, "invoices")) as InvoiceAppData | null
   const updatedTemplates = [...(appData?.templates || []), template]
   const appDataResult = await setAppData(orgId, "invoices", { ...appData, templates: updatedTemplates })
+  revalidatePath("/settings")
+  return { success: true, data: appDataResult }
+}
+
+export async function updateTemplateAction(orgId: string, templateId: string, template: Partial<InvoiceTemplate>) {
+  const appData = (await getAppData(orgId, "invoices")) as InvoiceAppData | null
+  if (!appData) return { success: false, error: "No app data found" }
+  
+  const updatedTemplates = appData.templates.map((t) => 
+    t.id === templateId ? { ...t, ...template } : t
+  )
+  
+  const appDataResult = await setAppData(orgId, "invoices", { ...appData, templates: updatedTemplates })
+  revalidatePath("/settings")
   return { success: true, data: appDataResult }
 }
 

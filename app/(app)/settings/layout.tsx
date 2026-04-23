@@ -25,8 +25,9 @@ const settingsGroups: NavGroup[] = [
   {
     label: "Financial",
     items: [
-      { title: "Invoice", href: "/settings?tab=invoice", icon: "file-text" },
-      { title: "Estimate", href: "/settings?tab=estimate", icon: "clipboard-list" },
+      { title: "Templates", href: "/settings?tab=templates", icon: "layout-template" },
+      { title: "Invoices", href: "/settings?tab=invoice", icon: "file-text" },
+      { title: "Estimates", href: "/settings?tab=estimate", icon: "quote" },
       { title: "Taxes", href: "/settings?tab=taxes", icon: "receipt" },
       { title: "Items", href: "/settings?tab=items", icon: "square-stack" },
       { title: "Categories", href: "/settings?tab=categories", icon: "folder-kanban" },
@@ -37,7 +38,6 @@ const settingsGroups: NavGroup[] = [
   {
     label: "Communications",
     items: [
-      { title: "Email templates", href: "/settings?tab=email-templates", icon: "mail" },
       { title: "Social accounts", href: "/settings?tab=social", icon: "share-2" },
     ],
   },
