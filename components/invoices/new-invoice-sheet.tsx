@@ -26,6 +26,7 @@ import { useActionState, useCallback, useEffect, useState } from "react"
 import { createInvoiceAction } from "@/app/(app)/invoices/actions"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { EditInvoiceForm } from "@/app/(app)/invoices/[invoiceId]/edit-invoice-form"
+import { FormSelectCurrency } from "@/components/forms/select-currency"
 
 interface LineItem {
   name: string
@@ -131,6 +132,8 @@ export function NewInvoiceSheet({
   const [clientEmail, setClientEmail] = useState("")
   const [clientAddress, setClientAddress] = useState("")
   const [clientTaxId, setClientTaxId] = useState("")
+  const [subject, setSubject] = useState("")
+  const [description, setDescription] = useState("")
   const [hasSelectedContact, setHasSelectedContact] = useState(false)
 
   const [lineItems, setLineItems] = useState<LineItem[]>([emptyLine()])
@@ -283,6 +286,8 @@ export function NewInvoiceSheet({
               <input type="hidden" name="clientEmail" value={clientEmail} />
               <input type="hidden" name="clientTaxId" value={clientTaxId || taxId} />
               <input type="hidden" name="clientAddress" value={clientAddress} />
+              <input type="hidden" name="subject" value={subject} />
+              <input type="hidden" name="description" value={description} />
 
               {hasSelectedContact ? (
                 <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-1">
@@ -326,17 +331,12 @@ export function NewInvoiceSheet({
                   </Select>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <Label className="text-sm font-medium">Currency</Label>
-                  <Select name="currency" defaultValue={baseCurrency}>
-                    <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {currencyList.map((c) => (
-                        <SelectItem key={c.code} value={c.code}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormSelectCurrency
+                    title="Currency"
+                    name="currency"
+                    defaultValue={baseCurrency}
+                    currencies={currencyList}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -348,6 +348,14 @@ export function NewInvoiceSheet({
                   <Label className="text-sm font-medium">Due date</Label>
                   <DatePicker name="dueAt" defaultValue={defaultDueDate} placeholder="Due date" />
                 </div>
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label className="text-sm font-medium">Subject</Label>
+                <Input placeholder="e.g. Project Delivery - Q1" value={subject} onChange={(e) => setSubject(e.target.value)} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label className="text-sm font-medium">Description</Label>
+                <Textarea placeholder="Detailed explanation..." value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
               </div>
             </div>
 

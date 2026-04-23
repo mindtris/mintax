@@ -82,7 +82,7 @@ export function ReminderForm({ initialData: reminder, members, categories, curre
       <div className="grid grid-cols-2 gap-4">
         <FormDate
           name="dueAt"
-          title="Due Date"
+          title="Due date"
           defaultValue={reminder?.dueAt ? new Date(reminder.dueAt) : undefined}
         />
 

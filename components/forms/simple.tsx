@@ -51,6 +51,7 @@ type FormTextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
   title?: string
   hideIfEmpty?: boolean
   isRequired?: boolean
+  readOnly?: boolean
 }
 
 export function FormTextarea({ title, hideIfEmpty = false, isRequired = false, ...props }: FormTextareaProps) {
@@ -74,6 +75,17 @@ export function FormTextarea({ title, hideIfEmpty = false, isRequired = false, .
 
   if (hideIfEmpty && isEmpty) {
     return null
+  }
+
+  if (props.readOnly) {
+    return (
+      <div className="flex flex-col gap-1 w-full">
+        {title && <span className="text-xs font-medium text-muted-foreground">{title}</span>}
+        <div className={cn("text-sm whitespace-pre-wrap min-h-4", props.className)}>
+          {props.value || props.defaultValue}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -229,7 +241,7 @@ export const FormDate = ({
       if (!isNaN(newDate.getTime())) {
         setDate(newDate)
       }
-    } catch {}
+    } catch { }
   }
 
   return (
@@ -271,11 +283,13 @@ export const FormAvatar = ({
   defaultValue,
   className,
   onChange,
+  readOnly = false,
   ...props
 }: {
   title?: string
   defaultValue?: string
   className?: string
+  readOnly?: boolean
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
 } & InputHTMLAttributes<HTMLInputElement>) => {
   const [preview, setPreview] = useState<string | null>(defaultValue || null)
@@ -297,29 +311,31 @@ export const FormAvatar = ({
   }
 
   return (
-    <label className="inline-block">
+    <div className="inline-block">
       {title && <span className="text-sm font-medium">{title}</span>}
       <div className={cn("relative group", className)}>
-        <div className="absolute inset-0 flex items-center justify-center bg-background rounded-lg overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center bg-background rounded-lg overflow-hidden border border-border/50">
           {preview ? (
-            <img src={preview} alt="Avatar preview" className="w-full h-full object-cover" />
+            <img src={preview} alt="Avatar preview" className="w-full h-full object-contain" />
           ) : (
             <div className="w-full h-full bg-muted flex items-center justify-center">
-              <span className="text-muted-foreground">No image</span>
+              <span className="text-[10px] text-muted-foreground">Logo</span>
             </div>
           )}
         </div>
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
-          <input
-            type="file"
-            accept="image/*"
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            onChange={handleFileChange}
-            {...props}
-          />
-          <Upload className="z-10 bg-background/30 text-background p-1 rounded-sm h-7 w-8 cursor-pointer" />
-        </div>
+        {!readOnly && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+            <input
+              type="file"
+              accept="image/*"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              onChange={handleFileChange}
+              {...props}
+            />
+            <Upload className="z-10 bg-background/30 text-background p-1 rounded-sm h-7 w-8 cursor-pointer" />
+          </div>
+        )}
       </div>
-    </label>
+    </div>
   )
 }

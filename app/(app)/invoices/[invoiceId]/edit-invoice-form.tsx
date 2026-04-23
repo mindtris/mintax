@@ -10,6 +10,9 @@ import { useActionState, useState, useTransition, useEffect } from "react"
 import { updateInvoiceAction, generateAndAttachInvoicePDFAction, sendInvoiceAction } from "../actions"
 import { toast } from "sonner"
 import dynamic from "next/dynamic"
+import { InvoicePage } from "@/app/(app)/apps/invoices/components/invoice-page"
+import { invoiceToFormData } from "@/components/invoices/templates"
+
 
 // PDFPreview — lazy loaded to avoid SSR issues with @react-pdf/renderer
 const PDFPreview = dynamic(() => import("@/components/invoices/pdf-preview"), { ssr: false, loading: () => (
@@ -59,6 +62,9 @@ export function EditInvoiceForm({
   const [clientTaxId, setClientTaxId] = useState(invoice.clientTaxId || "")
   const [contactId, setContactId] = useState(invoice.contactId || "")
   const [currency, setCurrency] = useState(invoice.currency || baseCurrency)
+  const [subject, setSubject] = useState(invoice.subject || "")
+  const [description, setDescription] = useState(invoice.description || "")
+
 
   function handleContactSelect(contact: any) {
     if (!contact) {
@@ -113,42 +119,20 @@ export function EditInvoiceForm({
   if (onlyPreview) {
     // Build live formData for PDF render using current settings
     const liveFormData = org && invoiceSettings ? {
-      title: invoiceSettings.invoice_title || "INVOICE",
-      businessLogo: org.logo || null,
-      invoiceNumber: invoice.invoiceNumber,
-      date: invoice.issuedAt ? new Date(invoice.issuedAt).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
-      dueDate: invoice.dueAt ? new Date(invoice.dueAt).toISOString().split("T")[0] : "",
-      currency: invoice.currency || org.baseCurrency || "INR",
-      companyDetails: `${org.name}\n${org.address || ""}${invoiceSettings.invoice_tax_id ? `\nTax ID: ${invoiceSettings.invoice_tax_id}` : ""}`,
-      companyDetailsLabel: "Bill From",
-      billTo: [invoice.clientName, invoice.clientEmail, invoice.clientAddress, invoice.clientTaxId ? `Tax ID: ${invoice.clientTaxId}` : ""].filter(Boolean).join("\n"),
-      billToLabel: "Bill To",
-      items: (invoice.items || []).length > 0
-        ? (invoice.items || []).map((item: any) => ({
-            name: item.name || "",
-            subtitle: item.description || "",
-            showSubtitle: !!item.description,
-            quantity: item.quantity || 1,
-            unitPrice: (item.price || 0) / 100,
-            subtotal: ((item.price || 0) * (item.quantity || 1)) / 100,
-          }))
-        : [{ name: "Services", subtitle: "", showSubtitle: false, quantity: 1, unitPrice: invoice.subtotal / 100, subtotal: invoice.subtotal / 100 }],
-      taxIncluded: false,
-      additionalTaxes: invoice.taxTotal > 0 ? [{ name: "Tax", rate: 0, amount: invoice.taxTotal / 100 }] : [],
-      additionalFees: [],
-      notes: invoice.notes || invoiceSettings.invoice_notes || "",
-      bankDetails: invoiceSettings.invoice_bank_details || org.bankDetails || "",
-      issueDateLabel: "Issue Date",
-      dueDateLabel: "Due Date",
-      itemLabel: invoiceSettings.invoice_item_label || "Item",
-      quantityLabel: invoiceSettings.invoice_quantity_label || "Qty",
-      unitPriceLabel: invoiceSettings.invoice_price_label || "Unit Price",
-      subtotalLabel: "Subtotal",
-      summarySubtotalLabel: "Subtotal:",
-      summaryTotalLabel: "Total:",
-      accentColor: invoiceSettings.invoice_color || "#6366f1",
-      template: invoiceSettings.invoice_template || "default",
-      footerText: invoiceSettings.invoice_footer || "",
+      ...invoiceToFormData(
+        {
+          ...invoice,
+          clientName,
+          clientEmail,
+          clientAddress,
+          clientTaxId,
+          currency,
+          subject,
+          description,
+        },
+        org,
+        invoiceSettings
+      )
     } : null
 
     return (
@@ -164,9 +148,9 @@ export function EditInvoiceForm({
           )}
         </div>
 
-        <div className="flex-1 overflow-hidden h-[calc(96vh-240px)]">
+        <div className="flex-1 overflow-auto min-h-0 p-4 sm:p-8">
           {liveFormData ? (
-            <PDFPreview data={liveFormData} />
+            <InvoicePage invoiceData={liveFormData as any} readOnly={true} dispatch={() => {}} currencies={[]} />
           ) : previewFileId ? (
             <iframe
               src={`/files/preview/${previewFileId}#toolbar=0`}
@@ -221,7 +205,7 @@ export function EditInvoiceForm({
         <input type="hidden" name="invoiceId" value={invoice.id} />
         <input type="hidden" name="contactId" value={contactId} />
         <input type="hidden" name="clientName" value={clientName} />
-        <div className="flex-1 overflow-y-auto space-y-6">
+        <div className="flex-1 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <FormSelect
               name="type"
@@ -311,6 +295,25 @@ export function EditInvoiceForm({
               defaultValue={invoice.dueAt ? new Date(invoice.dueAt) : undefined}
             />
           </div>
+
+          <div className="space-y-4">
+            <FormInput
+              name="subject"
+              title="Subject"
+              placeholder="e.g. Project Delivery - Q1"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+            />
+            <FormTextarea
+              name="description"
+              title="Description"
+              placeholder="Detailed explanation of the invoice scope..."
+              value={description}
+              rows={2}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+
 
           {/* Line items — read-only display */}
           {invoice.items && invoice.items.length > 0 && (

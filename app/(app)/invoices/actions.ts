@@ -38,6 +38,8 @@ export async function createInvoiceAction(_prevState: any, formData: FormData) {
   const currency = formData.get("currency") as string || org.baseCurrency
   const issuedAt = formData.get("issuedAt") as string
   const dueAt = formData.get("dueAt") as string
+  const subject = formData.get("subject") as string
+  const description = formData.get("description") as string
   const notes = formData.get("notes") as string
   const itemsJson = formData.get("itemsJson") as string
   const files = formData.getAll("files") as File[]
@@ -73,6 +75,8 @@ export async function createInvoiceAction(_prevState: any, formData: FormData) {
     currency,
     issuedAt: issuedDate,
     dueAt: dueAt ? new Date(dueAt) : undefined,
+    subject: subject || undefined,
+    description: description || undefined,
     notes: notes || undefined,
     items,
   })
@@ -116,6 +120,8 @@ export async function updateInvoiceAction(_prevState: any, formData: FormData) {
   const currency = formData.get("currency") as string || org.baseCurrency
   const issuedAt = formData.get("issuedAt") as string
   const dueAt = formData.get("dueAt") as string
+  const subject = formData.get("subject") as string
+  const description = formData.get("description") as string
   const notes = formData.get("notes") as string
   const intent = formData.get("intent") as string
 
@@ -137,6 +143,8 @@ export async function updateInvoiceAction(_prevState: any, formData: FormData) {
     currency,
     issuedAt: issuedAt ? new Date(issuedAt) : undefined,
     dueAt: dueAt ? new Date(dueAt) : undefined,
+    subject: subject || undefined,
+    description: description || undefined,
     notes: notes || undefined,
   })
 

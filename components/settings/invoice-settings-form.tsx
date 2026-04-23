@@ -2,98 +2,19 @@
 
 import { saveInvoiceSettingsAction, deleteInvoiceTemplateAction } from "@/app/(app)/settings/actions"
 import { FormError } from "@/components/forms/error"
-import { InvoiceTemplatePreview } from "@/components/settings/invoice-template-preview"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Trash2 } from "lucide-react"
-import { useActionState, useEffect, useState, useTransition } from "react"
+import { useActionState, useEffect } from "react"
 import { toast } from "sonner"
-import { InvoiceTemplate } from "../invoices/types"
 
-interface Props {
-  settings: Record<string, string>
-  orgName: string
-  templates: InvoiceTemplate[]
-}
-
-export default function InvoiceSettingsForm({ settings, orgName, templates }: Props) {
+export default function InvoiceSettingsForm({ settings }: { settings: Record<string, string> }) {
   const [saveState, saveAction, pending] = useActionState(saveInvoiceSettingsAction, null)
-  const [isDeleting, startDeleting] = useTransition()
-  const [selectedTemplate, setSelectedTemplate] = useState(settings.invoice_template || "default")
-  const [accentColor, setAccentColor] = useState(settings.invoice_color || "#c96442")
-
-  useEffect(() => {
-    if (saveState?.success) toast.success("Invoice settings saved")
-    if (saveState?.error) toast.error(saveState.error)
-  }, [saveState])
-
-  async function handleDeleteTemplate(id: string) {
-    if (!confirm("Are you sure you want to delete this template?")) return
-    startDeleting(async () => {
-      const result = await deleteInvoiceTemplateAction(id)
-      if (result.success) {
-        toast.success("Template deleted")
-        if (selectedTemplate === id) setSelectedTemplate("default")
-      } else {
-        toast.error("Failed to delete template")
-      }
-    })
-  }
 
   return (
-    <form action={saveAction} className="space-y-10">
-      {/* Template selection */}
-      <section className="space-y-5">
-        <div>
-          <h3 className="text-base font-semibold tracking-tight">Template</h3>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Choose the layout for your invoice documents.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-          {(["default", "classic", "modern"] as const).map((tpl) => (
-            <div key={tpl} className="space-y-2">
-              <InvoiceTemplatePreview
-                template={tpl}
-                accentColor={accentColor}
-                orgName={orgName}
-                selected={selectedTemplate === tpl}
-                onClick={() => setSelectedTemplate(tpl)}
-              />
-            </div>
-          ))}
-
-          {templates.map((tpl) => (
-            <div key={tpl.id} className="space-y-2 relative group">
-              <InvoiceTemplatePreview
-                template="default" // Fallback preview for custom
-                customName={tpl.name}
-                accentColor={accentColor}
-                orgName={orgName}
-                selected={selectedTemplate === tpl.id}
-                onClick={() => setSelectedTemplate(tpl.id || "default")}
-              />
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => tpl.id && handleDeleteTemplate(tpl.id)}
-                disabled={isDeleting}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </div>
-          ))}
-        </div>
-        <input type="hidden" name="invoice_template" value={selectedTemplate} />
-      </section>
-
-      <hr className="border-border" />
+    <form action={saveAction} className="space-y-8">
 
       {/* Numbering */}
       <section className="space-y-5">
@@ -211,44 +132,6 @@ export default function InvoiceSettingsForm({ settings, orgName, templates }: Pr
             <p className="text-[10px] text-muted-foreground">Automatically email the invoice to the client when created.</p>
           </div>
         </label>
-      </section>
-
-      <hr className="border-border" />
-
-      {/* Appearance */}
-      <section className="space-y-5">
-        <div>
-          <h3 className="text-base font-semibold tracking-tight">Appearance</h3>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Customize the look of your invoices.
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="invoice_color">Accent color</Label>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <span
-                className="block h-8 w-8 rounded-md border"
-                style={{ backgroundColor: accentColor }}
-              />
-              <input
-                type="color"
-                name="invoice_color"
-                className="absolute inset-0 h-8 w-8 opacity-0 cursor-pointer"
-                value={accentColor}
-                onChange={(e) => setAccentColor(e.target.value)}
-              />
-            </div>
-            <Input
-              value={accentColor}
-              onChange={(e) => setAccentColor(e.target.value)}
-              placeholder="#c96442"
-              className="flex-1 max-w-[140px]"
-            />
-          </div>
-          <p className="text-[10px] text-muted-foreground">Updates the template preview in real time.</p>
-        </div>
       </section>
 
       <hr className="border-border" />

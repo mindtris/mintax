@@ -9,36 +9,47 @@ export interface InvoiceTemplate {
   formData: InvoiceFormData
 }
 
-export default function defaultTemplates(org: Organization, settings: SettingsMap): InvoiceTemplate[] {
+export default function defaultTemplates(org: Organization, settings: SettingsMap, userEmail?: string): InvoiceTemplate[] {
   const paymentTerms = parseInt(settings.invoice_payment_terms || "30") || 30
 
   const defaultTemplate: InvoiceFormData = {
     title: settings.invoice_title || "INVOICE",
-    businessLogo: org.logo,
+    subject: "",
+    description: "",
+    businessLogo: org.logo || "/logo/logo.svg",
     invoiceNumber: `${settings.invoice_prefix || "INV-"}${format(new Date(), "yyyyMMdd")}`,
     date: format(new Date(), "yyyy-MM-dd"),
     dueDate: format(addDays(new Date(), paymentTerms), "yyyy-MM-dd"),
     currency: settings.default_currency || org.baseCurrency || "INR",
-    companyDetails: `${org.name}\n${org.address || ""}${settings.invoice_tax_id ? `\nTax ID: ${settings.invoice_tax_id}` : ""}`,
+    companyDetails: [
+      org.name,
+      org.address,
+      [userEmail, org.phone].filter(Boolean).join(", ")
+    ].filter(Boolean).join("\n"),
     companyDetailsLabel: settings.invoice_bill_from_label || "Bill From",
     billTo: "",
     billToLabel: settings.invoice_bill_to_label || "Bill To",
-    items: [{ name: "", subtitle: "", showSubtitle: false, quantity: 1, unitPrice: 0, subtotal: 0 }],
+    items: [
+      { name: "Consulting Service", subtitle: "Project management and strategic planning", showSubtitle: true, quantity: 1, unitPrice: 0, discount: 0, subtotal: 0 },
+      { name: "Development Task", subtitle: "Custom software feature implementation", showSubtitle: true, quantity: 1, unitPrice: 0, discount: 0, subtotal: 0 },
+    ],
     taxIncluded: settings.invoice_tax_included === "true",
     additionalTaxes: settings.invoice_tax_rate ? [
       { name: settings.invoice_tax_name || "Tax", rate: parseFloat(settings.invoice_tax_rate), amount: 0 }
     ] : [],
     additionalFees: [],
-    notes: settings.invoice_notes || "",
+    notes: settings.invoice_notes || "Thanks for your business.",
     bankDetails: settings.invoice_bank_details || org.bankDetails || "",
     issueDateLabel: settings.invoice_date_label || "Issue Date",
     dueDateLabel: settings.invoice_due_date_label || "Due Date",
     itemLabel: settings.invoice_item_label || "Item",
     quantityLabel: settings.invoice_quantity_label || "Quantity",
     unitPriceLabel: settings.invoice_price_label || "Unit Price",
+    discountLabel: settings.discount_label || "Discount",
     subtotalLabel: settings.invoice_subtotal_label || "Subtotal",
     summarySubtotalLabel: settings.invoice_subtotal_label ? `${settings.invoice_subtotal_label}:` : "Subtotal:",
     summaryTotalLabel: settings.invoice_total_label ? `${settings.invoice_total_label}:` : "Total:",
+    currencyLabel: "Currency:",
   }
 
   return [
@@ -94,7 +105,7 @@ export function invoiceToFormData(
 
   return {
     title: settings.invoice_title || "INVOICE",
-    businessLogo: org.logo,
+    businessLogo: org.logo || "/logo/logo.svg",
     invoiceNumber: invoice.invoiceNumber,
     date: invoice.issuedAt ? format(new Date(invoice.issuedAt), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
     dueDate: invoice.dueAt ? format(new Date(invoice.dueAt), "yyyy-MM-dd") : "",
@@ -107,9 +118,12 @@ export function invoiceToFormData(
     taxIncluded: false,
     additionalTaxes: taxAmount > 0 ? [{ name: "Tax", rate: 0, amount: taxAmount }] : [],
     additionalFees: [],
-    notes: invoice.notes || settings.invoice_notes || "",
+    notes: invoice.notes || settings.invoice_notes || "Thanks for your business.",
     bankDetails: org.bankDetails || "",
+    subject: invoice.subject || "",
+    description: invoice.description || "",
     issueDateLabel: "Issue Date",
+
     dueDateLabel: "Due Date",
     itemLabel: settings.invoice_item_label || "Item",
     quantityLabel: settings.invoice_quantity_label || "Quantity",
@@ -117,5 +131,6 @@ export function invoiceToFormData(
     subtotalLabel: "Subtotal",
     summarySubtotalLabel: "Subtotal:",
     summaryTotalLabel: "Total:",
+    currencyLabel: "Currency:",
   }
 }

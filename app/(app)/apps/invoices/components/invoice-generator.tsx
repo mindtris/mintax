@@ -8,10 +8,11 @@ import { Currency, Organization, User } from "@/lib/prisma/client"
 import { FileDown, Loader2, Save, TextSelect, X } from "lucide-react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { startTransition, useMemo, useReducer, useState } from "react"
+import { forwardRef, startTransition, useImperativeHandle, useMemo, useReducer, useState } from "react"
 import {
   addNewTemplateAction,
   deleteTemplateAction,
+  updateTemplateAction,
   generateInvoicePDF,
   saveInvoiceAsTransactionAction,
 } from "../actions"
@@ -70,39 +71,40 @@ function invoiceFormReducer(state: InvoiceFormData, action: any): InvoiceFormDat
   }
 }
 
-interface SavedInvoice {
-  id: string
-  invoiceNumber: string
-  clientName: string
-  clientEmail?: string | null
-  clientAddress?: string | null
-  clientTaxId?: string | null
-  total: number
-  subtotal: number
-  taxTotal: number
-  currency: string
-  status: string
-  issuedAt?: string | null
-  dueAt?: string | null
-  notes?: string | null
-  items?: any[]
-}
 
-export function InvoiceGenerator({
+export const InvoiceGenerator = forwardRef(({
   user,
   org,
   settings,
   currencies,
   appData,
-  savedInvoices = [],
+  mode = "transaction",
+  initialData,
+  onSave,
 }: {
   user: User
   org: Organization
   settings: SettingsMap
   currencies: Currency[]
   appData: InvoiceAppData | null
-  savedInvoices?: SavedInvoice[]
-}) {
+  mode?: "transaction" | "template"
+  initialData?: any
+  onSave?: () => void
+}, ref) => {
+  useImperativeHandle(ref, () => ({
+    save: () => {
+      // If template mode, trigger template save
+      if (mode === "template") {
+        if (initialData?.id) {
+          // Direct update for existing
+          handleUpdateTemplate()
+        } else {
+          // Dialog for new
+          setIsTemplateDialogOpen(true)
+        }
+      }
+    }
+  }))
   const templates: InvoiceTemplate[] = useMemo(
     () => [...defaultTemplates(org, settings), ...(appData?.templates || [])],
     [appData]
@@ -111,18 +113,21 @@ export function InvoiceGenerator({
   const [selectedTemplate, setSelectedTemplate] = useState<string>(templates[0].name)
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false)
   const [newTemplateName, setNewTemplateName] = useState("")
-  const [formData, dispatch] = useReducer(invoiceFormReducer, templates[0].formData)
+  
+  // Initialize with initialData if in template mode
+  const initialFormData = useMemo(() => {
+    if (mode === "template" && initialData) {
+      return initialData.formData || initialData
+    }
+    return templates[0].formData
+  }, [mode, initialData, templates])
+
+  const [formData, dispatch] = useReducer(invoiceFormReducer, initialFormData)
   const [isPdfLoading, setIsPdfLoading] = useState(false)
   const [isSavingTransaction, setIsSavingTransaction] = useState(false)
 
   const router = useRouter()
 
-  // Load a saved invoice into the form for PDF preview/export
-  const handleLoadInvoice = (invoice: SavedInvoice) => {
-    const data = invoiceToFormData(invoice, org, settings)
-    dispatch({ type: "SET_FORM", payload: data })
-    setSelectedTemplate(`Invoice ${invoice.invoiceNumber}`)
-  }
 
   // Function to handle template selection
   const handleTemplateSelect = (templateName: string) => {
@@ -170,6 +175,30 @@ export function InvoiceGenerator({
     }
   }
 
+  const handleUpdateTemplate = async () => {
+    if (!initialData?.id) return
+    
+    setIsSavingTransaction(true)
+    try {
+      const result = await updateTemplateAction(org.id, initialData.id, {
+        formData: formData,
+      })
+
+      if (result.success) {
+        toast.success("Template updated")
+        onSave?.()
+        router.refresh()
+      } else {
+        toast.error("Failed to update template")
+      }
+    } catch (error) {
+      console.error("Error updating template:", error)
+      toast.error("Failed to update template")
+    } finally {
+      setIsSavingTransaction(false)
+    }
+  }
+
   const handleSaveTemplate = async () => {
     if (!newTemplateName.trim()) {
       toast.error("Please enter a template name")
@@ -181,6 +210,7 @@ export function InvoiceGenerator({
       return
     }
 
+    setIsSavingTransaction(true)
     try {
       const result = await addNewTemplateAction(org.id, {
         id: `tmpl_${Math.random().toString(36).substring(2, 15)}`,
@@ -191,6 +221,8 @@ export function InvoiceGenerator({
       if (result.success) {
         setIsTemplateDialogOpen(false)
         setNewTemplateName("")
+        toast.success("New template saved")
+        onSave?.()
         router.refresh()
       } else {
         toast.error("Failed to save template. Please try again.")
@@ -198,6 +230,8 @@ export function InvoiceGenerator({
     } catch (error) {
       console.error("Error saving template:", error)
       toast.error("Failed to save template. Please try again.")
+    } finally {
+      setIsSavingTransaction(false)
     }
   }
 
@@ -245,89 +279,76 @@ export function InvoiceGenerator({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Load from saved invoices */}
-      {savedInvoices.length > 0 && (
-        <div className="space-y-3">
-          <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Load from sales invoices</h4>
-          <div className="flex overflow-x-auto gap-2 pb-1">
-            {savedInvoices.slice(0, 10).map((inv) => (
+
+      {/* Templates Section - only in transaction mode */}
+      {mode !== "template" && (
+        <div className="py-4 flex overflow-x-auto gap-2">
+          {templates.map((template) => (
+            <div key={template.name} className="relative group">
               <Button
-                key={inv.id}
-                variant="outline"
-                className="whitespace-nowrap text-xs shrink-0"
-                onClick={() => handleLoadInvoice(inv)}
+                variant={selectedTemplate === template.name ? "default" : "outline"}
+                className={`
+                    whitespace-nowrap p-4 
+                    ${selectedTemplate === template.name ? "bg-foreground hover:bg-foreground/90" : "border-border text-foreground hover:bg-muted"}
+                  `}
+                onClick={() => handleTemplateSelect(template.name)}
               >
-                {inv.invoiceNumber} — {inv.clientName} ({(inv.total / 100).toFixed(2)} {inv.currency})
+                {template.name}
               </Button>
-            ))}
-          </div>
+              {template.id && (
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="absolute -top-2 -right-2 h-5 w-5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => handleDeleteTemplate(template.id, e)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+          ))}
         </div>
       )}
-
-      {/* Templates Section */}
-      <div className="py-4 flex overflow-x-auto gap-2">
-        {templates.map((template) => (
-          <div key={template.name} className="relative group">
-            <Button
-              variant={selectedTemplate === template.name ? "default" : "outline"}
-              className={`
-                  whitespace-nowrap p-4 
-                  ${selectedTemplate === template.name ? "bg-foreground hover:bg-foreground/90" : "border-border text-foreground hover:bg-muted"}
-                `}
-              onClick={() => handleTemplateSelect(template.name)}
-            >
-              {template.name}
-            </Button>
-            {template.id && (
-              <Button
-                variant="destructive"
-                size="icon"
-                className="absolute -top-2 -right-2 h-5 w-5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={(e) => handleDeleteTemplate(template.id, e)}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
-        ))}
-      </div>
 
       <div className="flex flex-row flex-wrap justify-start items-start gap-4">
         <InvoicePage invoiceData={formData} dispatch={dispatch} currencies={currencies} />
 
         {/* Generate PDF Button */}
-        <div className="flex flex-col gap-4">
-          <Button onClick={handleGeneratePDF} disabled={isPdfLoading}>
-            {isPdfLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <FileDown className="mr-2" />
-                Download PDF
-              </>
-            )}
-          </Button>
-          <Button variant="secondary" onClick={() => setIsTemplateDialogOpen(true)}>
-            <TextSelect />
-            Make a Template
-          </Button>
-          <Button variant="secondary" onClick={handleSaveAsTransaction} disabled={isSavingTransaction}>
-            {isSavingTransaction ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2" />
-                Save as Transaction
-              </>
-            )}
-          </Button>
-        </div>
+        {/* Contextual Action Column - only in transaction mode */}
+        {mode !== "template" && (
+          <div className="flex flex-col gap-4">
+            <Button onClick={handleGeneratePDF} disabled={isPdfLoading}>
+              {isPdfLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <FileDown className="mr-2" />
+                  Download PDF
+                </>
+              )}
+            </Button>
+            <Button variant="secondary" onClick={() => setIsTemplateDialogOpen(true)}>
+              <TextSelect />
+              Make a Template
+            </Button>
+            <Button variant="secondary" onClick={handleSaveAsTransaction} disabled={isSavingTransaction}>
+              {isSavingTransaction ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2" />
+                  Save as Transaction
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* New Template Dialog */}
@@ -355,4 +376,4 @@ export function InvoiceGenerator({
       </Dialog>
     </div>
   )
-}
+})

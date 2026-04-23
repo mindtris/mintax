@@ -11,6 +11,8 @@ export type InvoiceData = {
   clientEmail?: string
   clientAddress?: string
   clientTaxId?: string
+  subject?: string
+  description?: string
   items?: any[]
   subtotal: number
   taxTotal?: number
@@ -41,6 +43,7 @@ export const getInvoices = cache(
           { invoiceNumber: { contains: filters.search, mode: "insensitive" } },
           { clientName: { contains: filters.search, mode: "insensitive" } },
           { clientEmail: { contains: filters.search, mode: "insensitive" } },
+          { subject: { contains: filters.search, mode: "insensitive" } },
         ]
       }
       if (filters.status && filters.status !== "-") where.status = filters.status
@@ -54,8 +57,13 @@ export const getInvoices = cache(
     }
 
     const orderByMatch = options?.ordering?.match(/^-?(.+)$/)
-    const orderByField = orderByMatch ? orderByMatch[1] : "createdAt"
+    let orderByField = orderByMatch ? orderByMatch[1] : "createdAt"
     const orderDirection = options?.ordering?.startsWith("-") ? "desc" : "asc"
+
+    // Prevent invalid field names like "desc" or "asc" from being used as field keys
+    if (["desc", "asc"].includes(orderByField)) {
+      orderByField = "createdAt"
+    }
 
     const [invoices, total] = await Promise.all([
       prisma.invoice.findMany({

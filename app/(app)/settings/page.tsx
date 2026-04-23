@@ -14,6 +14,11 @@ import { getPublicApiConfigView } from "@/lib/services/public-api-config"
 import appConfig from "@/lib/core/config"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import TemplateHub from "@/components/settings/template-hub"
+import { getOrgEmailTemplates } from "@/lib/services/email-templates"
+import { getAppData } from "@/lib/services/apps"
+import { getContentTemplates } from "@/lib/services/content-templates"
+import { InvoiceAppData } from "@/app/(app)/apps/invoices/page"
 
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { getSettings } from "@/lib/services/settings"
@@ -135,38 +140,64 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     return <ScheduleSettingsView schedules={schedules} />
   }
 
-  // Invoice tab
-  if (tab === "invoice") {
-    const [settings, appData] = await Promise.all([
+  // Templates hub
+  if (tab === "templates") {
+    const [settings, emailTemplates, invoiceAppData, estimateAppData, currencies, contentTemplates] = await Promise.all([
       getSettings(org.id),
-      import("@/lib/services/apps").then((m) => m.getAppData(org.id, "invoices")),
+      getOrgEmailTemplates(org.id),
+      getAppData(org.id, "invoices") as Promise<InvoiceAppData>,
+      getAppData(org.id, "estimates"),
+      getCurrencies(org.id),
+      getContentTemplates(org.id),
     ])
-    const templates = (appData as any)?.templates || []
-    
+
+    return (
+      <TemplateHub 
+        user={user}
+        org={org}
+        settings={settings}
+        currencies={currencies}
+        emailTemplates={emailTemplates}
+        invoiceAppData={invoiceAppData}
+        estimateAppData={estimateAppData}
+        contentTemplates={contentTemplates}
+      />
+    )
+  }
+
+  // Invoices hub
+  if (tab === "invoice") {
+    const [settings, invoiceAppData, currencies] = await Promise.all([
+      getSettings(org.id),
+      getAppData(org.id, "invoices") as Promise<InvoiceAppData>,
+      getCurrencies(org.id),
+    ])
     return (
       <div className="flex flex-col gap-6">
         <div>
           <h2 className="text-xl font-bold tracking-tight">Invoice settings</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Configure invoice numbering, defaults, appearance, and column labels.
+            Configure numbering, default terms, and functional presets for invoices.
           </p>
         </div>
         <div className="w-full max-w-2xl">
-          <InvoiceSettingsForm settings={settings} orgName={org.name} templates={templates} />
+          <InvoiceSettingsForm settings={settings} orgName={org.name} templates={invoiceAppData?.templates || []} />
         </div>
       </div>
     )
   }
 
-  // Estimate tab
+  // Estimates hub
   if (tab === "estimate") {
-    const settings = await getSettings(org.id)
+    const [settings] = await Promise.all([
+      getSettings(org.id),
+    ])
     return (
       <div className="flex flex-col gap-6">
         <div>
           <h2 className="text-xl font-bold tracking-tight">Estimate settings</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Configure estimate numbering, defaults, appearance, and column labels.
+            Configure numbering, validity, and functional presets for estimate documents.
           </p>
         </div>
         <div className="w-full max-w-2xl">
@@ -370,7 +401,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     return (
       <div className="flex flex-col gap-6">
         <Tabs defaultValue="financial" className="w-full">
-          <TabsList className="bg-muted/30 p-1 mb-4">
+          <TabsList className="bg-muted p-1 mb-4">
             <TabsTrigger value="financial">Financial</TabsTrigger>
             <TabsTrigger value="offering">Products & taxes</TabsTrigger>
             <TabsTrigger value="operations">Operations</TabsTrigger>
@@ -545,15 +576,6 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     )
   }
 
-  // Email templates tab
-  if (tab === "email-templates") {
-    const { getOrgEmailTemplates } = await import("@/lib/services/email-templates")
-    const [settings, templates] = await Promise.all([
-      getSettings(org.id),
-      getOrgEmailTemplates(org.id),
-    ])
-    return <EmailTemplateSettingsForm settings={settings} orgName={org.name} templates={templates} orgId={org.id} />
-  }
 
   // Social tab
   if (tab === "social") {

@@ -25,6 +25,7 @@ import { updateOrganization } from "@/lib/services/organizations"
 import { updateUser } from "@/lib/services/users"
 import { createTax, deleteTax, updateTax } from "@/lib/services/taxes"
 import { createItem, deleteItem, updateItem } from "@/lib/services/items"
+import { createContentTemplate, deleteContentTemplate, updateContentTemplate } from "@/lib/services/content-templates"
 import { migrateLegacyCategoryTypes } from "@/lib/services/migration"
 import { Prisma, User } from "@/lib/prisma/client"
 import { revalidatePath } from "next/cache"
@@ -803,6 +804,44 @@ export async function deleteScheduleAction(id: string) {
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to delete schedule" }
+  }
+}
+
+// --- Content Template Actions ---
+
+export async function addContentTemplateAction(data: any) {
+  const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
+  try {
+    const template = await createContentTemplate(org.id, user.id, data)
+    revalidatePath("/settings")
+    return { success: true, template }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to create content template" }
+  }
+}
+
+export async function editContentTemplateAction(id: string, data: any) {
+  const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
+  try {
+    const template = await updateContentTemplate(id, org.id, data)
+    revalidatePath("/settings")
+    return { success: true, template }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to update content template" }
+  }
+}
+
+export async function deleteContentTemplateAction(id: string) {
+  const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
+  try {
+    await deleteContentTemplate(id, org.id)
+    revalidatePath("/settings")
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message || "Failed to delete content template" }
   }
 }
 

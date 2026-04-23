@@ -145,14 +145,6 @@ export function AppSidebar({
                   </SidebarMenuButton>
                 </SidebarMenuItemWithHighlight>
 
-                <SidebarMenuItemWithHighlight href="/invoices">
-                  <SidebarMenuButton asChild>
-                    <Link href="/invoices">
-                      <Receipt />
-                      <span>Invoices</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItemWithHighlight>
 
                 {/* ── Contacts (collapsible) ── */}
                 <Collapsible

@@ -27,7 +27,10 @@ export interface AdditionalFee {
 
 export interface InvoiceFormData {
   title: string
+  subject?: string
+  description?: string
   businessLogo: string | null
+
   invoiceNumber: string
   date: string
   dueDate: string
@@ -50,6 +53,7 @@ export interface InvoiceFormData {
   subtotalLabel: string
   summarySubtotalLabel: string
   summaryTotalLabel: string
+  currencyLabel: string
   // Theming from invoice settings
   accentColor?: string
   template?: string

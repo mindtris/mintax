@@ -70,3 +70,6 @@ CLAUDE.md
 # npm lockfile (using pnpm)
 package-lock.json
 graphify-out/
+
+# brain
+brain.md

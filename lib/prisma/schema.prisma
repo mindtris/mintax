@@ -310,6 +310,9 @@ model Invoice {
   clientEmail     String?      @map("client_email")
   clientAddress   String?      @map("client_address")
   clientTaxId     String?      @map("client_tax_id") // GSTIN, VAT, etc.
+  subject         String?
+  description     String?
+
   
   // Replaced arbitrary JSON with structured InvoiceItem
   // items           Json         @default("[]")

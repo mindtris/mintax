@@ -1,58 +1,19 @@
 "use client"
 
-import { saveEstimateSettingsAction } from "@/app/(app)/settings/actions"
 import { FormError } from "@/components/forms/error"
-import { InvoiceTemplatePreview } from "@/components/settings/invoice-template-preview"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { useActionState, useEffect, useState } from "react"
+import { useActionState, useEffect } from "react"
 import { toast } from "sonner"
 
-interface Props {
-  settings: Record<string, string>
-  orgName: string
-}
-
-export default function EstimateSettingsForm({ settings, orgName }: Props) {
+export default function EstimateSettingsForm({ settings }: { settings: Record<string, string> }) {
   const [saveState, saveAction, pending] = useActionState(saveEstimateSettingsAction, null)
-  const [selectedTemplate, setSelectedTemplate] = useState(settings.estimate_template || "default")
-  const [accentColor, setAccentColor] = useState(settings.estimate_color || "#c96442")
-
-  useEffect(() => {
-    if (saveState?.success) toast.success("Estimate settings saved")
-    if (saveState?.error) toast.error(saveState.error)
-  }, [saveState])
 
   return (
-    <form action={saveAction} className="space-y-10">
-      {/* Template selection */}
-      <section className="space-y-5">
-        <div>
-          <h3 className="text-base font-semibold tracking-tight">Template</h3>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Choose the layout for your estimate documents.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-3 gap-4">
-          {(["default", "classic", "modern"] as const).map((tpl) => (
-            <InvoiceTemplatePreview
-              key={tpl}
-              template={tpl}
-              accentColor={accentColor}
-              orgName={orgName}
-              selected={selectedTemplate === tpl}
-              onClick={() => setSelectedTemplate(tpl)}
-            />
-          ))}
-        </div>
-        <input type="hidden" name="estimate_template" value={selectedTemplate} />
-      </section>
-
-      <hr className="border-border" />
+    <form action={saveAction} className="space-y-8">
 
       {/* Numbering */}
       <section className="space-y-5">
@@ -154,41 +115,6 @@ export default function EstimateSettingsForm({ settings, orgName }: Props) {
             placeholder="Thank you for considering our services."
             rows={2}
           />
-        </div>
-      </section>
-
-      <hr className="border-border" />
-
-      {/* Appearance */}
-      <section className="space-y-5">
-        <div>
-          <h3 className="text-base font-semibold tracking-tight">Appearance</h3>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Customize the look of your estimates.
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="estimate_color">Accent color</Label>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <span className="block h-8 w-8 rounded-md border" style={{ backgroundColor: accentColor }} />
-              <input
-                type="color"
-                name="estimate_color"
-                className="absolute inset-0 h-8 w-8 opacity-0 cursor-pointer"
-                value={accentColor}
-                onChange={(e) => setAccentColor(e.target.value)}
-              />
-            </div>
-            <Input
-              value={accentColor}
-              onChange={(e) => setAccentColor(e.target.value)}
-              placeholder="#c96442"
-              className="flex-1 max-w-[140px]"
-            />
-          </div>
-          <p className="text-[10px] text-muted-foreground">Updates the template preview in real time.</p>
         </div>
       </section>
 

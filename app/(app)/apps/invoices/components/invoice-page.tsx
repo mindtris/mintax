@@ -3,8 +3,9 @@ import { FormAvatar, FormInput, FormTextarea } from "@/components/forms/simple"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
 import { Currency } from "@/lib/prisma/client"
-import { X } from "lucide-react"
+import { CheckCircle2, FileText, Mail, Quote, Search, Filter, Columns3, X, Megaphone, Plus, Loader2, Send, Pencil, Eye, ShieldCheck } from "lucide-react"
 import { InputHTMLAttributes, memo, useCallback, useMemo } from "react"
+import { Logo } from "@/components/ui/logo"
 import { DatePicker } from "@/components/ui/date-picker"
 
 export interface InvoiceItem {
@@ -13,6 +14,7 @@ export interface InvoiceItem {
   showSubtitle: boolean
   quantity: number
   unitPrice: number
+  discount: number
   subtotal: number
 }
 
@@ -29,6 +31,8 @@ export interface AdditionalFee {
 
 export interface InvoiceFormData {
   title: string
+  subject: string
+  description: string
   businessLogo: string | null
   invoiceNumber: string
   date: string
@@ -49,6 +53,7 @@ export interface InvoiceFormData {
   itemLabel: string
   quantityLabel: string
   unitPriceLabel: string
+  discountLabel: string
   subtotalLabel: string
   summarySubtotalLabel: string
   summaryTotalLabel: string
@@ -58,103 +63,113 @@ interface InvoicePageProps {
   invoiceData: InvoiceFormData
   dispatch: React.Dispatch<any>
   currencies: Currency[]
+  readOnly?: boolean
 }
 
 // Memoized row for invoice items
 const ItemRow = memo(function ItemRow({
   item,
   index,
-  onChange,
   onRemove,
   currency,
+  readOnly,
 }: {
   item: InvoiceItem
   index: number
   onChange: (index: number, field: keyof InvoiceItem, value: string | number | boolean) => void
   onRemove: (index: number) => void
   currency: string
+  readOnly?: boolean
 }) {
   return (
-    <div className="flex flex-col sm:flex-row items-start py-3 px-4 bg-card hover:bg-muted">
-      {/* Mobile view label (visible only on small screens) */}
-      <div className="flex justify-between sm:hidden mb-2">
-        <span className="text-xs font-medium text-muted-foreground uppercase">Item</span>
-        <Button variant="destructive" className="rounded-full p-1 h-5 w-5" onClick={() => onRemove(index)}>
-          <X />
-        </Button>
-      </div>
+    <div className="flex flex-col sm:flex-row items-center py-4 px-4 bg-white border-b border-border/50">
+      {/* Index */}
+      <div className="w-8 text-[11px] font-bold text-muted-foreground/60">{index + 1}</div>
 
       {/* Item name and subtitle */}
-      <div className="flex-1 sm:px-0">
-        <div className="flex flex-col">
-          <FormInput
+      <div className="flex-1 sm:px-4 w-full sm:w-auto">
+        <div className="flex flex-col gap-0.5">
+          <ShadyFormInput
             type="text"
             value={item.name}
             onChange={(e) => onChange(index, "name", e.target.value)}
-            className="w-full min-w-0 font-semibold"
+            className="w-full min-w-0 font-bold text-sm text-foreground"
             placeholder="Item name"
             required
+            readOnly={readOnly}
           />
-          <div>
-            {!item.showSubtitle ? (
-              <button
-                type="button"
-                className="text-xs text-muted-foreground hover:text-foreground mt-1 ml-1"
-                onClick={() => onChange(index, "showSubtitle", true)}
-              >
-                + Add Description
-              </button>
-            ) : (
-              <FormInput
-                type="text"
-                value={item.subtitle}
-                onChange={(e) => onChange(index, "subtitle", e.target.value)}
-                className="w-full mt-1 text-xs text-muted-foreground"
-                placeholder="Detailed description (optional)"
-              />
-            )}
-          </div>
+          {item.subtitle || !readOnly ? (
+            <ShadyFormInput
+              type="text"
+              value={item.subtitle}
+              onChange={(e) => onChange(index, "subtitle", e.target.value)}
+              className="w-full text-[11px] text-muted-foreground leading-snug"
+              placeholder="Add description"
+              readOnly={readOnly}
+            />
+          ) : null}
         </div>
       </div>
 
-      {/* Mobile labels for small screens */}
-      <div className="grid grid-cols-3 gap-2 mt-2 sm:hidden">
-        <div className="text-xs font-medium text-muted-foreground uppercase">Quantity</div>
-        <div className="text-xs font-medium text-muted-foreground uppercase">Unit Price</div>
-        <div className="text-xs font-medium text-muted-foreground uppercase">Subtotal</div>
-      </div>
-
-      {/* Quantity, Unit Price, Subtotal, and Remove button */}
-      <div className="grid grid-cols-3 sm:flex gap-2 mt-1 sm:mt-0">
-        <div className="sm:w-20 sm:px-4">
+      {/* Numerical Columns - Flattened to match header */}
+      <div className="w-16 flex flex-col items-center mt-2 sm:mt-0 px-1">
+        {readOnly ? (
+          <div className="text-sm font-semibold">{item.quantity}</div>
+        ) : (
           <FormInput
             type="number"
             min="1"
             value={item.quantity}
             onChange={(e) => onChange(index, "quantity", Number(e.target.value))}
-            className="w-full text-right"
+            className="w-full text-center h-8 text-xs px-1"
             required
           />
-        </div>
-        <div className="sm:w-28 sm:px-4">
+        )}
+        <span className="text-[9px] text-muted-foreground/60 font-bold uppercase mt-0.5">Nos</span>
+      </div>
+
+      <div className="w-24 mt-2 sm:mt-0 px-1 text-right">
+        {readOnly ? (
+          <div className="text-sm font-medium">{formatCurrency(item.unitPrice * 100, currency)}</div>
+        ) : (
           <FormInput
             type="number"
             step="0.01"
             value={item.unitPrice}
             onChange={(e) => onChange(index, "unitPrice", Number(e.target.value))}
-            className="w-full text-right"
+            className="w-full text-right h-8 text-xs px-1"
             required
           />
-        </div>
-        <div className="sm:w-28 sm:px-4 flex items-center justify-end">
-          <span className="text-sm text-right">{formatCurrency(item.subtotal * 100, currency)}</span>
-        </div>
-        <div className="hidden sm:flex sm:w-10 sm:px-2 items-center justify-center">
-          <Button variant="destructive" className="rounded-full p-1 h-5 w-5" onClick={() => onRemove(index)}>
-            <X />
+        )}
+      </div>
+
+      <div className="w-20 mt-2 sm:mt-0 px-1 text-right">
+        {readOnly ? (
+          <div className="text-sm font-medium">{formatCurrency(item.discount * 100, currency)}</div>
+        ) : (
+          <FormInput
+            type="number"
+            step="0.01"
+            value={item.discount}
+            onChange={(e) => onChange(index, "discount", Number(e.target.value))}
+            className="w-full text-right h-8 text-xs px-1"
+          />
+        )}
+      </div>
+
+      <div className="w-24 mt-2 sm:mt-0 text-right pr-2">
+        <span className="text-sm font-bold">
+          {formatCurrency(item.subtotal * 100, currency)}
+        </span>
+      </div>
+
+      {!readOnly && (
+        <div className="w-8 flex items-center justify-center mt-2 sm:mt-0">
+          <Button variant="ghost" size="icon" className="rounded-full h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => onRemove(index)}>
+            <X className="h-4 w-4" />
           </Button>
         </div>
-      </div>
+      )}
     </div>
   )
 })
@@ -163,36 +178,42 @@ const ItemRow = memo(function ItemRow({
 const TaxRow = memo(function TaxRow({
   tax,
   index,
-  onChange,
   onRemove,
   currency,
+  readOnly,
 }: {
   tax: AdditionalTax
   index: number
   onChange: (index: number, field: keyof AdditionalTax, value: string | number) => void
   onRemove: (index: number) => void
   currency: string
+  readOnly?: boolean
 }) {
   return (
     <div className="flex justify-between items-center">
       <div className="w-full flex flex-row gap-2 items-center">
-        <Button variant="destructive" className="rounded-full p-1 h-5 w-5" onClick={() => onRemove(index)}>
-          <X />
-        </Button>
-        <FormInput
+        {!readOnly && (
+          <Button variant="destructive" className="rounded-full p-1 h-5 w-5" onClick={() => onRemove(index)}>
+            <X />
+          </Button>
+        )}
+        <ShadyFormInput
           type="text"
           value={tax.name}
           onChange={(e) => onChange(index, "name", e.target.value)}
           placeholder="Tax name"
+          readOnly={readOnly}
+          className="flex-1"
         />
-        <FormInput
+        <ShadyFormInput
           type="number"
           max="100"
           value={tax.rate}
           onChange={(e) => onChange(index, "rate", Number(e.target.value))}
           className="w-12 text-right"
+          readOnly={readOnly}
         />
-        <span className="text-sm text-muted-foreground">%</span>
+        <span className="text-sm text-muted-foreground mr-2">%</span>
         <span className="text-sm text-nowrap">{formatCurrency(tax.amount * 100, currency)}</span>
       </div>
     </div>
@@ -203,42 +224,48 @@ const TaxRow = memo(function TaxRow({
 const FeeRow = memo(function FeeRow({
   fee,
   index,
-  onChange,
   onRemove,
   currency,
+  readOnly,
 }: {
   fee: AdditionalFee
   index: number
   onChange: (index: number, field: keyof AdditionalFee, value: string | number) => void
   onRemove: (index: number) => void
   currency: string
+  readOnly?: boolean
 }) {
   return (
     <div className="w-full flex justify-between items-center">
       <div className="w-full flex flex-row gap-2 items-center justify-between">
-        <Button variant="destructive" className="rounded-full p-1 h-5 w-5" onClick={() => onRemove(index)}>
-          <X />
-        </Button>
-        <FormInput
+        {!readOnly && (
+          <Button variant="destructive" className="rounded-full p-1 h-5 w-5" onClick={() => onRemove(index)}>
+            <X />
+          </Button>
+        )}
+        <ShadyFormInput
           type="text"
           value={fee.name}
           onChange={(e) => onChange(index, "name", e.target.value)}
           placeholder="Fee or discount name"
+          readOnly={readOnly}
+          className="flex-1"
         />
-        <FormInput
+        <ShadyFormInput
           type="number"
           step="0.01"
           value={fee.amount}
           onChange={(e) => onChange(index, "amount", Number(e.target.value))}
           className="w-16 text-right"
+          readOnly={readOnly}
         />
-        <span className="text-sm text-nowrap">{formatCurrency(fee.amount * 100, currency)}</span>
+        <span className="text-sm text-nowrap ml-2">{formatCurrency(fee.amount * 100, currency)}</span>
       </div>
     </div>
   )
 })
 
-export function InvoicePage({ invoiceData, dispatch, currencies }: InvoicePageProps) {
+export function InvoicePage({ invoiceData, dispatch, currencies, readOnly = false }: InvoicePageProps) {
   const addItem = useCallback(() => dispatch({ type: "ADD_ITEM" }), [dispatch])
   const removeItem = useCallback((index: number) => dispatch({ type: "REMOVE_ITEM", index }), [dispatch])
   const updateItem = useCallback(
@@ -278,166 +305,202 @@ export function InvoicePage({ invoiceData, dispatch, currencies }: InvoicePagePr
   )
 
   return (
-    <div className="relative w-full max-w-[794px] sm:w-[794px] min-h-[297mm] bg-card shadow-lg p-2 sm:p-8 mb-8">
-      {/* Gradient Background */}
-      <div className="absolute top-0 left-0 right-0 h-[25%] bg-gradient-to-b from-muted to-transparent opacity-70" />
-
+    <div className={`relative flex flex-col w-full max-w-[880px] sm:w-[880px] min-h-[1050px] bg-white p-2 sm:p-10 mx-auto border border-border ${readOnly ? "rounded-2xl shadow-sm" : "rounded-sm mb-8"}`}>
       {/* Invoice Header */}
-      <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 justify-between items-start mb-8 relative">
-        <div className="w-full flex flex-col space-y-2">
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start mb-10 relative">
+        <div className="flex flex-col gap-2 text-sm">
+          {/* Business Logo */}
+          <div className="relative max-w-[100px] sm:max-w-[140px] max-h-[60px] sm:max-h-[80px]">
+            <img 
+              src={invoiceData.businessLogo || "/logo/logo.svg"} 
+              alt="Business Logo" 
+              className="w-full h-full object-contain object-left"
+            />
+          </div>
+
+          <div className="text-muted-foreground leading-relaxed">
+            {readOnly ? (
+              <div className="whitespace-pre-wrap">{invoiceData.companyDetails}</div>
+            ) : (
+              <FormTextarea
+                value={invoiceData.companyDetails}
+                onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "companyDetails", value: e.target.value })}
+                rows={4}
+                placeholder="Address & Details"
+                className="w-full"
+              />
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col items-start sm:items-end gap-1">
           <ShadyFormInput
             type="text"
             value={invoiceData.title}
             onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "title", value: e.target.value })}
-            className="text-2xl sm:text-4xl font-extrabold"
-            placeholder="INVOICE"
+            className="text-4xl sm:text-5xl font-semibold tracking-tight text-primary sm:text-right"
+            placeholder="Invoice"
             required
+            readOnly={readOnly}
           />
-          <FormInput
-            placeholder="Invoice ID or subtitle"
-            value={invoiceData.invoiceNumber}
-            onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "invoiceNumber", value: e.target.value })}
-            className="w-full sm:w-[200px] font-medium"
-          />
-        </div>
-
-        <div className="flex flex-row items-center justify-end mt-4 sm:mt-0">
-          <FormAvatar
-            name="businessLogo"
-            className="w-[60px] h-[60px] sm:w-[100px] sm:h-[100px]"
-            defaultValue={invoiceData.businessLogo || ""}
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) {
-                const objectUrl = URL.createObjectURL(file)
-                dispatch({ type: "UPDATE_FIELD", field: "businessLogo", value: objectUrl })
-              } else {
-                dispatch({ type: "UPDATE_FIELD", field: "businessLogo", value: null })
-              }
-            }}
-          />
+          <div className="flex items-center gap-1 sm:justify-end text-muted-foreground font-medium text-sm">
+            <span>#</span>
+            <ShadyFormInput
+              placeholder="INV-17"
+              value={invoiceData.invoiceNumber}
+              onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "invoiceNumber", value: e.target.value })}
+              className="w-[100px]"
+              readOnly={readOnly}
+            />
+          </div>
+          
+          <div className="mt-4 flex flex-col items-start sm:items-end">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-right w-full">Balance Due</span>
+            <span className="text-xl font-extrabold text-foreground">
+              {formatCurrency(total * 100, invoiceData.currency)}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Company and Bill To */}
-      <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 mb-8">
-        <div className="flex flex-col gap-1">
-          <ShadyFormInput
-            type="text"
-            value={invoiceData.companyDetailsLabel}
-            onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "companyDetailsLabel", value: e.target.value })}
-            className="text-xs sm:text-sm font-medium"
-          />
-          <FormTextarea
-            value={invoiceData.companyDetails}
-            onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "companyDetails", value: e.target.value })}
-            rows={4}
-            placeholder="Your Company Name, Address, City, State, ZIP, Country, Tax ID"
-            required
-          />
-        </div>
-        <div className="flex flex-col gap-1">
+      {/* Company and Bill To + Metadata Row */}
+      <div className="relative flex justify-between gap-8 mb-10">
+        <div className="flex-1 flex flex-col gap-1">
           <ShadyFormInput
             type="text"
             value={invoiceData.billToLabel}
             onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "billToLabel", value: e.target.value })}
-            className="text-xs sm:text-sm font-medium"
+            className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest"
+            readOnly={readOnly}
           />
-          <FormTextarea
-            value={invoiceData.billTo}
-            onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "billTo", value: e.target.value })}
-            rows={4}
-            placeholder="Client Name, Address, City, State, ZIP, Country, Tax ID"
-            required
-          />
-        </div>
-      </div>
-
-      <div className="relative flex flex-col sm:flex-row items-start sm:items-end justify-between mb-8 gap-4">
-        <div className="flex flex-row items-center gap-4 w-full sm:w-auto">
-          <div className="flex flex-col gap-1 w-full">
-            <ShadyFormInput
-              type="text"
-              value={invoiceData.issueDateLabel}
-              onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "issueDateLabel", value: e.target.value })}
-              className="text-xs sm:text-sm font-medium"
-            />
-            <DatePicker
-              value={invoiceData.date ? new Date(invoiceData.date) : undefined}
-              onChange={(date) => dispatch({
-                type: "UPDATE_FIELD",
-                field: "date",
-                value: date ? date.toISOString().split('T')[0] : ""
-              })}
-              className="w-full border-b border-border py-1"
-            />
+          <div className="text-sm font-bold text-foreground mb-1 leading-tight">
+             <ShadyFormInput
+               type="text"
+               value={invoiceData.billTo?.split('\n')[0] || ""}
+               onChange={(e) => {
+                 const lines = invoiceData.billTo?.split('\n') || []
+                 lines[0] = e.target.value
+                 dispatch({ type: "UPDATE_FIELD", field: "billTo", value: lines.join('\n') })
+               }}
+               readOnly={readOnly}
+             />
           </div>
-
-          <div className="flex flex-col gap-1 w-full">
-            <ShadyFormInput
-              type="text"
-              value={invoiceData.dueDateLabel}
-              onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "dueDateLabel", value: e.target.value })}
-              className="text-xs sm:text-sm font-medium"
-            />
-            <DatePicker
-              value={invoiceData.dueDate ? new Date(invoiceData.dueDate) : undefined}
-              onChange={(date) => dispatch({
-                type: "UPDATE_FIELD",
-                field: "dueDate",
-                value: date ? date.toISOString().split('T')[0] : ""
-              })}
-            />
+          <div className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
+            {readOnly ? (
+              invoiceData.billTo?.split('\n').slice(1).join('\n')
+            ) : (
+              <FormTextarea
+                value={invoiceData.billTo?.split('\n').slice(1).join('\n')}
+                onChange={(e) => {
+                  const lines = invoiceData.billTo?.split('\n') || []
+                  dispatch({ type: "UPDATE_FIELD", field: "billTo", value: lines[0] + '\n' + e.target.value })
+                }}
+                rows={3}
+                className="w-full text-xs"
+              />
+            )}
           </div>
         </div>
 
-        <div className="w-full sm:w-auto flex justify-end">
-          <FormSelectCurrency
-            currencies={currencies}
-            value={invoiceData.currency}
-            onValueChange={(value) => dispatch({ type: "UPDATE_FIELD", field: "currency", value })}
-          />
+        <div className="flex flex-col gap-1 items-end">
+            {[
+              { label: invoiceData.issueDateLabel || "Invoice Date", value: invoiceData.date || "" },
+              { label: "Terms", value: "Due on Receipt" },
+              { label: invoiceData.dueDateLabel || "Due Date", value: invoiceData.dueDate || "" },
+              { label: invoiceData.currencyLabel || "Currency", value: invoiceData.currency },
+              { label: "P.O.#", value: "SO-17" }
+            ].map((item, i) => (
+              <div key={i} className="grid grid-cols-[100px_auto_100px] gap-2 text-xs items-center">
+                <span className="text-right text-muted-foreground font-medium">{item.label}</span>
+                <span className="text-muted-foreground/30">:</span>
+                <span className="text-left font-semibold text-foreground">{item.value}</span>
+              </div>
+            ))}
         </div>
       </div>
 
-      {/* Items Section - Refactored to use only flex divs */}
-      <div className="mb-8">
-        <div className="border rounded-lg overflow-hidden">
+      {/* Subject and Description - Grouped tightly */}
+      <div className="mb-5 flex flex-col gap-1.5">
+        <div className="flex flex-col gap-0">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Subject :</span>
+          <ShadyFormInput
+            type="text"
+            value={invoiceData.subject}
+            onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "subject", value: e.target.value })}
+            placeholder="e.g. Project Delivery - Q1 2026"
+            className="text-[15px] font-bold text-foreground bg-transparent p-0"
+            readOnly={readOnly}
+          />
+        </div>
+        <div className="flex flex-col gap-0">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Description :</span>
+          <div className="text-[13px] text-muted-foreground leading-relaxed">
+            {readOnly ? (
+              <div className="whitespace-pre-wrap">{invoiceData.description}</div>
+            ) : (
+              <FormTextarea
+                value={invoiceData.description}
+                onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "description", value: e.target.value })}
+                placeholder="Additional context about this invoice..."
+                className="w-full text-[13px] p-0 border-none bg-transparent"
+                rows={2}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Items Section - Refactored to use rounded container */}
+      <div className="mb-8 border border-border rounded-xl overflow-hidden">
           {/* Header row for column titles */}
-          <div className="hidden sm:flex bg-muted text-xs font-medium text-muted-foreground uppercase tracking-wider border-b">
-            <div className="flex-1 px-4 py-3">
+          <div className="hidden sm:flex bg-primary text-[10px] font-bold text-primary-foreground uppercase tracking-widest px-4 py-3.5">
+            <div className="w-8">#</div>
+            <div className="flex-1 sm:px-4 text-left">
               <ShadyFormInput
                 type="text"
                 value={invoiceData.itemLabel}
                 onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "itemLabel", value: e.target.value })}
-                className="text-xs font-medium text-muted-foreground uppercase tracking-wider"
+                className="text-[10px] font-bold text-primary-foreground uppercase tracking-widest"
+                readOnly={readOnly}
               />
             </div>
-            <div className="w-20 px-4 py-3 text-right">
+            <div className="w-16 text-center">
               <ShadyFormInput
                 type="text"
                 value={invoiceData.quantityLabel}
                 onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "quantityLabel", value: e.target.value })}
-                className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right w-full"
+                className="text-[10px] font-bold text-primary-foreground uppercase tracking-widest text-center w-full"
+                readOnly={readOnly}
               />
             </div>
-            <div className="w-28 px-4 py-3 text-right">
+            <div className="w-24 text-right">
               <ShadyFormInput
                 type="text"
                 value={invoiceData.unitPriceLabel}
                 onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "unitPriceLabel", value: e.target.value })}
-                className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right w-full"
+                className="text-[10px] font-bold text-primary-foreground uppercase tracking-widest text-right w-full"
+                readOnly={readOnly}
               />
             </div>
-            <div className="w-28 px-4 py-3 text-right">
+            <div className="w-20 text-right">
+              <ShadyFormInput
+                type="text"
+                value={invoiceData.discountLabel}
+                onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "discountLabel", value: e.target.value })}
+                className="text-[10px] font-bold text-primary-foreground uppercase tracking-widest text-right w-full"
+                readOnly={readOnly}
+              />
+            </div>
+            <div className="w-24 text-right pr-2">
               <ShadyFormInput
                 type="text"
                 value={invoiceData.subtotalLabel}
                 onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "subtotalLabel", value: e.target.value })}
-                className="text-xs font-medium text-muted-foreground uppercase tracking-wider text-right w-full"
+                className="text-[10px] font-bold text-primary-foreground uppercase tracking-widest text-right w-full"
+                readOnly={readOnly}
               />
             </div>
-            <div className="w-10 px-2 py-3"></div>
+            {!readOnly && <div className="w-8"></div>}
           </div>
 
           {/* Invoice items */}
@@ -450,119 +513,122 @@ export function InvoicePage({ invoiceData, dispatch, currencies }: InvoicePagePr
                 onChange={updateItem}
                 onRemove={removeItem}
                 currency={invoiceData.currency}
+                readOnly={readOnly}
               />
             ))}
           </div>
 
-          <Button onClick={addItem} className="m-2 sm:m-3 w-full sm:w-auto">
-            + Add Item
-          </Button>
+          {!readOnly && (
+            <div className="p-2 border-t bg-muted/5">
+              <Button variant="ghost" size="sm" onClick={addItem} className="text-xs font-bold text-primary gap-1.5">
+                <Plus className="w-3.5 h-3.5" /> Add Item
+              </Button>
+            </div>
+          )}
+      </div>
+
+      {/* Summary Section - Spine Aligned to match table columns */}
+      <div className="flex justify-end mt-8 pr-1">
+        <div className="flex flex-col gap-2 items-end">
+           <div className="grid grid-cols-[1fr_96px] gap-8 text-sm items-center w-full">
+             <span className="text-right text-muted-foreground font-medium whitespace-nowrap">Sub Total</span>
+             <span className="text-right font-semibold">{formatCurrency(subtotal * 100, invoiceData.currency)}</span>
+           </div>
+
+           <div className="grid grid-cols-[1fr_96px] gap-8 text-sm items-center w-full">
+             <span className="text-right text-muted-foreground font-medium whitespace-nowrap">{invoiceData.discountLabel}</span>
+             <span className="text-right font-semibold">{formatCurrency(0, invoiceData.currency)}</span>
+           </div>
+
+           {invoiceData.additionalTaxes.map((tax, index) => (
+             <div key={index} className="grid grid-cols-[1fr_96px] gap-8 text-[13px] items-center w-full">
+               <span className="text-right text-muted-foreground font-medium whitespace-nowrap">{tax.name} ({tax.rate}%)</span>
+               <span className="text-right font-medium">{formatCurrency(tax.amount * 100, invoiceData.currency)}</span>
+             </div>
+           ))}
+
+           <div className="grid grid-cols-[1fr_96px] gap-8 py-2 border-y border-border/20 mt-2 items-center w-full">
+             <span className="text-right text-sm font-bold uppercase tracking-wider whitespace-nowrap">Total</span>
+             <span className="text-right text-sm font-bold text-primary">
+               {formatCurrency(total * 100, invoiceData.currency)}
+             </span>
+           </div>
+
+           <div className="grid grid-cols-[1fr_96px] gap-8 text-[13px] items-center pt-2 w-full">
+             <span className="text-right underline underline-offset-4 decoration-muted-foreground/30 text-muted-foreground whitespace-nowrap">Payment Retention</span>
+             <span className="text-right text-destructive font-medium">(-) {formatCurrency(0, invoiceData.currency)}</span>
+           </div>
+           
+           <div className="grid grid-cols-[1fr_96px] gap-8 text-[13px] items-center w-full">
+             <span className="text-right text-muted-foreground whitespace-nowrap">Payment Made</span>
+             <span className="text-right text-destructive font-medium">(-) {formatCurrency(0, invoiceData.currency)}</span>
+           </div>
+
+           <div className="mt-4 flex gap-8 items-center min-w-[240px] justify-between">
+             <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">Balance Due</span>
+             <span className="text-lg font-black text-foreground">
+               {formatCurrency(total * 100, invoiceData.currency)}
+             </span>
+           </div>
         </div>
       </div>
 
-      {/* Notes */}
-      <div className="mb-8">
-        <FormTextarea
-          value={invoiceData.notes}
-          onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "notes", value: e.target.value })}
-          className="w-full border border-border rounded p-2 text-xs sm:text-sm"
-          rows={3}
-          placeholder="Additional notes or terms"
-        />
+      {/* Footer Details - Grouped tightly at bottom */}
+      <div className="mt-auto pt-10 space-y-4">
+        <div className="space-y-1">
+          <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Notes</h3>
+          <div className="text-xs text-muted-foreground leading-relaxed">
+            {readOnly ? invoiceData.notes : (
+              <FormTextarea 
+                value={invoiceData.notes} 
+                onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "notes", value: e.target.value })}
+                placeholder="Message for the customer..."
+                className="w-full text-xs p-0 border-none bg-transparent"
+                rows={4}
+              />
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-6">
+           <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Payment Options</span>
+           <div className="flex gap-2">
+              <div className="px-2 py-1 bg-muted/30 rounded border border-border/50 text-[10px] font-bold text-primary tracking-widest">PAYPAL</div>
+              <div className="px-2 py-1 bg-muted/30 rounded border border-border/50 text-[10px] font-bold text-primary tracking-widest">CARD</div>
+           </div>
+        </div>
+
+        <div className="space-y-1">
+          <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Terms & Conditions</h3>
+          <p className="text-[11px] text-muted-foreground/70 leading-normal max-w-2xl">
+            Your company's Terms and Conditions will be displayed here. You can add it in the Invoice Preferences page under Settings.
+          </p>
+        </div>
       </div>
 
-      {/* Summary */}
-      <div className="flex justify-end">
-        <div className="w-full sm:w-72 space-y-2">
-          <div className="flex justify-between">
-            <ShadyFormInput
-              type="text"
-              value={invoiceData.summarySubtotalLabel}
-              onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "summarySubtotalLabel", value: e.target.value })}
-              className="text-xs sm:text-sm font-medium text-muted-foreground"
-            />
-            <span className="text-xs sm:text-sm">{formatCurrency(subtotal * 100, invoiceData.currency)}</span>
-          </div>
-
-          <div className="flex flex-col gap-2 items-start">
-            {/* Additional Taxes */}
-            {invoiceData.additionalTaxes.map((tax, index) => (
-              <TaxRow
-                key={index}
-                tax={tax}
-                index={index}
-                onChange={updateAdditionalTax}
-                onRemove={removeAdditionalTax}
-                currency={invoiceData.currency}
-              />
-            ))}
-
-            <div className="w-full flex justify-end">
-              <Button onClick={addAdditionalTax} className="w-full sm:w-auto">
-                + Add Tax
-              </Button>
-            </div>
-
-            {invoiceData.additionalFees.map((fee, index) => (
-              <FeeRow
-                key={index}
-                fee={fee}
-                index={index}
-                onChange={updateAdditionalFee}
-                onRemove={removeAdditionalFee}
-                currency={invoiceData.currency}
-              />
-            ))}
-
-            <div className="w-full flex justify-end">
-              <Button onClick={addAdditionalFee} className="w-full sm:w-auto">
-                + Add Fee or Discount
-              </Button>
-            </div>
-          </div>
-
-          <label className="flex items-center space-x-1">
-            <input
-              type="checkbox"
-              checked={invoiceData.taxIncluded}
-              onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "taxIncluded", value: e.target.checked })}
-              className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
-            />
-            <span className="text-muted-foreground text-xs sm:text-sm">Taxes are included in price</span>
-          </label>
-          <div className="flex justify-between border-t pt-2">
-            <ShadyFormInput
-              type="text"
-              value={invoiceData.summaryTotalLabel}
-              onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "summaryTotalLabel", value: e.target.value })}
-              className="text-sm sm:text-md font-bold"
-            />
-            <span className="text-sm sm:text-md font-bold text-nowrap">
-              {formatCurrency(total * 100, invoiceData.currency)}
+      {readOnly && (
+        <div className="pt-8 flex justify-center opacity-30 shadow-none">
+          <div className="flex flex-col items-center">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center">
+              Powered by Mindtris (Mintax) • © 2026 Mindtris™ Inc.
+            </span>
+            <span className="text-xs text-muted-foreground/60 mt-1 text-center">
+              You received this email because you have a Mintax account.
             </span>
           </div>
         </div>
-      </div>
-
-      {/* Bank Details Footer */}
-      <div className="mt-8 pt-8 border-t">
-        <textarea
-          value={invoiceData.bankDetails}
-          onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "bankDetails", value: e.target.value })}
-          className="text-center text-xs sm:text-sm text-muted-foreground w-full mx-auto border border-border rounded p-2"
-          rows={3}
-          placeholder="Bank and Payment Details: Account number, Bank name, IBAN, SWIFT/BIC, Your Email (optional)"
-          required
-        />
-      </div>
+      )}
     </div>
   )
 }
 
-function ShadyFormInput({ className = "", ...props }: { className?: string } & InputHTMLAttributes<HTMLInputElement>) {
+function ShadyFormInput({ className = "", readOnly, ...props }: { className?: string; readOnly?: boolean } & InputHTMLAttributes<HTMLInputElement>) {
+  if (readOnly) {
+    return <div className={`truncate ${className}`}>{props.value}</div>
+  }
   return (
     <input
-      className={`bg-transparent border border-transparent outline-none p-0 w-full hover:border-dashed hover:border-border hover:bg-muted focus:bg-muted hover:rounded-sm ${className}`}
+      className={`bg-transparent border border-transparent outline-none p-0 w-full hover:border-border hover:bg-muted focus:bg-muted hover:rounded-sm ${className}`}
       {...props}
     />
   )

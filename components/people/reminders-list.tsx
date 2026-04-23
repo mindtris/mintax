@@ -189,7 +189,7 @@ export function RemindersList({ reminders, members, categories, currentUserId, c
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={async () => {
                   if (confirm("Delete this reminder?")) {
                     await deleteReminderAction(row.id)
@@ -362,12 +362,12 @@ export function RemindersList({ reminders, members, categories, currentUserId, c
               </div>
             </SheetHeader>
             <div className="flex-1 overflow-y-auto px-6 py-6">
-              <ReminderForm 
-                initialData={row} 
+              <ReminderForm
+                initialData={row}
                 onSuccess={() => {
-                  router.refresh(); 
-                  onClose() 
-                }} 
+                  router.refresh();
+                  onClose()
+                }}
                 currentUserId={currentUserId}
                 members={members}
                 categories={categories}
@@ -383,9 +383,9 @@ export function RemindersList({ reminders, members, categories, currentUserId, c
       />
 
       {selectedIds.length > 0 && (
-        <RemindersBulkActions 
-          selectedIds={selectedIds} 
-          onActionComplete={() => setSelectedIds([])} 
+        <RemindersBulkActions
+          selectedIds={selectedIds}
+          onActionComplete={() => setSelectedIds([])}
         />
       )}
 
@@ -398,9 +398,9 @@ export function RemindersList({ reminders, members, categories, currentUserId, c
             <SheetTitle>New reminder</SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-6 py-6">
-            <ReminderForm 
-              onSuccess={() => { setCreateOpen(false); router.refresh() }} 
-              currentUserId={currentUserId} 
+            <ReminderForm
+              onSuccess={() => { setCreateOpen(false); router.refresh() }}
+              currentUserId={currentUserId}
               members={members}
               categories={categories}
             />
