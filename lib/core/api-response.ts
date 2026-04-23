@@ -9,6 +9,7 @@ export type ApiErrorCode =
   | "conflict"
   | "unauthorized"
   | "internal_error"
+  | "expired"
 
 type ErrorDetails = Record<string, unknown> | Array<Record<string, unknown>>
 

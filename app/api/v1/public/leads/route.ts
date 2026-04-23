@@ -1,10 +1,20 @@
+import crypto from "crypto"
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/core/db"
 import { apiError, apiOk } from "@/lib/core/api-response"
 import { checkRateLimit } from "@/lib/core/rate-limit"
+import { sendNewsletterConfirmEmail } from "@/lib/integrations/email"
 import { verifyTurnstile } from "@/lib/integrations/turnstile"
+import { logger } from "@/lib/logging/logger"
 import { decryptTurnstileSecret, getPublicApiConfigBySlug } from "@/lib/services/public-api-config"
+
+const CONFIRMATION_TTL_HOURS = 24
+const CONFIRMATION_TTL_MS = CONFIRMATION_TTL_HOURS * 60 * 60 * 1000
+
+function generateConfirmationToken(): string {
+  return crypto.randomBytes(32).toString("base64url")
+}
 
 const sourceEnum = z.enum(["demo", "contact-sales", "newsletter", "press", "careers"])
 
@@ -108,6 +118,10 @@ export async function POST(req: NextRequest) {
   const title = buildLeadTitle(body)
   const contactName = body.name ?? body.email
 
+  const isNewsletter = body.source === "newsletter"
+  const confirmationToken = isNewsletter ? generateConfirmationToken() : null
+  const confirmationTokenExpiresAt = isNewsletter ? new Date(Date.now() + CONFIRMATION_TTL_MS) : null
+
   const lead = await prisma.lead.create({
     data: {
       organizationId: orgId,
@@ -120,11 +134,26 @@ export async function POST(req: NextRequest) {
       stage: "new",
       probability: 10,
       description: buildDescription(body),
+      confirmationToken,
+      confirmationTokenExpiresAt,
     },
     select: { id: true },
   })
 
-  return apiOk({ id: lead.id }, 200, headers)
+  if (isNewsletter && confirmationToken) {
+    const confirmUrl = `${origin}/newsletter/confirm?token=${encodeURIComponent(confirmationToken)}`
+    try {
+      await sendNewsletterConfirmEmail({
+        email: body.email,
+        confirmUrl,
+        expiresInHours: CONFIRMATION_TTL_HOURS,
+      })
+    } catch (err) {
+      logger.error("LEADS", "newsletter-confirm email failed", err)
+    }
+  }
+
+  return apiOk({ id: lead.id, pendingConfirmation: isNewsletter }, 200, headers)
 }
 
 function buildLeadTitle(body: LeadBody): string {

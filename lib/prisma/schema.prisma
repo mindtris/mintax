@@ -1340,6 +1340,11 @@ model Lead {
   leadFiles       LeadFile[]
   meetings        Meeting[]
 
+  // Double opt-in (newsletter source)
+  confirmationToken          String?   @unique @map("confirmation_token")
+  confirmationTokenExpiresAt DateTime? @map("confirmation_token_expires_at")
+  confirmedAt                DateTime? @map("confirmed_at")
+
   // Lifecycle
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
@@ -1349,6 +1354,7 @@ model Lead {
   @@index([source])
   @@index([assignedToId])
   @@index([contactId])
+  @@index([confirmationTokenExpiresAt])
   @@map("leads")
 }
 

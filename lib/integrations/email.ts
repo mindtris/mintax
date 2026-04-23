@@ -4,6 +4,7 @@ import { InvoiceEmail } from "@/components/emails/invoice-email"
 import { InvoicePaymentEmail } from "@/components/emails/invoice-payment-email"
 import { InvoiceRecurringEmail } from "@/components/emails/invoice-recurring-email"
 import { InvoiceReminderEmail } from "@/components/emails/invoice-reminder-email"
+import { NewsletterConfirmEmail } from "@/components/emails/newsletter-confirm-email"
 import { NewsletterWelcomeEmail } from "@/components/emails/newsletter-welcome-email"
 import { OTPEmail } from "@/components/emails/otp-email"
 import { PaymentReceiptEmail } from "@/components/emails/payment-receipt-email"
@@ -123,6 +124,22 @@ export async function sendOTPCodeEmail({
     subject,
     react: React.createElement(OTPEmail, { otp }),
     replyTo: emailSettings?.email_reply_to || undefined,
+  })
+}
+
+export async function sendNewsletterConfirmEmail({
+  email,
+  confirmUrl,
+  expiresInHours = 24,
+}: {
+  email: string
+  confirmUrl: string
+  expiresInHours?: number
+}) {
+  return sendEmail({
+    to: email,
+    subject: "Confirm your newsletter subscription",
+    react: React.createElement(NewsletterConfirmEmail, { confirmUrl, expiresInHours }),
   })
 }
 

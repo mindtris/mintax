@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
     "/api/cron/publish-posts",
     "/api/cron/refresh-analytics",
     "/api/cron/schedules",
+    "/api/cron/cleanup-leads",
     "/api/reminders/process",
   ]
 
