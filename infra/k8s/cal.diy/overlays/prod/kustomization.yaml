@@ -1,0 +1,18 @@
+# Prod overlay for cal.diy.
+# TODO before apply:
+#   - set `images.newName` to your Nexus-mirrored registry path
+#   - set `images.newTag` to the pinned cal.diy release
+#   - replace the REPLACE_HOST tokens in patches.yaml with your prod hostname
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+images:
+  - name: REPLACE_REGISTRY/calcom/cal.diy
+    newName: REPLACE_REGISTRY/calcom/cal.diy
+    newTag: REPLACE_TAG
+
+patches:
+  - path: patches.yaml

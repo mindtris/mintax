@@ -39,6 +39,7 @@ const settingsGroups: NavGroup[] = [
     label: "Communications",
     items: [
       { title: "Social accounts", href: "/settings?tab=social", icon: "share-2" },
+      { title: "Calendar", href: "/settings?tab=calendar", icon: "calendar-days" },
     ],
   },
   {

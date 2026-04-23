@@ -3,8 +3,9 @@
 import { ActionState } from "@/lib/actions"
 import { updateFile } from "@/lib/services/files"
 import { getLLMSettings, getSettings } from "@/lib/services/settings"
-import { AnalyzeAttachment } from "./attachments"
-import { requestLLM } from "./providers/llmProvider"
+import { AnalyzeAttachment } from "@/lib/ai/attachments"
+import { requestLLM } from "@/lib/ai/providers/llmProvider"
+import { logger } from "@/lib/logging/logger"
 
 export type AnalysisResult = {
   output: Record<string, string>
@@ -36,8 +37,8 @@ export async function analyzeTransaction(
     const result = response.output
     const tokensUsed = response.tokensUsed || 0
 
-    console.log("LLM response:", result)
-    console.log("LLM tokens used:", tokensUsed)
+    logger.info("LLM", "response", result)
+    logger.info("LLM", "tokens used", tokensUsed)
 
     await updateFile(fileId, userId, { cachedParseResult: result })
 

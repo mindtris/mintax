@@ -15,6 +15,7 @@ import { Resend } from "resend"
 import nodemailer from "nodemailer"
 import config from "@/lib/core/config"
 import { SettingsMap } from "@/lib/services/settings"
+import { logger } from "@/lib/logging/logger"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Transport layer — supports Resend API or SMTP
@@ -59,7 +60,7 @@ export async function sendEmail({
   replyTo?: string
   attachments?: { filename: string; content: Buffer | Uint8Array; contentType: string }[]
 }) {
-  console.log(`[EMAIL] Sending "${subject}" to ${to} via ${config.email.driver}`)
+  logger.info("EMAIL", `Sending "${subject}" to ${to} via ${config.email.driver}`)
 
   try {
     if (config.email.driver === "smtp") {
@@ -78,7 +79,7 @@ export async function sendEmail({
         })),
         ...(replyTo ? { replyTo } : {}),
       })
-      console.log(`[EMAIL] SMTP result: ${result.messageId}`)
+      logger.success("EMAIL", `SMTP result: ${result.messageId}`)
       return { data: { id: result.messageId }, error: null }
     } else {
       const resend = getResend()
@@ -93,11 +94,11 @@ export async function sendEmail({
         })),
         ...(replyTo ? { reply_to: replyTo } : {}),
       })
-      console.log(`[EMAIL] Resend result:`, JSON.stringify(result))
+      logger.success("EMAIL", "Resend result", result)
       return result
     }
   } catch (error) {
-    console.error(`[EMAIL] Failed:`, error)
+    logger.error("EMAIL", "Failed", error)
     throw error
   }
 }

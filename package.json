@@ -106,5 +106,12 @@
     "react-day-picker": {
       "react": "^19.0.0"
     }
+  },
+  "pnpm": {
+    "overrides": {
+      "@react-email/render": "1.1.2",
+      "import-in-the-middle": "1.15.0",
+      "prettier": "3.8.1"
+    }
   }
 }

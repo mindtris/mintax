@@ -1,0 +1,55 @@
+# Ephemeral Redis — used by cal.diy for rate limiting and workflow queues.
+# No PVC intentionally: restart loses queued work but cal.diy retries.
+# Swap for a Redis operator or managed cache if durability matters later.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cal-redis
+  namespace: cal-diy
+  labels:
+    app.kubernetes.io/name: cal-redis
+    app.kubernetes.io/part-of: cal-diy
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cal-redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cal-redis
+        app.kubernetes.io/part-of: cal-diy
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          imagePullPolicy: IfNotPresent
+          args: ["redis-server", "--save", "", "--appendonly", "no", "--loglevel", "warning"]
+          ports:
+            - name: redis
+              containerPort: 6379
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 999
+            capabilities:
+              drop: ["ALL"]

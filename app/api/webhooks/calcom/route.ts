@@ -1,7 +1,7 @@
 import crypto from "crypto"
 import { NextRequest } from "next/server"
 import { apiError, apiOk } from "@/lib/core/api-response"
-import { decryptCalcomWebhookSecret, getPublicApiConfigBySlug } from "@/lib/services/public-api-config"
+import { getPublicApiConfigBySlug } from "@/lib/services/public-api-config"
 import {
   handleCalcomBookingCancelled,
   handleCalcomBookingCreated,
@@ -34,11 +34,11 @@ export async function POST(req: NextRequest) {
   if (!lookup || !lookup.config.enabled || !lookup.config.calcomEnabled) {
     return apiError("not_found", "Organization not found or cal.com webhook disabled", 404)
   }
-  const { orgId, config } = lookup
+  const { orgId } = lookup
 
-  const secret = decryptCalcomWebhookSecret(config)
+  const secret = process.env.CALCOM_WEBHOOK_SECRET
   if (!secret) {
-    return apiError("unauthorized", "Webhook secret not configured", 401)
+    return apiError("internal_error", "CALCOM_WEBHOOK_SECRET not configured", 500)
   }
 
   const rawBody = await req.text()

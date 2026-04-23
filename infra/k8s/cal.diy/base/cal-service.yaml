@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cal
+  namespace: cal-diy
+  labels:
+    app.kubernetes.io/name: cal
+    app.kubernetes.io/part-of: cal-diy
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: cal
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

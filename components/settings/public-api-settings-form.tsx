@@ -31,18 +31,12 @@ export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseU
   const [webhookCopied, setWebhookCopied] = useState<boolean>(false)
 
   const [calcomEnabled, setCalcomEnabled] = useState<boolean>(initialConfig?.calcomEnabled ?? false)
-  const [calcomSecretInput, setCalcomSecretInput] = useState<string>("")
-  const [clearCalcomSecret, setClearCalcomSecret] = useState<boolean>(false)
-  const [revealCalcomSecret, setRevealCalcomSecret] = useState<boolean>(false)
-  const [calcomEventType, setCalcomEventType] = useState<string>(initialConfig?.calcomDefaultEventType ?? "")
 
   useEffect(() => {
     if (state?.success) {
       toast.success("Public API settings saved")
       setSecretInput("")
       setClearSecret(false)
-      setCalcomSecretInput("")
-      setClearCalcomSecret(false)
     }
     if (state?.error) toast.error(state.error)
   }, [state])
@@ -77,7 +71,6 @@ export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseU
       <Input type="hidden" name="leadsEnabled" value={leadsEnabled ? "true" : "false"} readOnly />
       <Input type="hidden" name="clearTurnstileSecret" value={clearSecret ? "true" : "false"} readOnly />
       <Input type="hidden" name="calcomEnabled" value={calcomEnabled ? "true" : "false"} readOnly />
-      <Input type="hidden" name="clearCalcomWebhookSecret" value={clearCalcomSecret ? "true" : "false"} readOnly />
 
       <section className="flex flex-col gap-4 rounded-lg border bg-card p-6">
         <div>
@@ -113,7 +106,7 @@ export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseU
           title="Origins"
           value={origins}
           onChange={(e) => setOrigins(e.target.value)}
-          placeholder={"https://simplifisign.com\nhttps://www.simplifisign.com\nhttp://localhost:3002"}
+          placeholder={"https://example.com\nhttps://www.example.com\nhttp://localhost:3000"}
           rows={5}
         />
       </section>
@@ -266,68 +259,6 @@ export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseU
           </p>
         </div>
 
-        {initialConfig?.hasCalcomWebhookSecret && !clearCalcomSecret ? (
-          <div className="flex flex-col gap-2">
-            <Label>Webhook secret</Label>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 rounded-md border bg-muted/30 px-3 py-2 text-sm font-mono">
-                {revealCalcomSecret ? (initialConfig.calcomWebhookSecretPreview ?? "") : "••••••••••••••••••••"}
-              </div>
-              <Button type="button" variant="outline" size="sm" onClick={() => setRevealCalcomSecret((v) => !v)}>
-                {revealCalcomSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
-              <Button type="button" variant="outline" size="sm" onClick={() => setClearCalcomSecret(true)}>
-                Replace
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="calcomWebhookSecret">
-              {clearCalcomSecret ? "Replacement webhook secret" : "Webhook secret"}
-            </Label>
-            <Input
-              id="calcomWebhookSecret"
-              name="calcomWebhookSecret"
-              type="password"
-              autoComplete="off"
-              value={calcomSecretInput}
-              onChange={(e) => setCalcomSecretInput(e.target.value)}
-              placeholder="whsec_..."
-            />
-            {clearCalcomSecret ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="self-start"
-                onClick={() => {
-                  setClearCalcomSecret(false)
-                  setCalcomSecretInput("")
-                }}
-              >
-                Cancel replace
-              </Button>
-            ) : null}
-            <p className="text-xs text-muted-foreground">
-              cal.com signs every webhook request with this secret. Used for HMAC verification server-side.
-            </p>
-          </div>
-        )}
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="calcomDefaultEventType">Default event type slug</Label>
-          <Input
-            id="calcomDefaultEventType"
-            name="calcomDefaultEventType"
-            value={calcomEventType}
-            onChange={(e) => setCalcomEventType(e.target.value)}
-            placeholder="simplifisign/demo-30min"
-          />
-          <p className="text-xs text-muted-foreground">
-            Optional — used when generating booking links from lead records.
-          </p>
-        </div>
       </section>
 
       <section className="flex flex-col gap-4 rounded-lg border bg-card p-6">

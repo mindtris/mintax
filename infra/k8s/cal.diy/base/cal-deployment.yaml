@@ -1,0 +1,86 @@
+# TODO before apply:
+#   - replace REPLACE_REGISTRY with your Nexus registry host (e.g. nexus.internal.co)
+#   - replace REPLACE_TAG with the cal.diy release you've mirrored
+#     (see https://hub.docker.com/r/calcom/cal.diy/tags; ARM hosts use `-arm` suffix)
+#   - set spec.template.spec.imagePullSecrets if Nexus requires auth
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cal
+  namespace: cal-diy
+  labels:
+    app.kubernetes.io/name: cal
+    app.kubernetes.io/part-of: cal-diy
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cal
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cal
+        app.kubernetes.io/part-of: cal-diy
+    spec:
+      # imagePullSecrets:
+      #   - name: nexus-dockercfg
+      containers:
+        - name: cal
+          image: REPLACE_REGISTRY/calcom/cal.diy:REPLACE_TAG
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: cal-diy-config
+            - secretRef:
+                name: cal-diy-secrets
+          env:
+            - name: DATABASE_URL
+              value: postgresql://cal:$(CAL_DB_PASSWORD)@cal-postgres.cal-diy.svc.cluster.local:5432/cal
+            - name: DATABASE_DIRECT_URL
+              value: postgresql://cal:$(CAL_DB_PASSWORD)@cal-postgres.cal-diy.svc.cluster.local:5432/cal
+            - name: REDIS_URL
+              value: redis://cal-redis.cal-diy.svc.cluster.local:6379
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 36
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1001
+            capabilities:
+              drop: ["ALL"]

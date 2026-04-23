@@ -1,0 +1,23 @@
+# Base manifests for cal.diy. Env-specific values (host, image tag, registry,
+# replica count) are applied by overlays under ../overlays/<env>/.
+# Do not point an ArgoCD Application at this directory directly —
+# target an overlay instead.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: cal-diy
+
+commonLabels:
+  app.kubernetes.io/part-of: cal-diy
+
+resources:
+  - namespace.yaml
+  - secret.yaml
+  - configmap.yaml
+  - postgres-statefulset.yaml
+  - postgres-service.yaml
+  - redis-deployment.yaml
+  - redis-service.yaml
+  - cal-deployment.yaml
+  - cal-service.yaml
+  - ingress.yaml

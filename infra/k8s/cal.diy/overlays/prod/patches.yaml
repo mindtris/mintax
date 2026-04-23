@@ -1,0 +1,35 @@
+# Prod-specific patches. Replace REPLACE_HOST with your cal.diy hostname
+# (e.g. cal.yourcompany.com) and REPLACE_CLUSTER_ISSUER with your cert-manager
+# ClusterIssuer (e.g. letsencrypt-prod, internal-ca).
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cal-diy-config
+data:
+  NEXTAUTH_URL: https://REPLACE_HOST
+  NEXT_PUBLIC_WEBAPP_URL: https://REPLACE_HOST
+  NEXT_PUBLIC_API_V2_URL: https://REPLACE_HOST/api/v2
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cal
+  annotations:
+    cert-manager.io/cluster-issuer: REPLACE_CLUSTER_ISSUER
+spec:
+  tls:
+    - hosts:
+        - REPLACE_HOST
+      secretName: cal-tls
+  rules:
+    - host: REPLACE_HOST
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cal
+                port:
+                  number: 80

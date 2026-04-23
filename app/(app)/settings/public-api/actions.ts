@@ -20,9 +20,6 @@ const formSchema = z.object({
   turnstileSecret: z.string().optional(),
   clearTurnstileSecret: z.enum(["true", "false"]).optional(),
   calcomEnabled: z.enum(["true", "false"]).transform((v) => v === "true"),
-  calcomWebhookSecret: z.string().optional(),
-  clearCalcomWebhookSecret: z.enum(["true", "false"]).optional(),
-  calcomDefaultEventType: z.string().optional(),
 })
 
 export async function getPublicApiConfigForCurrentOrg(): Promise<PublicApiConfigView | null> {
@@ -63,13 +60,6 @@ export async function savePublicApiConfigAction(
         ? input.turnstileSecret.trim()
         : undefined
 
-  const calcomWebhookSecret =
-    input.clearCalcomWebhookSecret === "true"
-      ? null
-      : input.calcomWebhookSecret && input.calcomWebhookSecret.trim().length > 0
-        ? input.calcomWebhookSecret.trim()
-        : undefined
-
   try {
     const saved = await upsertPublicApiConfig(org.id, {
       enabled: input.enabled,
@@ -78,8 +68,6 @@ export async function savePublicApiConfigAction(
       ratePerMinute: input.ratePerMinute,
       turnstileSecret,
       calcomEnabled: input.calcomEnabled,
-      calcomWebhookSecret,
-      calcomDefaultEventType: input.calcomDefaultEventType ?? null,
     })
     revalidatePath("/settings")
     return { success: true, data: saved }

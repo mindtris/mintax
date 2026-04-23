@@ -10,8 +10,9 @@ import { nextCookies } from "better-auth/next-js"
 import { emailOTP } from "better-auth/plugins/email-otp"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
-import { prisma } from "./db"
+import { prisma } from "@/lib/core/db"
 import { resend, sendOTPCodeEmail } from "@/lib/integrations/email"
+import { logger } from "@/lib/logging/logger"
 
 export type UserProfile = {
   id: string
@@ -62,7 +63,7 @@ export const auth = betterAuth({
       otpLength: 6,
       expiresIn: 10 * 60, // 10 minutes
       sendVerificationOTP: async ({ email, otp }) => {
-        console.log(`[AUTH] OTP requested for ${email}, code: ${otp}`)
+        logger.info("AUTH", `OTP requested for ${email}, code: ${otp}`)
         await sendOTPCodeEmail({ email, otp })
       },
     }),

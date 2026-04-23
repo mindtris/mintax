@@ -1,0 +1,112 @@
+# Self-hosted cal.diy deployment.
+# Usage:
+#   1. cp .env.example .env  and fill values
+#   2. docker compose up -d
+# Upstream image: https://hub.docker.com/r/calcom/cal.diy
+# Upstream docs:  https://www.cal.diy/docker
+# For ARM hosts, append "-arm" to CAL_IMAGE_TAG (e.g. v5.6.19-arm).
+# CAL_IMAGE_TAG is required — pin to a specific release before production (never use `latest` in prod).
+
+services:
+  cal:
+    image: calcom/cal.diy:${CAL_IMAGE_TAG}
+    container_name: cal-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://cal:${CAL_DB_PASSWORD}@cal-postgres:5432/cal
+      - DATABASE_DIRECT_URL=postgresql://cal:${CAL_DB_PASSWORD}@cal-postgres:5432/cal
+      - REDIS_URL=redis://cal-redis:6379
+    env_file:
+      - .env
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      cal-postgres:
+        condition: service_healthy
+      cal-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100M"
+        max-file: "3"
+
+  cal-postgres:
+    image: postgres:17-alpine
+    container_name: cal-postgres
+    environment:
+      - POSTGRES_USER=cal
+      - POSTGRES_PASSWORD=${CAL_DB_PASSWORD}
+      - POSTGRES_DB=cal
+    volumes:
+      - cal_pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cal -d cal"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100M"
+        max-file: "3"
+
+  cal-redis:
+    image: redis:7-alpine
+    container_name: cal-redis
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    volumes:
+      - cal_redisdata:/data
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50M"
+        max-file: "3"
+
+volumes:
+  cal_pgdata:
+  cal_redisdata:

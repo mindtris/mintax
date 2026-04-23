@@ -1,0 +1,35 @@
+# TODO before apply:
+#   - replace REPLACE_HOST with your cal.diy hostname
+#   - verify ingressClassName matches your Traefik installation (usually "traefik")
+#   - replace REPLACE_CLUSTER_ISSUER with your cert-manager ClusterIssuer
+#     (e.g. letsencrypt-prod, internal-ca). Remove cert-manager annotation +
+#     the tls block if you're pre-provisioning certs via another mechanism.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cal
+  namespace: cal-diy
+  labels:
+    app.kubernetes.io/name: cal
+    app.kubernetes.io/part-of: cal-diy
+  annotations:
+    cert-manager.io/cluster-issuer: REPLACE_CLUSTER_ISSUER
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - REPLACE_HOST
+      secretName: cal-tls
+  rules:
+    - host: REPLACE_HOST
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cal
+                port:
+                  number: 80

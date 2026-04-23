@@ -1,0 +1,82 @@
+# Self-contained Postgres for cal.diy. For HA/backups at scale, graduate to
+# an operator (CloudNativePG, Zalando, Percona) or a shared managed Postgres.
+# storageClassName is omitted — uses the cluster default. Set explicitly
+# (e.g. longhorn, rook-ceph, gp3) if you need a specific storage tier.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cal-postgres
+  namespace: cal-diy
+  labels:
+    app.kubernetes.io/name: cal-postgres
+    app.kubernetes.io/part-of: cal-diy
+spec:
+  serviceName: cal-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cal-postgres
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cal-postgres
+        app.kubernetes.io/part-of: cal-diy
+    spec:
+      securityContext:
+        fsGroup: 999
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: cal
+            - name: POSTGRES_DB
+              value: cal
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cal-diy-secrets
+                  key: CAL_DB_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "cal", "-d", "cal"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "cal", "-d", "cal"]
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 999
+            capabilities:
+              drop: ["ALL"]
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        # storageClassName: REPLACE_STORAGE_CLASS
+        resources:
+          requests:
+            storage: 10Gi

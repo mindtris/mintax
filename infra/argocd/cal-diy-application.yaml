@@ -1,0 +1,36 @@
+# TODO before apply:
+#   - replace REPLACE_REPO_URL with your Git repo URL (ssh or https)
+#   - replace REPLACE_REVISION with the branch or tag you want to track (e.g. main)
+#   - replace REPLACE_PROJECT with your ArgoCD AppProject name (default: "default")
+#   - if you add per-env overlays later, point `source.path` at the overlay dir
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cal-diy
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: REPLACE_PROJECT
+  source:
+    repoURL: REPLACE_REPO_URL
+    targetRevision: REPLACE_REVISION
+    # Points at the Kustomize overlay for prod. Add more overlays under
+    # infra/k8s/cal.diy/overlays/<env>/ and create a separate Application for each.
+    path: infra/k8s/cal.diy/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cal-diy
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m

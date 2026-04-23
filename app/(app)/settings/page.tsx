@@ -10,6 +10,7 @@ import { CrudTable } from "@/components/settings/crud"
 import { SocialAccountsList } from "@/components/settings/social-list"
 import { ConnectAccountButton } from "@/components/settings/connect-button"
 import PublicApiSettingsForm from "@/components/settings/public-api-settings-form"
+import CalendarSettingsView from "@/components/settings/calendar-settings-view"
 import { getPublicApiConfigView } from "@/lib/services/public-api-config"
 import appConfig from "@/lib/core/config"
 import { Button } from "@/components/ui/button"
@@ -715,6 +716,12 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         </div>
       </div>
     )
+  }
+
+  // Calendar tab
+  if (tab === "calendar") {
+    const baseUrl = process.env.NEXT_PUBLIC_CALCOM_BASE_URL ?? null
+    return <CalendarSettingsView baseUrl={baseUrl} />
   }
 
   // Public API tab

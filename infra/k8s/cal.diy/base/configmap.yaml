@@ -1,0 +1,19 @@
+# TODO before apply: replace REPLACE_HOST with your cal.diy hostname
+# (e.g. cal.yourcompany.com). Non-secret env only — secrets live in secret.yaml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cal-diy-config
+  namespace: cal-diy
+data:
+  NODE_ENV: production
+  NEXTAUTH_URL: https://REPLACE_HOST
+  NEXT_PUBLIC_WEBAPP_URL: https://REPLACE_HOST
+  NEXT_PUBLIC_API_V2_URL: https://REPLACE_HOST/api/v2
+  LICENSE_CONSENT: agree
+
+  # SMTP (non-secret parts — password lives in the Secret)
+  EMAIL_FROM: bookings@REPLACE_DOMAIN
+  EMAIL_SERVER_HOST: REPLACE_SMTP_HOST
+  EMAIL_SERVER_PORT: "587"
+  EMAIL_SERVER_USER: REPLACE_SMTP_USER

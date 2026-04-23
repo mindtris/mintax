@@ -2,11 +2,9 @@ import { prisma } from "@/lib/core/db"
 import { encrypt, decrypt, isEncrypted } from "@/lib/core/encryption"
 import type { PublicApiConfig } from "@/lib/prisma/client"
 
-export type PublicApiConfigView = Omit<PublicApiConfig, "turnstileSecret" | "calcomWebhookSecret"> & {
+export type PublicApiConfigView = Omit<PublicApiConfig, "turnstileSecret"> & {
   turnstileSecretPreview: string | null
   hasTurnstileSecret: boolean
-  calcomWebhookSecretPreview: string | null
-  hasCalcomWebhookSecret: boolean
 }
 
 export type PublicApiConfigInput = {
@@ -16,8 +14,6 @@ export type PublicApiConfigInput = {
   leadsEnabled: boolean
   turnstileSecret?: string | null
   calcomEnabled: boolean
-  calcomWebhookSecret?: string | null
-  calcomDefaultEventType?: string | null
 }
 
 export async function getPublicApiConfig(organizationId: string): Promise<PublicApiConfig | null> {
@@ -46,8 +42,6 @@ export async function upsertPublicApiConfig(
   const existing = await prisma.publicApiConfig.findUnique({ where: { organizationId } })
 
   const turnstileSecret = resolveSecretForWrite(input.turnstileSecret, existing?.turnstileSecret)
-  const calcomWebhookSecret = resolveSecretForWrite(input.calcomWebhookSecret, existing?.calcomWebhookSecret)
-  const calcomDefaultEventType = normalizeEventType(input.calcomDefaultEventType)
 
   const saved = await prisma.publicApiConfig.upsert({
     where: { organizationId },
@@ -59,8 +53,6 @@ export async function upsertPublicApiConfig(
       leadsEnabled: input.leadsEnabled,
       turnstileSecret,
       calcomEnabled: input.calcomEnabled,
-      calcomWebhookSecret,
-      calcomDefaultEventType,
     },
     update: {
       enabled: input.enabled,
@@ -69,8 +61,6 @@ export async function upsertPublicApiConfig(
       leadsEnabled: input.leadsEnabled,
       turnstileSecret,
       calcomEnabled: input.calcomEnabled,
-      calcomWebhookSecret,
-      calcomDefaultEventType,
     },
   })
 
@@ -80,11 +70,6 @@ export async function upsertPublicApiConfig(
 export function decryptTurnstileSecret(config: Pick<PublicApiConfig, "turnstileSecret">): string | null {
   if (!config.turnstileSecret) return null
   return decrypt(config.turnstileSecret) || null
-}
-
-export function decryptCalcomWebhookSecret(config: Pick<PublicApiConfig, "calcomWebhookSecret">): string | null {
-  if (!config.calcomWebhookSecret) return null
-  return decrypt(config.calcomWebhookSecret) || null
 }
 
 function resolveSecretForWrite(incoming: string | null | undefined, existing: string | null | undefined): string | null {
@@ -110,22 +95,13 @@ function normalizeOrigins(origins: string[]): string[] {
   return Array.from(set)
 }
 
-function normalizeEventType(value: string | null | undefined): string | null {
-  if (!value) return null
-  const trimmed = value.trim()
-  return trimmed.length > 0 ? trimmed : null
-}
-
 function toView(cfg: PublicApiConfig): PublicApiConfigView {
   const tsDecrypted = cfg.turnstileSecret ? decrypt(cfg.turnstileSecret) : null
-  const calDecrypted = cfg.calcomWebhookSecret ? decrypt(cfg.calcomWebhookSecret) : null
-  const { turnstileSecret: _ts, calcomWebhookSecret: _cs, ...rest } = cfg
+  const { turnstileSecret: _ts, ...rest } = cfg
   return {
     ...rest,
     turnstileSecretPreview: tsDecrypted ? maskSecret(tsDecrypted) : null,
     hasTurnstileSecret: Boolean(tsDecrypted),
-    calcomWebhookSecretPreview: calDecrypted ? maskSecret(calDecrypted) : null,
-    hasCalcomWebhookSecret: Boolean(calDecrypted),
   }
 }
 
