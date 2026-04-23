@@ -6,10 +6,11 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { saveEstimateSettingsAction } from "@/app/(app)/settings/actions"
 import { useActionState, useEffect } from "react"
 import { toast } from "sonner"
 
-export default function EstimateSettingsForm({ settings }: { settings: Record<string, string> }) {
+export default function EstimateSettingsForm({ settings, orgName }: { settings: Record<string, string>; orgName?: string }) {
   const [saveState, saveAction, pending] = useActionState(saveEstimateSettingsAction, null)
 
   return (

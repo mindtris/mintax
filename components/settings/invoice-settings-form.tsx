@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useActionState, useEffect } from "react"
 import { toast } from "sonner"
 
-export default function InvoiceSettingsForm({ settings }: { settings: Record<string, string> }) {
+export default function InvoiceSettingsForm({ settings, orgName, templates }: { settings: Record<string, string>; orgName?: string; templates?: any[] }) {
   const [saveState, saveAction, pending] = useActionState(saveInvoiceSettingsAction, null)
 
   return (

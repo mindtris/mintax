@@ -4,6 +4,7 @@ export interface InvoiceItem {
   showSubtitle: boolean
   quantity: number
   unitPrice: number
+  discount: number
   subtotal: number
 }
 
@@ -50,10 +51,11 @@ export interface InvoiceFormData {
   itemLabel: string
   quantityLabel: string
   unitPriceLabel: string
+  discountLabel?: string
   subtotalLabel: string
   summarySubtotalLabel: string
   summaryTotalLabel: string
-  currencyLabel: string
+  currencyLabel?: string
   // Theming from invoice settings
   accentColor?: string
   template?: string

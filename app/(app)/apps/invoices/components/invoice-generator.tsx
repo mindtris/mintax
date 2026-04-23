@@ -31,7 +31,7 @@ function invoiceFormReducer(state: InvoiceFormData, action: any): InvoiceFormDat
         ...state,
         items: [
           ...state.items,
-          { name: "", subtitle: "", showSubtitle: false, quantity: 1, unitPrice: 0, subtotal: 0 },
+          { name: "", subtitle: "", showSubtitle: false, quantity: 1, unitPrice: 0, discount: 0, subtotal: 0 },
         ],
       }
     case "UPDATE_ITEM": {
