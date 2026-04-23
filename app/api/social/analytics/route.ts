@@ -44,7 +44,8 @@ export async function GET(req: NextRequest) {
       dailyStats[day].impressions += stat.impressions
       dailyStats[day].engagements += stat.engagements
 
-      const provider = stat.post.socialAccount.provider
+      const provider = stat.post.socialAccount?.provider
+      if (!provider) return
       if (!providerStats[provider]) {
         providerStats[provider] = { likes: 0, shares: 0, comments: 0, count: 0 }
       }

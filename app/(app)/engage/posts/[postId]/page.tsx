@@ -50,11 +50,13 @@ export default async function PostDetailPage({ params }: { params: Promise<{ pos
               <Badge variant={statusVariant[post.status] || "outline"} className="capitalize">
                 {post.status}
               </Badge>
-              <Badge variant="outline" className="capitalize">{post.socialAccount.provider}</Badge>
+              {post.socialAccount ? (
+                <Badge variant="outline" className="capitalize">{post.socialAccount.provider}</Badge>
+              ) : null}
               <Badge variant="outline">{post.contentType}</Badge>
             </div>
             <div className="flex items-center gap-2">
-              {post.externalUrl && (
+              {post.externalUrl && post.socialAccount && (
                 <a href={post.externalUrl} target="_blank" rel="noopener noreferrer">
                   <Button variant="outline" size="sm">
                     <ExternalLink className="h-3.5 w-3.5" />
@@ -69,17 +71,19 @@ export default async function PostDetailPage({ params }: { params: Promise<{ pos
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-3">
-            {post.socialAccount.picture && (
-              <img src={post.socialAccount.picture} alt="" className="h-10 w-10 rounded-full" />
-            )}
-            <div>
-              <div className="font-medium">{post.socialAccount.name}</div>
-              <div className="text-sm text-muted-foreground">
-                @{post.socialAccount.username || post.socialAccount.name}
+          {post.socialAccount ? (
+            <div className="flex items-center gap-3">
+              {post.socialAccount.picture && (
+                <img src={post.socialAccount.picture} alt="" className="h-10 w-10 rounded-full" />
+              )}
+              <div>
+                <div className="font-medium">{post.socialAccount.name}</div>
+                <div className="text-sm text-muted-foreground">
+                  @{post.socialAccount.username || post.socialAccount.name}
+                </div>
               </div>
             </div>
-          </div>
+          ) : null}
 
           {post.title && <h2 className="text-xl font-semibold">{post.title}</h2>}
           {post.excerpt && <p className="text-muted-foreground">{post.excerpt}</p>}

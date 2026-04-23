@@ -45,6 +45,9 @@ export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseU
   const [webhookCopied, setWebhookCopied] = useState<boolean>(false)
 
   const [calcomEnabled, setCalcomEnabled] = useState<boolean>(initialConfig?.calcomEnabled ?? false)
+  const [contentEnabled, setContentEnabled] = useState<boolean>(initialConfig?.contentEnabled ?? false)
+  const [contentCacheSeconds, setContentCacheSeconds] = useState<number>(initialConfig?.contentCacheSeconds ?? 60)
+  const [contentCopied, setContentCopied] = useState<boolean>(false)
 
   const markDirty = () => setDirty(true)
 
@@ -61,6 +64,9 @@ export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseU
 
   const leadsEndpoint = `${apiBaseUrl.replace(/\/+$/, "")}/api/v1/public/leads`
   const calcomWebhookUrl = `${apiBaseUrl.replace(/\/+$/, "")}/api/webhooks/calcom?org=${encodeURIComponent(orgSlug)}`
+  const contentEndpoint = `${apiBaseUrl.replace(/\/+$/, "")}/api/v1/public/content?org=${encodeURIComponent(orgSlug)}&type=blog`
+  const contentCurl = `curl "${contentEndpoint}" \\
+  -H "Origin: ${origins.split(/\s+/).find((o) => o.trim()) || "https://example.com"}"`
 
   const curlExample = useMemo(
     () => `curl -X POST ${leadsEndpoint} \\
@@ -139,6 +145,7 @@ export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseU
       <Input type="hidden" name="leadsEnabled" value={leadsEnabled ? "true" : "false"} readOnly />
       <Input type="hidden" name="clearTurnstileSecret" value={clearSecret ? "true" : "false"} readOnly />
       <Input type="hidden" name="calcomEnabled" value={calcomEnabled ? "true" : "false"} readOnly />
+      <Input type="hidden" name="contentEnabled" value={contentEnabled ? "true" : "false"} readOnly />
 
       <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-4 rounded-lg border bg-card p-6">
@@ -318,11 +325,65 @@ export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseU
       </section>
 
       <section className="flex flex-col gap-4 rounded-lg border bg-card p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-base font-semibold">Content</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Public-read endpoints for blog / docs / help / changelog content authored in Engage.
+              When off, GET /api/v1/public/content returns 404.
+            </p>
+          </div>
+          <Switch
+            checked={contentEnabled}
+            onCheckedChange={(v) => { setContentEnabled(v); markDirty() }}
+            aria-label="Enable content API"
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Label htmlFor="contentCacheSeconds" className="text-sm">Cache (s-maxage)</Label>
+          <Input
+            id="contentCacheSeconds"
+            type="number"
+            name="contentCacheSeconds"
+            min={0}
+            max={86400}
+            value={contentCacheSeconds}
+            onChange={(e) => {
+              setContentCacheSeconds(parseInt(e.target.value || "60", 10))
+              markDirty()
+            }}
+            className="w-32"
+          />
+          <span className="text-sm text-muted-foreground">seconds (stale-while-revalidate: 600)</span>
+        </div>
+
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex-1 min-w-0 text-xs font-mono rounded-md border bg-muted/30 px-3 py-2 overflow-x-auto whitespace-nowrap">
+            {contentEndpoint}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              await navigator.clipboard.writeText(contentCurl)
+              setContentCopied(true)
+              setTimeout(() => setContentCopied(false), 1500)
+            }}
+          >
+            {contentCopied ? <Check className="h-4 w-4 mr-1.5" /> : <Copy className="h-4 w-4 mr-1.5" />}
+            {contentCopied ? "Copied" : "Copy curl"}
+          </Button>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-4 rounded-lg border bg-card p-6">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h3 className="text-base font-semibold">Example request</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              Test the endpoint with your current settings.
+              Test the leads endpoint with your current settings.
             </p>
           </div>
           <Button type="button" variant="outline" size="sm" onClick={handleCopyCurl}>

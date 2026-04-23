@@ -24,6 +24,14 @@ export async function GET(request: NextRequest) {
 
   for (const post of duePosts) {
     try {
+      // Non-social content (blog/doc/help/changelog) has no external account.
+      // Flip straight to published at scheduledAt — no external publish call.
+      if (!post.socialAccount) {
+        await markPublished(post.id, null, null)
+        published++
+        continue
+      }
+
       // Optimistic lock — set to publishing
       await markPublishing(post.id)
 

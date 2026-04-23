@@ -21,6 +21,8 @@ const formSchema = z.object({
   turnstileSecret: z.string().optional(),
   clearTurnstileSecret: z.enum(["true", "false"]).optional(),
   calcomEnabled: z.enum(["true", "false"]).transform((v) => v === "true"),
+  contentEnabled: z.enum(["true", "false"]).transform((v) => v === "true"),
+  contentCacheSeconds: z.coerce.number().int().min(0).max(86_400).default(60),
 })
 
 export async function getPublicApiConfigForCurrentOrg(): Promise<PublicApiConfigView | null> {
@@ -84,6 +86,8 @@ export async function savePublicApiConfigAction(
       ratePerMinute: input.ratePerMinute,
       turnstileSecret,
       calcomEnabled: input.calcomEnabled,
+      contentEnabled: input.contentEnabled,
+      contentCacheSeconds: input.contentCacheSeconds,
     })
     revalidatePath("/settings")
     return { success: true, data: saved }

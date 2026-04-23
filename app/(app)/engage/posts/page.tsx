@@ -46,6 +46,36 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
         </NewPostSheet>
       </header>
 
+      {/* Content-type filter chips */}
+      <div className="flex gap-2 flex-wrap">
+        {[
+          { label: "All", value: undefined },
+          { label: "Social", value: "social" },
+          { label: "Blog", value: "blog" },
+          { label: "Docs", value: "doc" },
+          { label: "Help", value: "help" },
+          { label: "Changelog", value: "changelog" },
+        ].map((chip) => {
+          const isActive = (filters.contentType ?? undefined) === chip.value
+          const href = chip.value
+            ? `/engage/posts?contentType=${encodeURIComponent(chip.value)}`
+            : "/engage/posts"
+          return (
+            <Link
+              key={chip.label}
+              href={href}
+              className={
+                isActive
+                  ? "inline-flex items-center rounded-full bg-foreground text-background px-3 py-1 text-xs font-medium"
+                  : "inline-flex items-center rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              }
+            >
+              {chip.label}
+            </Link>
+          )
+        })}
+      </div>
+
       {/* Stats */}
       <div className="flex gap-3 flex-wrap">
         {Object.entries(stats).map(([status, count]) => (
@@ -71,9 +101,11 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
                       <Badge variant={statusVariant[post.status] || "outline"} className="capitalize text-xs">
                         {post.status}
                       </Badge>
-                      <Badge variant="outline" className="capitalize text-xs">
-                        {post.socialAccount.provider}
-                      </Badge>
+                      {post.socialAccount ? (
+                        <Badge variant="outline" className="capitalize text-xs">
+                          {post.socialAccount.provider}
+                        </Badge>
+                      ) : null}
                       <Badge variant="outline" className="text-xs">
                         {post.contentType}
                       </Badge>
@@ -89,7 +121,9 @@ export default async function PostsPage({ searchParams }: { searchParams: Promis
                     {!post.scheduledAt && !post.publishedAt && (
                       <div>Created {formatDate(new Date(post.createdAt), "MMM dd")}</div>
                     )}
-                    <div className="text-xs mt-1">@{post.socialAccount.username || post.socialAccount.name}</div>
+                    {post.socialAccount ? (
+                      <div className="text-xs mt-1">@{post.socialAccount.username || post.socialAccount.name}</div>
+                    ) : null}
                   </div>
                 </Link>
               ))}

@@ -89,7 +89,7 @@ export async function EngageWidget() {
                   <Link key={post.id} href={`/engage/posts/${post.id}`} className="flex items-center justify-between hover:bg-muted/50 rounded-md p-2 -mx-2 transition-colors">
                     <div className="flex-1 min-w-0 mr-3">
                       <div className="text-sm truncate">{post.content.slice(0, 60)}</div>
-                      <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mt-0.5">{post.socialAccount.provider}</div>
+                      <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mt-0.5">{post.socialAccount?.provider ?? post.contentType}</div>
                     </div>
                     <span className="text-[10px] font-bold text-muted-foreground tabular-nums shrink-0">
                       {post.scheduledAt && formatDate(new Date(post.scheduledAt), "MMM dd, HH:mm")}
@@ -117,7 +117,7 @@ export async function EngageWidget() {
                   <Link key={post.id} href={`/engage/posts/${post.id}`} className="flex items-center justify-between hover:bg-muted/50 rounded-md p-2 -mx-2 transition-colors">
                     <div className="flex-1 min-w-0 mr-3">
                       <div className="text-sm truncate">{post.content.slice(0, 60)}</div>
-                      <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mt-0.5">{post.socialAccount.provider}</div>
+                      <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mt-0.5">{post.socialAccount?.provider ?? post.contentType}</div>
                     </div>
                     {post.externalUrl ? (
                       <Badge variant="secondary" className="text-[10px] font-bold uppercase py-0 px-1.5 shrink-0">Live</Badge>

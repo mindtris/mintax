@@ -44,8 +44,8 @@ export async function GET(request: NextRequest) {
         externalPostId: p.externalPostId,
         externalUrl: p.externalUrl,
         error: p.error,
-        provider: p.socialAccount.provider,
-        accountName: p.socialAccount.name,
+        provider: p.socialAccount?.provider ?? null,
+        accountName: p.socialAccount?.name ?? null,
         createdAt: p.createdAt,
       })),
     })

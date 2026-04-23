@@ -14,6 +14,8 @@ export type PublicApiConfigInput = {
   leadsEnabled: boolean
   turnstileSecret?: string | null
   calcomEnabled: boolean
+  contentEnabled: boolean
+  contentCacheSeconds: number
 }
 
 export async function getPublicApiConfig(organizationId: string): Promise<PublicApiConfig | null> {
@@ -51,6 +53,8 @@ export async function upsertPublicApiConfig(
 
   const turnstileSecret = resolveSecretForWrite(input.turnstileSecret, existing?.turnstileSecret)
 
+  const contentCacheSeconds = Math.max(0, Math.min(86_400, input.contentCacheSeconds))
+
   const saved = await prisma.publicApiConfig.upsert({
     where: { organizationId },
     create: {
@@ -61,6 +65,8 @@ export async function upsertPublicApiConfig(
       leadsEnabled: input.leadsEnabled,
       turnstileSecret,
       calcomEnabled: input.calcomEnabled,
+      contentEnabled: input.contentEnabled,
+      contentCacheSeconds,
     },
     update: {
       enabled: input.enabled,
@@ -69,6 +75,8 @@ export async function upsertPublicApiConfig(
       leadsEnabled: input.leadsEnabled,
       turnstileSecret,
       calcomEnabled: input.calcomEnabled,
+      contentEnabled: input.contentEnabled,
+      contentCacheSeconds,
     },
   })
 

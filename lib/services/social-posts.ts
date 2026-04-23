@@ -19,7 +19,11 @@ export const getSocialPosts = cache(
 
     if (filters) {
       if (filters.status && filters.status !== "-") where.status = filters.status
-      if (filters.contentType) where.contentType = filters.contentType
+      if (filters.contentType === "social") {
+        where.contentType = { in: ["post", "article", "newsletter", "page", "thread", "social"] }
+      } else if (filters.contentType) {
+        where.contentType = filters.contentType
+      }
       if (filters.provider && filters.provider !== "-") {
         where.socialAccount = { provider: filters.provider }
       }
@@ -282,7 +286,7 @@ export async function deletePostGroup(group: string, orgId: string) {
   })
 }
 
-export async function markPublished(id: string, externalPostId: string, externalUrl: string) {
+export async function markPublished(id: string, externalPostId: string | null, externalUrl: string | null) {
   return await prisma.socialPost.update({
     where: { id },
     data: {

@@ -89,7 +89,7 @@ export async function AnalyticsView() {
                   <div className="flex-1 min-w-0 mr-4">
                     <div className="text-sm truncate">{post.title || post.content.slice(0, 80)}</div>
                     <div className="text-xs text-card-foreground capitalize">
-                      {post.socialAccount.provider} · {post.publishedAt && formatDate(new Date(post.publishedAt), "MMM dd")}
+                      {(post.socialAccount?.provider ?? post.contentType)} · {post.publishedAt && formatDate(new Date(post.publishedAt), "MMM dd")}
                     </div>
                   </div>
                   {post.externalUrl && (

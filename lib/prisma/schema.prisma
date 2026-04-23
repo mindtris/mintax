@@ -820,30 +820,40 @@ model SocialAccount {
 }
 
 model SocialPost {
-  id              String        @id @default(uuid()) @db.Uuid
-  organizationId  String        @map("organization_id") @db.Uuid
-  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  socialAccountId String        @map("social_account_id") @db.Uuid
-  socialAccount   SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
-  createdById     String        @map("created_by_id") @db.Uuid
-  group           String        @default(uuid())
-  contentType     String        @default("post") @map("content_type") // "post" | "article" | "newsletter" | "page" | "thread"
+  id              String         @id @default(uuid()) @db.Uuid
+  organizationId  String         @map("organization_id") @db.Uuid
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  // Nullable for non-social content (blog, doc, help, changelog) that has no external account.
+  socialAccountId String?        @map("social_account_id") @db.Uuid
+  socialAccount   SocialAccount? @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  createdById     String         @map("created_by_id") @db.Uuid
+  group           String         @default(uuid())
+  // Existing social values: "post" | "article" | "newsletter" | "page" | "thread"
+  // Extended for website content: "blog" | "doc" | "help" | "changelog"
+  contentType     String         @default("post") @map("content_type")
   content         String
   title           String?
-  excerpt         String?       // summary/subtitle for articles
-  slug            String?       // URL slug for blog posts
-  tags            String[]      @default([]) // hashtags, categories, keywords
-  settings        Json?         // provider-specific settings (poll options, blog category, featured image, etc.)
-  status          String        @default("draft") // "draft" | "queued" | "publishing" | "published" | "error"
-  scheduledAt     DateTime?     @map("scheduled_at")
-  publishedAt     DateTime?     @map("published_at")
-  externalPostId  String?       @map("external_post_id")
-  externalUrl     String?       @map("external_url")
+  excerpt         String?        // summary/subtitle for articles
+  slug            String?        // URL slug for blog posts
+  tags            String[]       @default([]) // hashtags, categories, keywords
+  settings        Json?          // provider-specific settings (poll options, blog category, featured image, etc.)
+  status          String         @default("draft") // "draft" | "queued" | "publishing" | "published" | "error"
+  scheduledAt     DateTime?      @map("scheduled_at")
+  publishedAt     DateTime?      @map("published_at")
+  externalPostId  String?        @map("external_post_id")
+  externalUrl     String?        @map("external_url")
   error           String?
-  templateId      String?       @map("template_id") @db.Uuid
-  hasComments     Boolean       @default(false) @map("has_comments")
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
+  templateId      String?        @map("template_id") @db.Uuid
+  hasComments     Boolean        @default(false) @map("has_comments")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  // Website-content extensions (used when contentType != social-media type)
+  visibility      String   @default("internal") // "internal" | "public"
+  canonicalPath   String?  @map("canonical_path")
+  heroImageId     String?  @map("hero_image_id") @db.Uuid
+  seoTitle        String?  @map("seo_title")
+  seoDescription  String?  @map("seo_description")
 
   media     SocialPostMedia[]
   comments  SocialPostComment[]
@@ -855,6 +865,7 @@ model SocialPost {
   @@index([scheduledAt])
   @@index([group])
   @@index([createdAt])
+  @@index([organizationId, contentType, visibility, slug])
   @@map("social_posts")
 }
 
@@ -1408,6 +1419,9 @@ model PublicApiConfig {
   leadsEnabled    Boolean      @default(true) @map("leads_enabled")
 
   calcomEnabled Boolean @default(false) @map("calcom_enabled")
+
+  contentEnabled      Boolean @default(false) @map("content_enabled")
+  contentCacheSeconds Int     @default(60)    @map("content_cache_seconds")
 
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")

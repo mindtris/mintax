@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
 
   for (const post of posts) {
     try {
+      if (!post.socialAccount) continue
       const provider = getProvider(post.socialAccount.provider)
       if (!provider.getPostAnalytics || !post.externalPostId) continue
 
