@@ -166,18 +166,27 @@ export async function updatePostAction(postId: string, _prevState: any, formData
   const seoTitle = formData.get("seoTitle") as string | null
   const seoDescription = formData.get("seoDescription") as string | null
 
-  await updateSocialPost(postId, org.id, {
-    content: content?.trim(),
-    title: title || undefined,
-    status,
-    scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
-    visibility: visibility || undefined,
-    canonicalPath: canonicalPath || undefined,
-    seoTitle: seoTitle || undefined,
-    seoDescription: seoDescription || undefined,
-  })
+  const heroImageId = formData.get("heroImageId") as string | null
+  const trimmedContent = content?.trim()
 
-  revalidatePath("/engage/posts")
+  try {
+    await updateSocialPost(postId, org.id, {
+      content: trimmedContent && trimmedContent.length > 0 ? trimmedContent : undefined,
+      title: title || undefined,
+      status: status || undefined,
+      scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
+      visibility: visibility || undefined,
+      canonicalPath: canonicalPath || undefined,
+      seoTitle: seoTitle || undefined,
+      seoDescription: seoDescription || undefined,
+      heroImageId: heroImageId || undefined,
+    })
+    revalidatePath("/engage/posts")
+    revalidatePath(`/engage/posts/${postId}`)
+    return { success: true as const }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Failed to save post" }
+  }
 }
 
 export async function deletePostAction(postId: string) {

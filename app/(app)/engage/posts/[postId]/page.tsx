@@ -9,7 +9,10 @@ import { ArrowLeft, ExternalLink, Trash2 } from "lucide-react"
 import { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { DeletePostButton } from "./client"
+import { DeletePostButton } from "@/app/(app)/engage/posts/[postId]/client"
+import { ContentPostEditor } from "@/components/engage/content-post-editor"
+
+const CONTENT_TYPES = new Set(["blog", "doc", "help", "changelog"])
 
 export const metadata: Metadata = { title: "Post Detail" }
 
@@ -30,6 +33,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ pos
   if (!post) notFound()
 
   const analytics = await getPostAnalytics(postId, org.id)
+  const isContentOnly = CONTENT_TYPES.has(post.contentType)
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
@@ -142,6 +146,24 @@ export default async function PostDetailPage({ params }: { params: Promise<{ pos
           </div>
         </CardContent>
       </Card>
+
+      {/* Content settings (blog/doc/help/changelog only) */}
+      {isContentOnly && (
+        <ContentPostEditor
+          postId={post.id}
+          initialVisibility={post.visibility}
+          initialSeoTitle={post.seoTitle}
+          initialSeoDescription={post.seoDescription}
+          initialCanonicalPath={post.canonicalPath}
+          initialHeroImageId={post.heroImageId}
+          media={post.media.map((m) => ({
+            id: m.id,
+            url: m.url,
+            fileId: m.fileId,
+            type: m.type,
+          }))}
+        />
+      )}
 
       {/* Analytics */}
       {analytics.length > 0 && (
