@@ -10,9 +10,30 @@ import {
 // import { LEAD_SOURCES, LEAD_STAGES, SOURCE_LABELS, STAGE_LABELS } from "@/lib/services/leads"
 
 import { useActionState, useEffect, useState } from "react"
-import { createLeadAction, updateLeadAction } from "@/app/(app)/sales/actions"
-import { Loader2, Target } from "lucide-react"
+import { createLeadAction, getLeadMeetingsAction, updateLeadAction } from "@/app/(app)/sales/actions"
+import { Calendar, ExternalLink, Loader2, Target } from "lucide-react"
 import { toast } from "sonner"
+import { format } from "date-fns"
+
+type LeadMeeting = {
+  id: string
+  title: string
+  startAt: string | Date
+  endAt: string | Date
+  timezone: string
+  status: string
+  attendeeEmail: string
+  location: string | null
+  externalUrl: string | null
+  externalProvider: string
+}
+
+const MEETING_STATUS_LABEL: Record<string, string> = {
+  confirmed: "Confirmed",
+  rescheduled: "Rescheduled",
+  cancelled: "Cancelled",
+  no_show: "No show",
+}
 
 const sourceItems = [
   { code: "website", name: "Website" },
@@ -46,12 +67,31 @@ export function NewLeadSheet({
   const open = controlledOpen ?? internalOpen
   const setOpen = controlledOnOpenChange ?? setInternalOpen
 
+  const [meetings, setMeetings] = useState<LeadMeeting[]>([])
+  const [meetingsLoading, setMeetingsLoading] = useState(false)
+
   useEffect(() => {
     if (state?.success && open) {
       toast.success(isEdit ? "Lead updated" : "Lead created")
       setOpen(false)
     }
   }, [state?.success, open, isEdit, setOpen])
+
+  useEffect(() => {
+    if (!open || !isEdit || !lead?.id) return
+    let cancelled = false
+    setMeetingsLoading(true)
+    getLeadMeetingsAction(lead.id)
+      .then((rows) => {
+        if (!cancelled) setMeetings(rows as LeadMeeting[])
+      })
+      .finally(() => {
+        if (!cancelled) setMeetingsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open, isEdit, lead?.id])
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -124,6 +164,68 @@ export function NewLeadSheet({
 
               <FormTextarea title="Description" name="description" defaultValue={lead?.description} placeholder="Notes about this lead..." />
             </div>
+
+            {isEdit && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Meetings</h4>
+                  {meetingsLoading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                </div>
+                {!meetingsLoading && meetings.length === 0 && (
+                  <div className="rounded-md border border-dashed bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground">
+                    No meetings scheduled yet. Bookings from cal.com linked to this lead will appear here.
+                  </div>
+                )}
+                {meetings.length > 0 && (
+                  <ul className="flex flex-col gap-2">
+                    {meetings.map((m) => (
+                      <li
+                        key={m.id}
+                        className="rounded-md border bg-card px-4 py-3 flex items-start gap-3"
+                      >
+                        <div className="p-1.5 bg-primary/10 rounded-md mt-0.5">
+                          <Calendar className="h-3.5 w-3.5 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium truncate">{m.title}</span>
+                            <span
+                              className={
+                                "text-[10px] px-1.5 py-0.5 rounded-full uppercase tracking-wide " +
+                                (m.status === "cancelled"
+                                  ? "bg-destructive/10 text-destructive"
+                                  : m.status === "rescheduled"
+                                    ? "bg-amber-500/10 text-amber-600"
+                                    : "bg-primary/10 text-primary")
+                              }
+                            >
+                              {MEETING_STATUS_LABEL[m.status] ?? m.status}
+                            </span>
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            {format(new Date(m.startAt), "MMM d, yyyy 'at' h:mm a")} · {m.timezone}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                            {m.attendeeEmail}
+                            {m.location ? ` · ${m.location}` : ""}
+                          </div>
+                        </div>
+                        {m.externalUrl && (
+                          <a
+                            href={m.externalUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-primary hover:underline inline-flex items-center gap-1 mt-0.5"
+                          >
+                            Open <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
 
             {state?.error && (
               <div className="p-4 bg-red-50 border border-red-100 rounded-md text-sm text-red-600 font-medium">{state.error}</div>

@@ -46,6 +46,7 @@ const settingsGroups: NavGroup[] = [
     items: [
       { title: "Fields", href: "/settings?tab=fields", icon: "list-checks" },
       { title: "Payables", href: "/settings?tab=payables", icon: "credit-card" },
+      { title: "Public API", href: "/settings?tab=public-api", icon: "plug" },
       { title: "Backups", href: "/settings?tab=backups", icon: "database" },
       { title: "Danger zone", href: "/settings?tab=danger", icon: "shield-alert" },
     ],

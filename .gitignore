@@ -65,6 +65,8 @@ pgdata
 .references
 .pgdata
 refer/
+CLAUDE.md 
 
 # npm lockfile (using pnpm)
 package-lock.json
+graphify-out/

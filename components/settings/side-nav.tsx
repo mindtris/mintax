@@ -14,6 +14,7 @@ import {
   ListChecks,
   Mail,
   Palette,
+  Plug,
   Receipt,
   Settings,
   Share2,
@@ -42,6 +43,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   "credit-card": CreditCard,
   "share-2": Share2,
   database: Database,
+  plug: Plug,
   "shield-alert": ShieldAlert,
 }
 

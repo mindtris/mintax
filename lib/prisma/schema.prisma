@@ -146,8 +146,11 @@ model Organization {
 
   jobPostings   JobPosting[]
   candidates    Candidate[]
+
+  publicApiConfig PublicApiConfig?
   submissions   MarketingSubmission[]
   leads         Lead[]
+  meetings      Meeting[]
   llmPrompts    LlmPrompt[]
   emailTemplates EmailTemplate[]
 
@@ -1332,6 +1335,7 @@ model Lead {
   lostReason      String?      @map("lost_reason")
 
   leadFiles       LeadFile[]
+  meetings        Meeting[]
 
   // Lifecycle
   createdAt       DateTime     @default(now()) @map("created_at")
@@ -1343,6 +1347,65 @@ model Lead {
   @@index([assignedToId])
   @@index([contactId])
   @@map("leads")
+}
+
+model Meeting {
+  id               String       @id @default(uuid()) @db.Uuid
+  organizationId   String       @map("organization_id") @db.Uuid
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  leadId           String?      @map("lead_id") @db.Uuid
+  lead             Lead?        @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  contactId        String?      @map("contact_id") @db.Uuid
+
+  externalProvider String       @default("calcom") @map("external_provider")
+  externalId       String       @map("external_id")
+  externalUrl      String?      @map("external_url")
+
+  title            String
+  startAt          DateTime     @map("start_at")
+  endAt            DateTime     @map("end_at")
+  timezone         String
+  status           String       @default("confirmed")
+  hostUserId       String?      @map("host_user_id") @db.Uuid
+  attendeeEmail    String       @map("attendee_email")
+  location         String?
+  notes            String?      @db.Text
+
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  @@unique([externalProvider, externalId])
+  @@index([organizationId])
+  @@index([leadId])
+  @@index([startAt])
+  @@map("meetings")
+}
+
+// ──────────────────────────────────────────────
+// Public API: per-org configuration for unauthenticated endpoints
+// ──────────────────────────────────────────────
+
+model PublicApiConfig {
+  id              String       @id @default(uuid()) @db.Uuid
+  organizationId  String       @unique @map("organization_id") @db.Uuid
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  enabled         Boolean      @default(false)
+  allowedOrigins  String[]     @default([]) @map("allowed_origins")
+  turnstileSecret String?      @map("turnstile_secret") // encrypted at rest
+  ratePerMinute   Int          @default(5) @map("rate_per_minute")
+
+  leadsEnabled    Boolean      @default(true) @map("leads_enabled")
+
+  calcomEnabled          Boolean @default(false) @map("calcom_enabled")
+  calcomWebhookSecret    String? @map("calcom_webhook_secret") // encrypted at rest
+  calcomDefaultEventType String? @map("calcom_default_event_type")
+
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  @@map("public_api_configs")
 }
 
 // ──────────────────────────────────────────────

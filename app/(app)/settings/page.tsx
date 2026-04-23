@@ -9,6 +9,9 @@ import { LLMProvidersGrid } from "@/components/settings/llm-providers-grid"
 import { CrudTable } from "@/components/settings/crud"
 import { SocialAccountsList } from "@/components/settings/social-list"
 import { ConnectAccountButton } from "@/components/settings/connect-button"
+import PublicApiSettingsForm from "@/components/settings/public-api-settings-form"
+import { getPublicApiConfigView } from "@/lib/services/public-api-config"
+import appConfig from "@/lib/core/config"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -688,6 +691,26 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             </form>
           </div>
         </div>
+      </div>
+    )
+  }
+
+  // Public API tab
+  if (tab === "public-api") {
+    const publicApiConfig = await getPublicApiConfigView(org.id)
+    return (
+      <div className="flex flex-col gap-6">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight">Public API</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Expose lead intake and webhooks to external sites for this organization. Origins, captcha, and rate limits are configured per organization.
+          </p>
+        </div>
+        <PublicApiSettingsForm
+          initialConfig={publicApiConfig}
+          orgSlug={org.slug}
+          apiBaseUrl={appConfig.app.baseURL}
+        />
       </div>
     )
   }

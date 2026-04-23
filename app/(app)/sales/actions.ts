@@ -9,7 +9,14 @@ import {
   updateLeadStage,
   convertLeadToContact,
 } from "@/lib/services/leads"
+import { listMeetingsForLead } from "@/lib/services/meetings"
 import { revalidatePath } from "next/cache"
+
+export async function getLeadMeetingsAction(leadId: string) {
+  const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
+  return listMeetingsForLead(org.id, leadId)
+}
 
 export async function createLeadAction(
   _prevState: ActionState<any> | null,

@@ -1,0 +1,92 @@
+"use server"
+
+import { revalidatePath } from "next/cache"
+import { z } from "zod"
+import { ActionState } from "@/lib/actions"
+import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
+import {
+  PublicApiConfigView,
+  getPublicApiConfigView,
+  upsertPublicApiConfig,
+} from "@/lib/services/public-api-config"
+
+const originSchema = z.string().url("Each origin must be a valid URL (https://example.com)")
+
+const formSchema = z.object({
+  enabled: z.enum(["true", "false"]).transform((v) => v === "true"),
+  leadsEnabled: z.enum(["true", "false"]).transform((v) => v === "true"),
+  allowedOrigins: z.string().default(""),
+  ratePerMinute: z.coerce.number().int().min(1).max(1000).default(5),
+  turnstileSecret: z.string().optional(),
+  clearTurnstileSecret: z.enum(["true", "false"]).optional(),
+  calcomEnabled: z.enum(["true", "false"]).transform((v) => v === "true"),
+  calcomWebhookSecret: z.string().optional(),
+  clearCalcomWebhookSecret: z.enum(["true", "false"]).optional(),
+  calcomDefaultEventType: z.string().optional(),
+})
+
+export async function getPublicApiConfigForCurrentOrg(): Promise<PublicApiConfigView | null> {
+  const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
+  return getPublicApiConfigView(org.id)
+}
+
+export async function savePublicApiConfigAction(
+  _prevState: ActionState<PublicApiConfigView> | null,
+  formData: FormData
+): Promise<ActionState<PublicApiConfigView>> {
+  const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
+
+  const parsed = formSchema.safeParse(Object.fromEntries(formData.entries()))
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid form data" }
+  }
+
+  const input = parsed.data
+  const origins = input.allowedOrigins
+    .split(/[\n,]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  for (const o of origins) {
+    const v = originSchema.safeParse(o)
+    if (!v.success) {
+      return { success: false, error: `Invalid origin "${o}" — must be a full URL (https://example.com)` }
+    }
+  }
+
+  const turnstileSecret =
+    input.clearTurnstileSecret === "true"
+      ? null
+      : input.turnstileSecret && input.turnstileSecret.trim().length > 0
+        ? input.turnstileSecret.trim()
+        : undefined
+
+  const calcomWebhookSecret =
+    input.clearCalcomWebhookSecret === "true"
+      ? null
+      : input.calcomWebhookSecret && input.calcomWebhookSecret.trim().length > 0
+        ? input.calcomWebhookSecret.trim()
+        : undefined
+
+  try {
+    const saved = await upsertPublicApiConfig(org.id, {
+      enabled: input.enabled,
+      leadsEnabled: input.leadsEnabled,
+      allowedOrigins: origins,
+      ratePerMinute: input.ratePerMinute,
+      turnstileSecret,
+      calcomEnabled: input.calcomEnabled,
+      calcomWebhookSecret,
+      calcomDefaultEventType: input.calcomDefaultEventType ?? null,
+    })
+    revalidatePath("/settings")
+    return { success: true, data: saved }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to save public API settings",
+    }
+  }
+}
