@@ -145,7 +145,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     const [settings, emailTemplates, invoiceAppData, estimateAppData, currencies, contentTemplates] = await Promise.all([
       getSettings(org.id),
       getOrgEmailTemplates(org.id),
-      getAppData(org.id, "invoices") as Promise<InvoiceAppData>,
+      getAppData(org.id, "invoices") as unknown as Promise<InvoiceAppData>,
       getAppData(org.id, "estimates"),
       getCurrencies(org.id),
       getContentTemplates(org.id),
@@ -169,7 +169,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   if (tab === "invoice") {
     const [settings, invoiceAppData, currencies] = await Promise.all([
       getSettings(org.id),
-      getAppData(org.id, "invoices") as Promise<InvoiceAppData>,
+      getAppData(org.id, "invoices") as unknown as Promise<InvoiceAppData>,
       getCurrencies(org.id),
     ])
     return (

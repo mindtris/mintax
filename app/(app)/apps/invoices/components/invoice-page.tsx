@@ -57,6 +57,10 @@ export interface InvoiceFormData {
   subtotalLabel: string
   summarySubtotalLabel: string
   summaryTotalLabel: string
+  currencyLabel?: string
+  accentColor?: string
+  template?: string
+  footerText?: string
 }
 
 interface InvoicePageProps {
@@ -70,6 +74,7 @@ interface InvoicePageProps {
 const ItemRow = memo(function ItemRow({
   item,
   index,
+  onChange,
   onRemove,
   currency,
   readOnly,
@@ -178,6 +183,7 @@ const ItemRow = memo(function ItemRow({
 const TaxRow = memo(function TaxRow({
   tax,
   index,
+  onChange,
   onRemove,
   currency,
   readOnly,
@@ -224,6 +230,7 @@ const TaxRow = memo(function TaxRow({
 const FeeRow = memo(function FeeRow({
   fee,
   index,
+  onChange,
   onRemove,
   currency,
   readOnly,

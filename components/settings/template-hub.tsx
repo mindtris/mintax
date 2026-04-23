@@ -13,7 +13,7 @@ import {
   SheetFooter
 } from "@/components/ui/sheet"
 import { useState, useMemo, useCallback, useRef } from "react"
-import { CheckCircle2, FileText, Mail, Quote, Search, Filter, Columns3, X, Megaphone, Plus, Loader2, Send, Pencil, Eye, ShipWheel } from "lucide-react"
+import { CheckCircle2, FileText, Mail, Quote, Search, Filter, Columns3, X, Megaphone, Plus, Loader2, Send, Pencil, Eye, ShipWheel, Trash2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -86,7 +86,7 @@ export default function TemplateHub({
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set())
 
   // Ref for imperative actions
-  const emailEditorRef = useRef<{ save: () => Promise<void> } | null>(null)
+  const emailEditorRef = useRef<EmailEditorHandle | null>(null)
   const invoiceEditorRef = useRef<InvoiceFormHandle | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
 
@@ -144,7 +144,7 @@ export default function TemplateHub({
         status: "Default" as const,
         raw: t
       })),
-      ...custom.map(t => ({
+      ...custom.map((t: any) => ({
         id: t.id || `estimate_${t.name}`,
         name: t.name,
         type: "estimate" as const,
@@ -273,6 +273,12 @@ export default function TemplateHub({
       return next
     })
   }
+
+  const handleDeleteContent = useCallback(() => {
+    // Deletion handled inside ContentTemplateForm; close the sheet
+    setSelectedTemplate(null)
+    router.refresh()
+  }, [router])
 
   const handleSuccess = useCallback(() => {
     setSelectedTemplate(null)
@@ -586,6 +592,7 @@ export default function TemplateHub({
                             {/* The Document */}
                             <InvoicePage
                               invoiceData={selectedTemplate.raw.formData}
+                              dispatch={() => {}}
                               currencies={currencies}
                               readOnly={true}
                             />

@@ -28,6 +28,14 @@ import { EmailTemplate as DbTemplate } from "@/lib/prisma/client"
 
 import { RegistryTemplate, TEMPLATE_REGISTRY } from "@/lib/constants/email-templates"
 
+const CATEGORY_COLORS: Record<string, string> = {
+  Accounting: "bg-primary/10 text-primary border-primary/20",
+  Pipeline: "bg-accent/10 text-accent-foreground border-accent-200/50",
+  Hire: "bg-secondary/10 text-secondary-foreground border-secondary/20",
+  Others: "bg-muted text-muted-foreground border-muted/50",
+  Social: "bg-blue-500/10 text-blue-600 border-blue-200",
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────
 
 interface Props {
