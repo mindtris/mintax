@@ -6,9 +6,20 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
 import { FormTextarea } from "@/components/forms/simple"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from "@/components/ui/sheet"
 import { Eye, EyeOff, Copy, Check } from "lucide-react"
-import { savePublicApiConfigAction } from "@/app/(app)/settings/public-api/actions"
+import {
+  savePublicApiConfigAction,
+  togglePublicApiEnabledAction,
+} from "@/app/(app)/settings/public-api/actions"
 import type { PublicApiConfigView } from "@/lib/services/public-api-config"
 
 type Props = {
@@ -19,6 +30,9 @@ type Props = {
 
 export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseUrl }: Props) {
   const [state, action, pending] = useActionState(savePublicApiConfigAction, null)
+  const [sheetOpen, setSheetOpen] = useState<boolean>(false)
+  const [togglePending, setTogglePending] = useState<boolean>(false)
+  const [dirty, setDirty] = useState<boolean>(false)
 
   const [enabled, setEnabled] = useState<boolean>(initialConfig?.enabled ?? false)
   const [leadsEnabled, setLeadsEnabled] = useState<boolean>(initialConfig?.leadsEnabled ?? true)
@@ -32,11 +46,15 @@ export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseU
 
   const [calcomEnabled, setCalcomEnabled] = useState<boolean>(initialConfig?.calcomEnabled ?? false)
 
+  const markDirty = () => setDirty(true)
+
   useEffect(() => {
     if (state?.success) {
       toast.success("Public API settings saved")
       setSecretInput("")
       setClearSecret(false)
+      setDirty(false)
+      setSheetOpen(false)
     }
     if (state?.error) toast.error(state.error)
   }, [state])
@@ -65,35 +83,64 @@ export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseU
     setTimeout(() => setCopied(false), 1500)
   }
 
+  const handleToggleEnabled = async (next: boolean) => {
+    const prev = enabled
+    setEnabled(next)
+    setTogglePending(true)
+    const result = await togglePublicApiEnabledAction(next)
+    setTogglePending(false)
+    if (!result.success) {
+      setEnabled(prev)
+      toast.error(result.error ?? "Failed to update public API status")
+      return
+    }
+    toast.success(next ? "Public API enabled" : "Public API disabled")
+    if (next) setSheetOpen(true)
+  }
+
   return (
-    <form action={action} className="flex flex-col gap-8 max-w-3xl">
+    <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+      <section className="flex items-center justify-between gap-4 rounded-lg border bg-card p-6 max-w-3xl">
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium">Public API</span>
+          <span
+            className={
+              enabled
+                ? "inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400"
+                : "inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground"
+            }
+          >
+            <span className={enabled ? "h-1.5 w-1.5 rounded-full bg-emerald-500" : "h-1.5 w-1.5 rounded-full bg-muted-foreground/50"} />
+            {enabled ? "Active" : "Disabled"}
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          {enabled ? (
+            <Button type="button" variant="ghost" size="sm" onClick={() => setSheetOpen(true)}>
+              Configure
+            </Button>
+          ) : null}
+          <Switch
+            checked={enabled}
+            onCheckedChange={handleToggleEnabled}
+            disabled={togglePending}
+            aria-label="Enable public API"
+          />
+        </div>
+      </section>
+
+      <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>Public API settings</SheetTitle>
+        </SheetHeader>
+
+        <form action={action} className="flex flex-col gap-6 mt-6">
       <Input type="hidden" name="enabled" value={enabled ? "true" : "false"} readOnly />
       <Input type="hidden" name="leadsEnabled" value={leadsEnabled ? "true" : "false"} readOnly />
       <Input type="hidden" name="clearTurnstileSecret" value={clearSecret ? "true" : "false"} readOnly />
       <Input type="hidden" name="calcomEnabled" value={calcomEnabled ? "true" : "false"} readOnly />
 
-      <section className="flex flex-col gap-4 rounded-lg border bg-card p-6">
-        <div>
-          <h3 className="text-base font-semibold">Enable public API</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            When off, all <code className="text-xs">/api/v1/public/*</code> calls for this organization return 404.
-          </p>
-        </div>
-        <label className="flex items-start gap-3 cursor-pointer">
-          <Checkbox
-            checked={enabled}
-            onCheckedChange={(v) => setEnabled(v === true)}
-            className="mt-0.5"
-          />
-          <span className="text-sm">
-            <span className="font-medium">Enable public API endpoints for this organization</span>
-            <span className="block text-muted-foreground">
-              Required before external sites can submit leads or receive webhooks.
-            </span>
-          </span>
-        </label>
-      </section>
-
+      <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-4 rounded-lg border bg-card p-6">
         <div>
           <h3 className="text-base font-semibold">Allowed origins</h3>
@@ -105,7 +152,10 @@ export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseU
           name="allowedOrigins"
           title="Origins"
           value={origins}
-          onChange={(e) => setOrigins(e.target.value)}
+          onChange={(e) => {
+            setOrigins(e.target.value)
+            markDirty()
+          }}
           placeholder={"https://example.com\nhttps://www.example.com\nhttp://localhost:3000"}
           rows={5}
         />
@@ -136,7 +186,7 @@ export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseU
             <Button type="button" variant="outline" size="sm" onClick={() => setRevealSecret((v) => !v)}>
               {revealSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </Button>
-            <Button type="button" variant="outline" size="sm" onClick={() => setClearSecret(true)}>
+            <Button type="button" variant="outline" size="sm" onClick={() => { setClearSecret(true); markDirty() }}>
               Replace
             </Button>
           </div>
@@ -149,7 +199,10 @@ export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseU
               type="password"
               autoComplete="off"
               value={secretInput}
-              onChange={(e) => setSecretInput(e.target.value)}
+              onChange={(e) => {
+                setSecretInput(e.target.value)
+                markDirty()
+              }}
               placeholder="0x4AAAAAAA..."
             />
             {clearSecret ? (
@@ -184,7 +237,10 @@ export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseU
             min={1}
             max={1000}
             value={ratePerMinute}
-            onChange={(e) => setRatePerMinute(parseInt(e.target.value || "5", 10))}
+            onChange={(e) => {
+              setRatePerMinute(parseInt(e.target.value || "5", 10))
+              markDirty()
+            }}
             className="w-32"
           />
           <span className="text-sm text-muted-foreground">requests per minute per IP</span>
@@ -201,7 +257,7 @@ export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseU
         <label className="flex items-start gap-3 cursor-pointer">
           <Checkbox
             checked={leadsEnabled}
-            onCheckedChange={(v) => setLeadsEnabled(v === true)}
+            onCheckedChange={(v) => { setLeadsEnabled(v === true); markDirty() }}
             className="mt-0.5"
           />
           <span className="text-sm">
@@ -215,22 +271,22 @@ export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseU
 
       <section className="flex flex-col gap-4 rounded-lg border bg-card p-6">
         <div>
-          <h3 className="text-base font-semibold">Calendar (cal.com)</h3>
+          <h3 className="text-base font-semibold">Calendar (cal.diy)</h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Receive booking events from cal.com to automatically create Meeting records and advance lead stages.
+            Receive booking events from cal.diy to automatically create Meeting records and advance lead stages.
           </p>
         </div>
 
         <label className="flex items-start gap-3 cursor-pointer">
           <Checkbox
             checked={calcomEnabled}
-            onCheckedChange={(v) => setCalcomEnabled(v === true)}
+            onCheckedChange={(v) => { setCalcomEnabled(v === true); markDirty() }}
             className="mt-0.5"
           />
           <span className="text-sm">
-            <span className="font-medium">Enable cal.com webhook</span>
+            <span className="font-medium">Enable cal.diy webhook</span>
             <span className="block text-muted-foreground">
-              When off, cal.com webhook calls for this organization return 404.
+              When off, cal.diy webhook calls for this organization return 404.
             </span>
           </span>
         </label>
@@ -255,7 +311,7 @@ export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseU
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Paste into cal.com → Settings → Developer → Webhooks. Subscribe to BOOKING_CREATED, BOOKING_RESCHEDULED, BOOKING_CANCELLED.
+            Paste into cal.diy → Settings → Developer → Webhooks. Subscribe to BOOKING_CREATED, BOOKING_RESCHEDULED, BOOKING_CANCELLED.
           </p>
         </div>
 
@@ -278,12 +334,15 @@ export default function PublicApiSettingsForm({ initialConfig, orgSlug, apiBaseU
           {curlExample}
         </pre>
       </section>
-
-      <div className="flex items-center justify-end gap-3">
-        <Button type="submit" disabled={pending}>
-          {pending ? "Saving..." : "Save changes"}
-        </Button>
       </div>
-    </form>
+
+          <SheetFooter className="mt-2">
+            <Button type="submit" disabled={pending || !dirty}>
+              {pending ? "Saving..." : "Save changes"}
+            </Button>
+          </SheetFooter>
+        </form>
+      </SheetContent>
+    </Sheet>
   )
 }

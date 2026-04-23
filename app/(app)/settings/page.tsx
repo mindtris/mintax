@@ -729,12 +729,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     const publicApiConfig = await getPublicApiConfigView(org.id)
     return (
       <div className="flex flex-col gap-6">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight">Public API</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Expose lead intake and webhooks to external sites for this organization. Origins, captcha, and rate limits are configured per organization.
-          </p>
-        </div>
+        <h2 className="text-xl font-bold tracking-tight">Public API</h2>
         <PublicApiSettingsForm
           initialConfig={publicApiConfig}
           orgSlug={org.slug}

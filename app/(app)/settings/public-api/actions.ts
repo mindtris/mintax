@@ -7,6 +7,7 @@ import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import {
   PublicApiConfigView,
   getPublicApiConfigView,
+  setPublicApiEnabled,
   upsertPublicApiConfig,
 } from "@/lib/services/public-api-config"
 
@@ -26,6 +27,21 @@ export async function getPublicApiConfigForCurrentOrg(): Promise<PublicApiConfig
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
   return getPublicApiConfigView(org.id)
+}
+
+export async function togglePublicApiEnabledAction(enabled: boolean): Promise<ActionState<{ enabled: boolean }>> {
+  const user = await getCurrentUser()
+  const org = await getActiveOrg(user)
+  try {
+    await setPublicApiEnabled(org.id, enabled)
+    revalidatePath("/settings")
+    return { success: true, data: { enabled } }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update public API status",
+    }
+  }
 }
 
 export async function savePublicApiConfigAction(

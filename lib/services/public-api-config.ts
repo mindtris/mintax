@@ -35,6 +35,14 @@ export async function getPublicApiConfigView(organizationId: string): Promise<Pu
   return toView(cfg)
 }
 
+export async function setPublicApiEnabled(organizationId: string, enabled: boolean): Promise<void> {
+  await prisma.publicApiConfig.upsert({
+    where: { organizationId },
+    create: { organizationId, enabled },
+    update: { enabled },
+  })
+}
+
 export async function upsertPublicApiConfig(
   organizationId: string,
   input: PublicApiConfigInput
