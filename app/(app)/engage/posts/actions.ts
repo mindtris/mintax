@@ -15,6 +15,8 @@ import {
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
+const CONTENT_TYPES = new Set(["blog", "doc", "help", "changelog"])
+
 export async function createPostAction(_prevState: any, formData: FormData) {
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
@@ -28,12 +30,18 @@ export async function createPostAction(_prevState: any, formData: FormData) {
   const accountIds = formData.getAll("accountIds") as string[]
   const scheduledAt = formData.get("scheduledAt") as string
   const action = formData.get("action") as string // "draft" | "schedule" | "publish_now"
+  const isContentOnly = CONTENT_TYPES.has(contentType)
+
+  const visibility = (formData.get("visibility") as string) || "internal"
+  const canonicalPath = (formData.get("canonicalPath") as string) || null
+  const seoTitle = (formData.get("seoTitle") as string) || null
+  const seoDescription = (formData.get("seoDescription") as string) || null
 
   if (!content?.trim()) {
     return { error: "Content is required" }
   }
 
-  if (!accountIds.length) {
+  if (!isContentOnly && !accountIds.length) {
     return { error: "Select at least one account" }
   }
 
@@ -73,13 +81,23 @@ export async function createPostAction(_prevState: any, formData: FormData) {
       mediaUrls,
       mediaIds,
       accountSettings,
-      comments,
+      comments: isContentOnly ? [] : comments,
+      visibility: isContentOnly ? visibility : undefined,
+      canonicalPath: isContentOnly ? canonicalPath : undefined,
+      seoTitle: isContentOnly ? seoTitle : undefined,
+      seoDescription: isContentOnly ? seoDescription : undefined,
     },
-    accountIds
+    isContentOnly ? [] : accountIds
   )
 
-  // If "publish now", trigger immediate publishing
-  if (action === "publish_now") {
+  // If "publish now" on a social post, trigger immediate publishing.
+  // Content-only posts have no external provider — the publish-posts cron
+  // (or immediate save below for publish_now) flips status to published.
+  if (action === "publish_now" && isContentOnly) {
+    for (const post of posts) {
+      await markPublished(post.id, null, null)
+    }
+  } else if (action === "publish_now") {
     for (const post of posts) {
       try {
         await markPublishing(post.id)
@@ -143,12 +161,20 @@ export async function updatePostAction(postId: string, _prevState: any, formData
   const title = formData.get("title") as string
   const scheduledAt = formData.get("scheduledAt") as string
   const status = formData.get("status") as string
+  const visibility = formData.get("visibility") as string | null
+  const canonicalPath = formData.get("canonicalPath") as string | null
+  const seoTitle = formData.get("seoTitle") as string | null
+  const seoDescription = formData.get("seoDescription") as string | null
 
   await updateSocialPost(postId, org.id, {
     content: content?.trim(),
     title: title || undefined,
     status,
     scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
+    visibility: visibility || undefined,
+    canonicalPath: canonicalPath || undefined,
+    seoTitle: seoTitle || undefined,
+    seoDescription: seoDescription || undefined,
   })
 
   revalidatePath("/engage/posts")

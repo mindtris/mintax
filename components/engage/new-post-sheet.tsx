@@ -6,9 +6,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Clock, Loader2, Play, Save, Send, Sparkles, Trash2, Upload } from "lucide-react"
+
+const CONTENT_TYPES = new Set(["blog", "doc", "help", "changelog"])
 import { useEffect, useActionState, useState } from "react"
 import { createPostAction } from "@/app/(app)/engage/posts/actions"
 import { toast } from "sonner"
@@ -85,6 +88,12 @@ export function NewPostSheet({
 
   const [platformSettings, setPlatformSettings] = useState<Record<string, Record<string, any>>>({})
   const [comments, setComments] = useState<CommentData[]>([])
+  const [visibility, setVisibility] = useState<"internal" | "public">("internal")
+  const [seoTitle, setSeoTitle] = useState<string>("")
+  const [seoDescription, setSeoDescription] = useState<string>("")
+  const [canonicalPath, setCanonicalPath] = useState<string>("")
+
+  const isContentOnly = CONTENT_TYPES.has(contentType)
 
   const updatePlatformSetting = (accountId: string, settings: Record<string, any>) => {
     setPlatformSettings(prev => ({ ...prev, [accountId]: settings }))
@@ -197,23 +206,80 @@ export function NewPostSheet({
               <Select name="contentType" value={contentType} onValueChange={setContentType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {categories && categories.length > 0 ? (
-                    categories.map(c => (
-                      <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
-                    ))
-                  ) : (
-                    <>
-                      <SelectItem value="post">Social Post</SelectItem>
-                      <SelectItem value="article">Blog Article</SelectItem>
-                      <SelectItem value="thread">Thread</SelectItem>
-                      <SelectItem value="newsletter">Newsletter</SelectItem>
-                    </>
-                  )}
+                  {categories && categories.length > 0
+                    ? categories.map(c => (
+                        <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                      ))
+                    : (
+                      <>
+                        <SelectItem value="post">Social Post</SelectItem>
+                        <SelectItem value="article">Blog Article</SelectItem>
+                        <SelectItem value="thread">Thread</SelectItem>
+                        <SelectItem value="newsletter">Newsletter</SelectItem>
+                      </>
+                    )}
+                  <SelectItem value="blog">Blog (website)</SelectItem>
+                  <SelectItem value="doc">Documentation</SelectItem>
+                  <SelectItem value="help">Help article</SelectItem>
+                  <SelectItem value="changelog">Changelog entry</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {(contentType === "article" || contentType === "newsletter") && (
+            {isContentOnly && (
+              <div className="flex flex-col gap-4 rounded-lg border bg-card p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium">Publish to website</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      When on, this post is served from /api/v1/public/content.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={visibility === "public"}
+                    onCheckedChange={(v) => setVisibility(v ? "public" : "internal")}
+                    aria-label="Publish to website"
+                  />
+                  <Input type="hidden" name="visibility" value={visibility} readOnly />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="seoTitle" className="text-xs">SEO title</Label>
+                  <Input
+                    id="seoTitle"
+                    name="seoTitle"
+                    value={seoTitle}
+                    onChange={(e) => setSeoTitle(e.target.value)}
+                    placeholder="Falls back to title if blank"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="seoDescription" className="text-xs">SEO description</Label>
+                  <Textarea
+                    id="seoDescription"
+                    name="seoDescription"
+                    rows={2}
+                    value={seoDescription}
+                    onChange={(e) => setSeoDescription(e.target.value)}
+                    placeholder="~155 chars recommended for search snippets"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="canonicalPath" className="text-xs">Canonical path</Label>
+                  <Input
+                    id="canonicalPath"
+                    name="canonicalPath"
+                    value={canonicalPath}
+                    onChange={(e) => setCanonicalPath(e.target.value)}
+                    placeholder="/blog/how-we-built-x"
+                  />
+                </div>
+              </div>
+            )}
+
+            {(contentType === "article" || contentType === "newsletter" || isContentOnly) && (
               <>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="title">Title</Label>
@@ -289,8 +355,8 @@ export function NewPostSheet({
               )}
             </div>
 
-            {/* Comments / Thread */}
-            <div className="space-y-3">
+            {/* Comments / Thread — social-only */}
+            <div className={isContentOnly ? "hidden" : "space-y-3"}>
               <div className="flex items-center justify-between">
                 <Label>Thread / First Comment</Label>
                 <Button 
@@ -312,7 +378,7 @@ export function NewPostSheet({
                   onDelete={() => setComments(prev => prev.filter((_, idx) => idx !== i))}
                 />
               ))}
-              <input type="hidden" name="comments" value={JSON.stringify(comments)} />
+              <Input type="hidden" name="comments" value={JSON.stringify(comments)} readOnly />
             </div>
 
             {/* Media upload */}
@@ -329,7 +395,7 @@ export function NewPostSheet({
                   <p className="text-sm font-medium">Click or drag images/videos</p>
                   <p className="text-xs text-muted-foreground">Up to 50MB per file</p>
                 </div>
-                <input id="post-media-input" type="file" multiple className="hidden"
+                <Input id="post-media-input" type="file" multiple className="hidden"
                   accept="image/*,video/*,.gif"
                   onChange={(e) => { if (e.target.files) handleFileUpload(Array.from(e.target.files!)) }}
                 />
@@ -362,8 +428,8 @@ export function NewPostSheet({
                       </button>
 
                       {/* Hidden inputs to pass data to server action */}
-                      <input type="hidden" name="mediaUrls" value={item.url} />
-                      <input type="hidden" name="mediaIds" value={item.id} />
+                      <Input type="hidden" name="mediaUrls" value={item.url} readOnly />
+                      <Input type="hidden" name="mediaIds" value={item.id} readOnly />
                     </div>
                   ))}
                 </div>
@@ -376,8 +442,8 @@ export function NewPostSheet({
             </div>
 
 
-            {/* Accounts */}
-            <div className="flex flex-col gap-2">
+            {/* Accounts — social-only */}
+            <div className={isContentOnly ? "hidden" : "flex flex-col gap-2"}>
               <Label>Publish to</Label>
               {accounts.length > 0 ? (
                 <div className="space-y-4">
@@ -408,10 +474,11 @@ export function NewPostSheet({
                             settings={platformSettings[account.id] || {}}
                             onChange={(s) => updatePlatformSetting(account.id, s)}
                           />
-                          <input 
-                            type="hidden" 
-                            name={`settings_${account.id}`} 
-                            value={JSON.stringify(platformSettings[account.id] || {})} 
+                          <Input
+                            type="hidden"
+                            name={`settings_${account.id}`}
+                            value={JSON.stringify(platformSettings[account.id] || {})}
+                            readOnly
                           />
                         </div>
                       )}

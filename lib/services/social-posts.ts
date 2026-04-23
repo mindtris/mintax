@@ -201,6 +201,11 @@ export async function createMultiPlatformPost(
     mediaUrls?: string[]
     mediaIds?: string[]
     comments?: { content: string; delayMinutes: number; mediaUrls?: string[] }[]
+    visibility?: string
+    canonicalPath?: string | null
+    heroImageId?: string | null
+    seoTitle?: string | null
+    seoDescription?: string | null
   },
   accountIds: string[]
 ) {
@@ -209,6 +214,43 @@ export async function createMultiPlatformPost(
     where: { organizationId: orgId, type: "engage" },
     orderBy: { name: "asc" }
   }))?.code || "post"
+
+  // Content-only post (no external social account) — blog / doc / help / changelog.
+  if (accountIds.length === 0) {
+    const post = await prisma.socialPost.create({
+      data: {
+        organizationId: orgId,
+        createdById: userId,
+        socialAccountId: null,
+        content: data.content,
+        contentType: defaultContentType,
+        title: data.title,
+        excerpt: data.excerpt,
+        slug: data.slug,
+        tags: data.tags || [],
+        status: data.status || "draft",
+        scheduledAt: data.scheduledAt,
+        settings: data.settings,
+        templateId: data.templateId,
+        hasComments: false,
+        group,
+        visibility: data.visibility || "internal",
+        canonicalPath: data.canonicalPath ?? null,
+        heroImageId: data.heroImageId ?? null,
+        seoTitle: data.seoTitle ?? null,
+        seoDescription: data.seoDescription ?? null,
+        media: data.mediaUrls && data.mediaUrls.length > 0 ? {
+          create: data.mediaUrls.map((url, index) => ({
+            url,
+            fileId: data.mediaIds?.[index],
+            type: url.match(/\.(mp4|webm|ogg)$/i) ? "video" : "image",
+            sortOrder: index
+          }))
+        } : undefined,
+      },
+    })
+    return { group, posts: [post] }
+  }
 
   const posts = await Promise.all(
     accountIds.map((accountId) =>
@@ -266,6 +308,11 @@ export async function updateSocialPost(
     status?: string
     scheduledAt?: Date | null
     settings?: any
+    visibility?: string
+    canonicalPath?: string | null
+    heroImageId?: string | null
+    seoTitle?: string | null
+    seoDescription?: string | null
   }
 ) {
   return await prisma.socialPost.update({
