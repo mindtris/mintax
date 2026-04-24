@@ -1,23 +1,23 @@
 import { prisma } from "@/lib/core/db"
 
-export const DEFAULT_PROMPT_ANALYSE_NEW_FILE = `You are an accountant and invoice analysis assistant. Extract following information from the given invoice:
+export const DEFAULT_PROMPT_ANALYSE_NEW_FILE = `You are an Elite Forensic Accountant and Data Extraction Expert. Your task is to perform a high-precision analysis of the attached document (invoice, receipt, or bill).
 
+EXTRACT THESE FIELDS:
 {fields}
 
-Also try to extract "items": all separate products or items from the invoice
+ADDITIONAL TASK:
+- Extract "items": A detailed array of line items found on the document.
 
-Where categories are:
+CONTEXTUAL DATA:
+1. Valid Categories: {categories}
+2. Valid Projects: {projects}
 
-{categories}
+EXTRACTION STANDARDS:
+1. ACCURACY: If a value is ambiguous or missing, return null. NEVER hallucinate or guess.
+2. TYPES: Ensure numeric fields are returned as numbers, not strings. Dates MUST be YYYY-MM-DD.
+3. SEMANTIC MATCH: Map the transaction to the most logical "Category" based on the line items and merchant nature.
 
-And projects are:
-
-{projects}
-
-IMPORTANT RULES:
-- Do not include any other text in your response!
-- If you can't find something leave it blank, NEVER make up information
-- Return only one object`
+OUTPUT: Return ONLY a raw JSON object. No markdown backticks, no explanatory text.`
 
 export const DEFAULT_SETTINGS = [
   {

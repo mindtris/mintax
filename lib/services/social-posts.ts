@@ -21,6 +21,8 @@ export const getSocialPosts = cache(
       if (filters.status && filters.status !== "-") where.status = filters.status
       if (filters.contentType === "social") {
         where.contentType = { in: ["post", "article", "newsletter", "page", "thread", "social"] }
+      } else if (filters.contentType === "content") {
+        where.contentType = { in: ["blog", "doc", "help", "changelog"] }
       } else if (filters.contentType) {
         where.contentType = filters.contentType
       }
@@ -45,7 +47,24 @@ export const getSocialPosts = cache(
     const orderByField = orderByMatch ? orderByMatch[1] : "createdAt"
     const orderDirection = options?.ordering?.startsWith("-") ? "desc" : "asc"
 
-    const [posts, total] = await Promise.all([
+    // Unified where for EngagePost
+    const engageWhere: any = { organizationId: orgId }
+    if (filters) {
+      if (filters.status && filters.status !== "-") engageWhere.status = filters.status
+      if (filters.contentType && !["social", "content"].includes(filters.contentType)) {
+         engageWhere.type = filters.contentType
+      } else if (filters.contentType === "content") {
+         engageWhere.type = { in: ["blog", "doc", "help", "changelog"] }
+      }
+      if (filters.search) {
+        engageWhere.OR = [
+          { content: { contains: filters.search, mode: "insensitive" } },
+          { title: { contains: filters.search, mode: "insensitive" } },
+        ]
+      }
+    }
+
+    const [socialData, engageData] = await Promise.all([
       prisma.socialPost.findMany({
         where,
         include: {
@@ -56,18 +75,48 @@ export const getSocialPosts = cache(
         take: options?.take,
         skip: options?.skip,
       }),
+      prisma.engagePost.findMany({
+        where: engageWhere,
+        include: { user: true },
+        orderBy: { [orderByField === "createdAt" ? "createdAt" : (orderByField as any)]: orderDirection },
+        take: options?.take,
+        skip: options?.skip,
+      }),
       prisma.socialPost.count({ where }),
+      prisma.engagePost.count({ where: engageWhere }),
     ])
 
+    const socialPosts = socialData
+    const engagePosts = engageData.map(p => ({
+      ...p,
+      contentType: p.type, // Map 'type' to 'contentType' for UI compatibility
+      content: p.title || p.content.replace(/<[^>]*>/g, '').slice(0, 100), // Strip HTML for summary
+      socialAccount: { provider: "Website", name: "Website" }, // Placeholder for UI
+      group: p.id // Individual ID as group ID
+    }))
+
+    // Combine and sort
+    const combined = [...socialPosts, ...engagePosts]
+      .sort((a: any, b: any) => {
+        const valA = a[orderByField]
+        const valB = b[orderByField]
+        if (orderDirection === "desc") return valB > valA ? 1 : -1
+        return valA > valB ? 1 : -1
+      })
+      .slice(0, options?.take || 50)
+
+    const totalSocial = await prisma.socialPost.count({ where })
+    const totalEngage = await prisma.engagePost.count({ where: engageWhere })
+
     return {
-      items: posts,
-      total,
+      items: combined,
+      total: totalSocial + totalEngage,
     }
   }
 )
 
 export const getSocialPostById = cache(async (id: string, orgId: string) => {
-  return await prisma.socialPost.findFirst({
+  const social = await prisma.socialPost.findFirst({
     where: { id, organizationId: orgId },
     include: {
       socialAccount: true,
@@ -75,6 +124,23 @@ export const getSocialPostById = cache(async (id: string, orgId: string) => {
       analytics: { orderBy: { date: "desc" } },
     },
   })
+  if (social) return social
+
+  const engage = await prisma.engagePost.findFirst({
+    where: { id, organizationId: orgId },
+    include: {
+       user: true
+    }
+  })
+  if (engage) {
+    return {
+      ...engage,
+      contentType: engage.type,
+      socialAccount: { provider: "Website", name: "Website" },
+      media: [] // EngagePost uses mediaUrls/mediaIds, mapping for UI compatibility
+    }
+  }
+  return null
 })
 
 export const getSocialPostsByGroup = cache(async (group: string, orgId: string) => {
@@ -322,9 +388,15 @@ export async function updateSocialPost(
 }
 
 export async function deleteSocialPost(id: string, orgId: string) {
-  return await prisma.socialPost.delete({
-    where: { id, organizationId: orgId },
-  })
+  try {
+    return await prisma.socialPost.delete({
+      where: { id, organizationId: orgId },
+    })
+  } catch {
+    return await prisma.engagePost.delete({
+      where: { id, organizationId: orgId },
+    })
+  }
 }
 
 export async function deletePostGroup(group: string, orgId: string) {
@@ -361,19 +433,29 @@ export async function markError(id: string, error: string) {
 }
 
 export const getPostStats = cache(async (orgId: string) => {
-  const results = await prisma.socialPost.groupBy({
-    by: ["status"],
-    where: { organizationId: orgId },
-    _count: true,
+  const [socialResults, engageResults] = await Promise.all([
+    prisma.socialPost.groupBy({
+      by: ["status"],
+      where: { organizationId: orgId },
+      _count: true,
+    }),
+    prisma.engagePost.groupBy({
+      by: ["status"],
+      where: { organizationId: orgId },
+      _count: true,
+    }),
+  ])
+
+  const stats: Record<string, number> = {}
+  
+  socialResults.forEach(r => {
+    stats[r.status] = (stats[r.status] || 0) + r._count
+  })
+  engageResults.forEach(r => {
+    stats[r.status] = (stats[r.status] || 0) + r._count
   })
 
-  return results.reduce(
-    (acc, r) => {
-      acc[r.status] = r._count
-      return acc
-    },
-    {} as Record<string, number>
-  )
+  return stats
 })
 
 export const getPostCountThisWeek = cache(async (orgId: string) => {
@@ -386,4 +468,48 @@ export const getPostCountThisWeek = cache(async (orgId: string) => {
       createdAt: { gte: weekAgo },
     },
   })
+})
+
+export const getEngageSummary = cache(async (orgId: string) => {
+  const [socialStats, contentStatsOld, contentStatsNew, accounts] = await Promise.all([
+    prisma.socialPost.groupBy({
+      by: ["status"],
+      where: {
+        organizationId: orgId,
+        contentType: { in: ["post", "article", "newsletter", "page", "thread", "social"] },
+      },
+      _count: true,
+    }),
+    prisma.socialPost.groupBy({
+      by: ["status"],
+      where: {
+        organizationId: orgId,
+        contentType: { in: ["blog", "doc", "help", "changelog", "legal", "api-docs", "knowledge"] },
+      },
+      _count: true,
+    }),
+    prisma.engagePost.groupBy({
+      by: ["status"],
+      where: { organizationId: orgId },
+      _count: true,
+    }),
+    prisma.socialAccount.findMany({
+      where: { organizationId: orgId },
+      select: { id: true, provider: true, name: true, picture: true, username: true },
+    }),
+  ])
+
+  const sumStats = (acc: Record<string, number>, r: any) => {
+    acc[r.status] = (acc[r.status] || 0) + r._count
+    return acc
+  }
+
+  const social = socialStats.reduce(sumStats, {} as Record<string, number>)
+  const content = [...contentStatsOld, ...contentStatsNew].reduce(sumStats, {} as Record<string, number>)
+
+  return {
+    social,
+    content,
+    accounts,
+  }
 })

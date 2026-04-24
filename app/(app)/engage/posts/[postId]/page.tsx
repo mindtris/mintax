@@ -38,7 +38,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ pos
   return (
     <div className="flex flex-col gap-6 max-w-3xl">
       <div className="flex items-center gap-3">
-        <Link href="/engage/posts">
+        <Link href={isContentOnly ? "/engage?tab=content" : "/engage?tab=social"}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4" />
           </Button>

@@ -15,7 +15,7 @@ import {
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
-const CONTENT_TYPES = new Set(["blog", "doc", "help", "changelog"])
+const CONTENT_TYPES = new Set(["blog", "doc", "help", "changelog", "legal", "api-docs", "knowledge"])
 
 export async function createPostAction(_prevState: any, formData: FormData) {
   const user = await getCurrentUser()

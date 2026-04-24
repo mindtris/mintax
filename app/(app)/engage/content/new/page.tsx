@@ -4,9 +4,9 @@ import { UnifiedEditor } from "@/components/engage/unified-editor"
 import { prisma } from "@/lib/core/db"
 import { Metadata } from "next"
 
-export const metadata: Metadata = { title: "New social post" }
+export const metadata: Metadata = { title: "New post" }
 
-export default async function NewSocialPostPage() {
+export default async function NewContentPage() {
   const user = await getCurrentUser()
   const org = await getActiveOrg(user)
   

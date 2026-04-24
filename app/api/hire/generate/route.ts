@@ -30,11 +30,14 @@ export async function POST(request: NextRequest) {
       if (modulePrompts[0]?.prompt) systemPrompt = modulePrompts[0].prompt
     }
 
-    const fullPrompt = `${systemPrompt || "You are an HR specialist. Generate a professional job posting."}
+    const fullPrompt = `${systemPrompt || "You are a Senior Executive Recruiter and Talent Strategist specialized in Tier-1 tech hiring."}
 
-Generate a job posting based on the following brief. Return a JSON object with two fields:
-- "description": the full job description with responsibilities
-- "requirements": the qualifications and skills needed
+TASK: Generate a high-performance job posting based on the provided brief.
+STRATEGY: Use a "Benefit-First" structure. Highlight the problem the candidate will solve and the impact they will have. Avoid generic corporate jargon.
+
+FORMAT: Return a JSON object with exactly these fields:
+- "description": A compelling, impact-oriented job description.
+- "requirements": Precise, non-negotiable qualifications and desired traits.
 
 Brief: ${prompt}`
 

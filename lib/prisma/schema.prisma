@@ -43,6 +43,7 @@ model User {
   accounts     Account[]
   sessions     Session[]
   memberships  OrgMember[]
+  engagePosts  EngagePost[]
 
   @@map("users")
 }
@@ -153,6 +154,7 @@ model Organization {
   meetings      Meeting[]
   llmPrompts    LlmPrompt[]
   emailTemplates EmailTemplate[]
+  engagePosts   EngagePost[]
 
   @@map("organizations")
 }
@@ -1476,4 +1478,44 @@ model EmailTemplate {
   @@unique([organizationId, module, event, name])
   @@index([organizationId, module])
   @@map("email_templates")
+}
+
+// ──────────────────────────────────────────────
+// Engage: Unified Content & Social Publishing
+// ──────────────────────────────────────────────
+
+model EngagePost {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String       @map("user_id") @db.Uuid
+  user           User         @relation(fields: [userId], references: [id])
+  
+  type           String       // "social" | "blog" | "docs" | "help" etc
+  status         String       // "draft" | "scheduled" | "published" | "archived"
+  visibility     String       @default("public")
+  
+  title          String?
+  slug           String?
+  content        String       @db.Text
+  excerpt        String?      @db.Text
+  
+  seoTitle       String?      @map("seo_title")
+  seoDescription String?      @map("seo_description")
+  heroImageId    String?      @map("hero_image_id")
+  tags           String[]     @default([])
+  
+  scheduledAt    DateTime?    @map("scheduled_at")
+  publishedAt    DateTime?    @map("published_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  mediaUrls      String[]     @default([]) @map("media_urls")
+  mediaIds       String[]     @default([]) @map("media_ids")
+  accountIds     String[]     @default([]) @map("account_ids") // Stored channel metadata
+
+  @@index([organizationId])
+  @@index([type])
+  @@index([status])
+  @@map("engage_posts")
 }

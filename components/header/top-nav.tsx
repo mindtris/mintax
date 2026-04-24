@@ -154,9 +154,8 @@ const modules: NavModule[] = [
     icon: MessageCircleHeart,
     basePaths: ["/engage", "/apps/outlook"],
     items: [
-      { href: "/engage?tab=posts", label: "Posts", icon: HeartHandshake },
+      { href: "/engage?tab=posts", label: "Social", icon: Share2 },
       { href: "/engage?tab=calendar", label: "Calendar", icon: CalendarOff },
-      { href: "/engage?tab=content", label: "Content", icon: FileText },
       { href: "/engage?tab=branding", label: "Branding", icon: MessageCircleHeart },
     ],
   },

@@ -9,7 +9,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Loader2, Play, Save, Send, Sparkles, Trash2, Upload } from "lucide-react"
+import { Clock, Loader2, Play, Save, Send, Sparkles, Trash2, Upload, Share2 } from "lucide-react"
+import Link from "next/link"
 
 const CONTENT_TYPES = new Set(["blog", "doc", "help", "changelog"])
 import { useEffect, useActionState, useState } from "react"
@@ -206,22 +207,31 @@ export function NewPostSheet({
               <Select name="contentType" value={contentType} onValueChange={setContentType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {categories && categories.length > 0
-                    ? categories.map(c => (
-                        <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
-                      ))
-                    : (
-                      <>
-                        <SelectItem value="post">Social Post</SelectItem>
-                        <SelectItem value="article">Blog Article</SelectItem>
-                        <SelectItem value="thread">Thread</SelectItem>
-                        <SelectItem value="newsletter">Newsletter</SelectItem>
-                      </>
-                    )}
-                  <SelectItem value="blog">Blog (website)</SelectItem>
-                  <SelectItem value="doc">Documentation</SelectItem>
-                  <SelectItem value="help">Help article</SelectItem>
-                  <SelectItem value="changelog">Changelog entry</SelectItem>
+                  {(() => {
+                    const base = categories && categories.length > 0
+                      ? categories.map((c: { code: string; name: string }) => ({ code: c.code, name: c.name }))
+                      : [
+                          { code: "post", name: "Social Post" },
+                          { code: "article", name: "Blog Article" },
+                          { code: "thread", name: "Thread" },
+                          { code: "newsletter", name: "Newsletter" },
+                        ]
+                    const extras = [
+                      { code: "blog", name: "Blog (website)" },
+                      { code: "doc", name: "Documentation" },
+                      { code: "help", name: "Help article" },
+                      { code: "changelog", name: "Changelog entry" },
+                    ]
+                    const seen = new Set<string>()
+                    const merged = [...base, ...extras].filter((t) => {
+                      if (seen.has(t.code)) return false
+                      seen.add(t.code)
+                      return true
+                    })
+                    return merged.map((t) => (
+                      <SelectItem key={t.code} value={t.code}>{t.name}</SelectItem>
+                    ))
+                  })()}
                 </SelectContent>
               </Select>
             </div>
@@ -486,9 +496,18 @@ export function NewPostSheet({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  <a href="/engage/social" className="text-primary underline">Connect an account</a> to start posting
-                </p>
+                <div className="flex flex-col items-center justify-center py-8 px-4 border border-dashed rounded-xl bg-muted/5 gap-3">
+                   <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                      <Share2 className="h-5 w-5" />
+                   </div>
+                   <div className="text-center">
+                      <p className="text-sm font-semibold">No accounts connected</p>
+                      <p className="text-[10px] text-muted-foreground max-w-[200px]">Connect your social channels to start distribution.</p>
+                   </div>
+                   <Button asChild variant="outline" size="sm" className="h-8 font-bold uppercase tracking-tight text-[10px]">
+                      <Link href="/settings/accounts" onClick={() => setOpen(false)}>Connect Channels</Link>
+                   </Button>
+                </div>
               )}
             </div>
 

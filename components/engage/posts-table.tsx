@@ -5,9 +5,19 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { DataGrid, DataGridColumn, SortState } from "@/components/ui/data-grid"
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
-import { Share2, Facebook, Twitter, Linkedin, Instagram, Play, Clock } from "lucide-react"
+import { Share2, Facebook, Twitter, Linkedin, Instagram, Play, Clock, Globe } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu"
+import { MoreVertical, Edit, Trash2, Eye } from "lucide-react"
+import { deletePostAction } from "@/app/(app)/engage/posts/actions"
+import { toast } from "sonner"
 
 export type PostRow = {
   id: string
@@ -16,14 +26,16 @@ export type PostRow = {
   status: string
   scheduledAt?: string | Date | null
   publishedAt?: string | Date | null
-  socialAccount: { provider: string }
+  socialAccount: { provider: string } | null
+  contentType: string
 }
 
-const statusStyles: Record<string, string> = {
-  published: "bg-green-500/10 text-green-600 border-green-500/20",
-  queued: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-  draft: "bg-muted text-muted-foreground border-border",
-  error: "bg-red-500/10 text-red-600 border-red-500/20",
+const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
+  published: "default",
+  queued: "secondary",
+  draft: "outline",
+  error: "destructive",
+  scheduled: "secondary",
 }
 
 const providerIcons: Record<string, any> = {
@@ -32,6 +44,13 @@ const providerIcons: Record<string, any> = {
   linkedin: Linkedin,
   instagram: Instagram,
   youtube: Play,
+  website: Globe,
+  blog: Globe,
+  doc: FileText,
+  legal: FileText,
+  "api-docs": Settings2,
+  help: Settings2,
+  knowledge: History,
 }
 
 export function PostsTable({ posts, visibleColumns }: { posts: PostRow[]; visibleColumns?: string[] }) {
@@ -62,7 +81,8 @@ export function PostsTable({ posts, visibleColumns }: { posts: PostRow[]; visibl
       label: "Post",
       sortable: true,
       render: (row) => {
-        const ProviderIcon = providerIcons[row.socialAccount.provider.toLowerCase()] || Share2
+        const providerName = row.socialAccount?.provider || "Website"
+        const ProviderIcon = providerIcons[row.contentType.toLowerCase()] || providerIcons[providerName.toLowerCase()] || Share2
         return (
           <div className="flex items-center gap-3 py-1">
             <div className="h-9 w-9 rounded-md bg-primary/5 flex items-center justify-center shrink-0 border border-primary/10">
@@ -71,7 +91,7 @@ export function PostsTable({ posts, visibleColumns }: { posts: PostRow[]; visibl
             <div className="flex flex-col min-w-0">
               <span className="font-semibold text-foreground truncate max-w-[280px]">{row.title || row.content.slice(0, 50)}</span>
               <span className="text-[11px] text-muted-foreground truncate max-w-[280px] capitalize">
-                {row.socialAccount.provider}
+                {providerName}
               </span>
             </div>
           </div>
@@ -79,11 +99,21 @@ export function PostsTable({ posts, visibleColumns }: { posts: PostRow[]; visibl
       },
     },
     {
+      key: "contentType",
+      label: "Type",
+      sortable: true,
+      render: (row) => (
+        <Badge variant="secondary" className="h-5 px-2 text-[10px] items-center gap-1.5 font-bold uppercase tracking-wider">
+          {row.contentType}
+        </Badge>
+      ),
+    },
+    {
       key: "status",
       label: "Status",
       sortable: true,
       render: (row) => (
-        <Badge variant="outline" className={cn("text-[10px] font-medium capitalize", statusStyles[row.status] || "bg-muted text-muted-foreground")}>
+        <Badge variant={STATUS_VARIANTS[row.status] || "outline"} className="h-5 px-2 text-[10px] font-bold uppercase tracking-wider">
           {row.status}
         </Badge>
       ),
@@ -104,7 +134,72 @@ export function PostsTable({ posts, visibleColumns }: { posts: PostRow[]; visibl
         )
       },
     },
-  ], [])
+    {
+      key: "actions",
+      label: "",
+      sortable: false,
+      render: (row) => {
+        const isWebsite = !row.socialAccount || row.socialAccount.provider === "Website"
+        
+        const handleDelete = async (e: React.MouseEvent) => {
+          e.stopPropagation()
+          if (!confirm("Are you sure you want to delete this post?")) return
+          try {
+            await deletePostAction(row.id)
+            toast.success("Post deleted")
+            router.refresh()
+          } catch {
+            toast.error("Failed to delete post")
+          }
+        }
+
+        const handleEdit = (e: React.MouseEvent) => {
+          e.stopPropagation()
+          if (isWebsite) {
+            router.push(`/engage/content/${row.id}/edit`)
+          } else {
+            router.push(`/engage/posts/${row.id}`)
+          }
+        }
+
+        const handleView = (e: React.MouseEvent) => {
+          e.stopPropagation()
+          if (isWebsite) {
+            window.open(`/engage/content/preview`, "_blank")
+          } else {
+            router.push(`/engage/posts/${row.id}`)
+          }
+        }
+
+        return (
+          <div className="flex justify-end pr-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-muted/80 rounded-full">
+                  <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40 rounded-xl shadow-xl border-border/50">
+                <DropdownMenuItem onClick={handleEdit} className="text-xs font-bold gap-2 py-2">
+                  <Edit className="h-3.5 w-3.5" /> Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleView} className="text-xs font-bold gap-2 py-2">
+                  <Eye className="h-3.5 w-3.5" /> View
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="opacity-50" />
+                <DropdownMenuItem 
+                  onClick={handleDelete}
+                  className="text-xs font-bold gap-2 py-2 text-rose-600 focus:text-rose-600 focus:bg-rose-50"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )
+      },
+    },
+  ], [router])
 
   const filteredColumns = visibleColumns
     ? columns.filter((col) => visibleColumns.includes(col.key))
@@ -119,7 +214,14 @@ export function PostsTable({ posts, visibleColumns }: { posts: PostRow[]; visibl
       onSelectionChange={setSelectedIds}
       sort={sorting}
       onSortChange={setSorting}
-      onRowClick={(row) => router.push(`/engage/posts/${row.id}`)}
+      onRowClick={(row) => {
+        const isWebsite = !row.socialAccount || row.socialAccount.provider === "Website"
+        if (isWebsite) {
+          router.push(`/engage/content/${row.id}/edit`)
+        } else {
+          router.push(`/engage/posts/${row.id}`)
+        }
+      }}
       emptyIcon={<Image src="/empty-state.svg" alt="No posts" width={120} height={120} priority />}
       emptyTitle="Posts"
       emptyDescription="No posts yet. Create your first one to start publishing."

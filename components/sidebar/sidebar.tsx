@@ -42,6 +42,9 @@ import {
   Settings,
   TrendingUp,
   Upload,
+  Share2,
+  Newspaper,
+  Calendar,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -229,6 +232,15 @@ export function AppSidebar({
                         notification.code === "sidebar.unsorted" &&
                         notification.message && <Blinker />}
                       <span></span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItemWithHighlight>
+
+                <SidebarMenuItemWithHighlight href="/engage">
+                  <SidebarMenuButton asChild>
+                    <Link href="/engage">
+                      <Share2 />
+                      <span>Engage</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItemWithHighlight>

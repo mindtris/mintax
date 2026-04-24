@@ -34,6 +34,8 @@ interface DatePickerProps {
   id?: string
   /** locale for date formatting */
   locale?: any
+  /** variant for the trigger button */
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
 }
 
 function parseDate(value: Date | string | null | undefined): Date | undefined {
@@ -54,6 +56,7 @@ export function DatePicker({
   dateFormat = "PPP",
   id,
   locale,
+  variant = "outline",
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
   const isControlled = value !== undefined
@@ -79,7 +82,7 @@ export function DatePicker({
       <PopoverTrigger asChild>
         <Button
           id={id}
-          variant="outline"
+          variant={variant}
           disabled={disabled}
           className={cn(
             "w-full justify-start text-left font-normal h-9",
