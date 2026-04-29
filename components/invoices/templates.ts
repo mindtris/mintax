@@ -23,7 +23,7 @@ export default function defaultTemplates(org: Organization, settings: SettingsMa
     companyDetailsLabel: settings.invoice_bill_from_label || "Bill From",
     billTo: "",
     billToLabel: settings.invoice_bill_to_label || "Bill To",
-    items: [{ name: "", subtitle: "", showSubtitle: false, quantity: 1, unitPrice: 0, subtotal: 0 }],
+    items: [{ name: "", subtitle: "", showSubtitle: false, quantity: 1, unitPrice: 0, discount: 0, subtotal: 0 }],
     taxIncluded: settings.invoice_tax_included === "true",
     additionalTaxes: settings.invoice_tax_rate ? [
       { name: settings.invoice_tax_name || "Tax", rate: parseFloat(settings.invoice_tax_rate), amount: 0 }
@@ -36,9 +36,11 @@ export default function defaultTemplates(org: Organization, settings: SettingsMa
     itemLabel: settings.invoice_item_label || "Item",
     quantityLabel: settings.invoice_quantity_label || "Quantity",
     unitPriceLabel: settings.invoice_price_label || "Unit Price",
+    discountLabel: settings.invoice_discount_label || "Discount",
     subtotalLabel: settings.invoice_subtotal_label || "Subtotal",
     summarySubtotalLabel: settings.invoice_subtotal_label ? `${settings.invoice_subtotal_label}:` : "Subtotal:",
     summaryTotalLabel: settings.invoice_total_label ? `${settings.invoice_total_label}:` : "Total:",
+    currencyLabel: "Currency:",
   }
 
   return [
@@ -64,6 +66,8 @@ export function invoiceToFormData(
     issuedAt?: string | null | Date
     dueAt?: string | null | Date
     notes?: string | null
+    subject?: string | null
+    description?: string | null
     items?: any[]
   },
   org: Organization,
@@ -75,6 +79,7 @@ export function invoiceToFormData(
     showSubtitle: !!item.description,
     quantity: item.quantity || 1,
     unitPrice: (item.price || 0) / 100,
+    discount: 0,
     subtotal: ((item.price || 0) * (item.quantity || 1)) / 100,
   }))
 
@@ -86,6 +91,7 @@ export function invoiceToFormData(
       showSubtitle: false,
       quantity: 1,
       unitPrice: invoice.subtotal / 100,
+      discount: 0,
       subtotal: invoice.subtotal / 100,
     })
   }
@@ -114,6 +120,7 @@ export function invoiceToFormData(
     itemLabel: settings.invoice_item_label || "Item",
     quantityLabel: settings.invoice_quantity_label || "Quantity",
     unitPriceLabel: settings.invoice_price_label || "Unit Price",
+    discountLabel: settings.invoice_discount_label || "Discount",
     subtotalLabel: "Subtotal",
     summarySubtotalLabel: "Subtotal:",
     summaryTotalLabel: "Total:",

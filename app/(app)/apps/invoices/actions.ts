@@ -16,8 +16,7 @@ import { revalidatePath } from "next/cache"
 import { createElement } from "react"
 import { InvoiceFormData } from "./components/invoice-page"
 import { InvoicePDF } from "./components/invoice-pdf"
-import { InvoiceTemplate } from "./default-templates"
-import { InvoiceAppData } from "./page"
+import { InvoiceAppData, InvoiceTemplate } from "./default-templates"
 
 export async function generateInvoicePDF(data: InvoiceFormData): Promise<Uint8Array> {
   const pdfElement = createElement(InvoicePDF, { data })

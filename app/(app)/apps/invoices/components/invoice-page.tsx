@@ -57,11 +57,16 @@ export interface InvoiceFormData {
   subtotalLabel: string
   summarySubtotalLabel: string
   summaryTotalLabel: string
+  currencyLabel?: string
+  // Theming
+  accentColor?: string
+  template?: string
+  footerText?: string
 }
 
 interface InvoicePageProps {
   invoiceData: InvoiceFormData
-  dispatch: React.Dispatch<any>
+  dispatch?: React.Dispatch<any>
   currencies: Currency[]
   readOnly?: boolean
 }
@@ -70,6 +75,7 @@ interface InvoicePageProps {
 const ItemRow = memo(function ItemRow({
   item,
   index,
+  onChange,
   onRemove,
   currency,
   readOnly,
@@ -178,6 +184,7 @@ const ItemRow = memo(function ItemRow({
 const TaxRow = memo(function TaxRow({
   tax,
   index,
+  onChange,
   onRemove,
   currency,
   readOnly,
@@ -224,6 +231,7 @@ const TaxRow = memo(function TaxRow({
 const FeeRow = memo(function FeeRow({
   fee,
   index,
+  onChange,
   onRemove,
   currency,
   readOnly,
@@ -266,27 +274,30 @@ const FeeRow = memo(function FeeRow({
 })
 
 export function InvoicePage({ invoiceData, dispatch, currencies, readOnly = false }: InvoicePageProps) {
-  const addItem = useCallback(() => dispatch({ type: "ADD_ITEM" }), [dispatch])
-  const removeItem = useCallback((index: number) => dispatch({ type: "REMOVE_ITEM", index }), [dispatch])
+  const addItem = useCallback(() => dispatch?.({ type: "ADD_ITEM" }), [dispatch])
+  const removeItem = useCallback((index: number) => dispatch?.({ type: "REMOVE_ITEM", index }), [dispatch])
   const updateItem = useCallback(
     (index: number, field: keyof InvoiceItem, value: string | number | boolean) =>
-      dispatch({ type: "UPDATE_ITEM", index, field, value }),
+      dispatch?.({ type: "UPDATE_ITEM", index, field, value }),
     [dispatch]
   )
-
-  const addAdditionalTax = useCallback(() => dispatch({ type: "ADD_TAX" }), [dispatch])
-  const removeAdditionalTax = useCallback((index: number) => dispatch({ type: "REMOVE_TAX", index }), [dispatch])
-  const updateAdditionalTax = useCallback(
+  const updateField = useCallback(
+    (field: keyof InvoiceFormData, value: any) => dispatch?.({ type: "UPDATE_FIELD", field, value }),
+    [dispatch]
+  )
+  const addTax = useCallback(() => dispatch?.({ type: "ADD_TAX" }), [dispatch])
+  const removeTax = useCallback((index: number) => dispatch?.({ type: "REMOVE_TAX", index }), [dispatch])
+  const updateTax = useCallback(
     (index: number, field: keyof AdditionalTax, value: string | number) =>
-      dispatch({ type: "UPDATE_TAX", index, field, value }),
+      dispatch?.({ type: "UPDATE_TAX", index, field, value }),
     [dispatch]
   )
 
-  const addAdditionalFee = useCallback(() => dispatch({ type: "ADD_FEE" }), [dispatch])
-  const removeAdditionalFee = useCallback((index: number) => dispatch({ type: "REMOVE_FEE", index }), [dispatch])
+  const addAdditionalFee = useCallback(() => dispatch?.({ type: "ADD_FEE" }), [dispatch])
+  const removeAdditionalFee = useCallback((index: number) => dispatch?.({ type: "REMOVE_FEE", index }), [dispatch])
   const updateAdditionalFee = useCallback(
     (index: number, field: keyof AdditionalFee, value: string | number) =>
-      dispatch({ type: "UPDATE_FEE", index, field, value }),
+      dispatch?.({ type: "UPDATE_FEE", index, field, value }),
     [dispatch]
   )
 
@@ -311,9 +322,9 @@ export function InvoicePage({ invoiceData, dispatch, currencies, readOnly = fals
         <div className="flex flex-col gap-2 text-sm">
           {/* Business Logo */}
           <div className="relative max-w-[100px] sm:max-w-[140px] max-h-[60px] sm:max-h-[80px]">
-            <img 
-              src={invoiceData.businessLogo || "/logo/logo.svg"} 
-              alt="Business Logo" 
+            <img
+              src={invoiceData.businessLogo || "/logo/logo.svg"}
+              alt="Business Logo"
               className="w-full h-full object-contain object-left"
             />
           </div>
@@ -324,7 +335,7 @@ export function InvoicePage({ invoiceData, dispatch, currencies, readOnly = fals
             ) : (
               <FormTextarea
                 value={invoiceData.companyDetails}
-                onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "companyDetails", value: e.target.value })}
+                onChange={(e) => dispatch?.({ type: "UPDATE_FIELD", field: "companyDetails", value: e.target.value })}
                 rows={4}
                 placeholder="Address & Details"
                 className="w-full"
@@ -337,7 +348,7 @@ export function InvoicePage({ invoiceData, dispatch, currencies, readOnly = fals
           <ShadyFormInput
             type="text"
             value={invoiceData.title}
-            onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "title", value: e.target.value })}
+            onChange={(e) => dispatch?.({ type: "UPDATE_FIELD", field: "title", value: e.target.value })}
             className="text-4xl sm:text-5xl font-semibold tracking-tight text-primary sm:text-right"
             placeholder="Invoice"
             required
@@ -348,12 +359,12 @@ export function InvoicePage({ invoiceData, dispatch, currencies, readOnly = fals
             <ShadyFormInput
               placeholder="INV-17"
               value={invoiceData.invoiceNumber}
-              onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "invoiceNumber", value: e.target.value })}
+              onChange={(e) => dispatch?.({ type: "UPDATE_FIELD", field: "invoiceNumber", value: e.target.value })}
               className="w-[100px]"
               readOnly={readOnly}
             />
           </div>
-          
+
           <div className="mt-4 flex flex-col items-start sm:items-end">
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-right w-full">Balance Due</span>
             <span className="text-xl font-extrabold text-foreground">
@@ -369,21 +380,21 @@ export function InvoicePage({ invoiceData, dispatch, currencies, readOnly = fals
           <ShadyFormInput
             type="text"
             value={invoiceData.billToLabel}
-            onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "billToLabel", value: e.target.value })}
+            onChange={(e) => dispatch?.({ type: "UPDATE_FIELD", field: "billToLabel", value: e.target.value })}
             className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest"
             readOnly={readOnly}
           />
           <div className="text-sm font-bold text-foreground mb-1 leading-tight">
-             <ShadyFormInput
-               type="text"
-               value={invoiceData.billTo?.split('\n')[0] || ""}
-               onChange={(e) => {
-                 const lines = invoiceData.billTo?.split('\n') || []
-                 lines[0] = e.target.value
-                 dispatch({ type: "UPDATE_FIELD", field: "billTo", value: lines.join('\n') })
-               }}
-               readOnly={readOnly}
-             />
+            <ShadyFormInput
+              type="text"
+              value={invoiceData.billTo?.split('\n')[0] || ""}
+              onChange={(e) => {
+                const lines = invoiceData.billTo?.split('\n') || []
+                lines[0] = e.target.value
+                dispatch?.({ type: "UPDATE_FIELD", field: "billTo", value: lines.join('\n') })
+              }}
+              readOnly={readOnly}
+            />
           </div>
           <div className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
             {readOnly ? (
@@ -393,7 +404,7 @@ export function InvoicePage({ invoiceData, dispatch, currencies, readOnly = fals
                 value={invoiceData.billTo?.split('\n').slice(1).join('\n')}
                 onChange={(e) => {
                   const lines = invoiceData.billTo?.split('\n') || []
-                  dispatch({ type: "UPDATE_FIELD", field: "billTo", value: lines[0] + '\n' + e.target.value })
+                  dispatch?.({ type: "UPDATE_FIELD", field: "billTo", value: lines[0] + '\n' + e.target.value })
                 }}
                 rows={3}
                 className="w-full text-xs"
@@ -403,19 +414,19 @@ export function InvoicePage({ invoiceData, dispatch, currencies, readOnly = fals
         </div>
 
         <div className="flex flex-col gap-1 items-end">
-            {[
-              { label: invoiceData.issueDateLabel || "Invoice Date", value: invoiceData.date || "" },
-              { label: "Terms", value: "Due on Receipt" },
-              { label: invoiceData.dueDateLabel || "Due Date", value: invoiceData.dueDate || "" },
-              { label: invoiceData.currencyLabel || "Currency", value: invoiceData.currency },
-              { label: "P.O.#", value: "SO-17" }
-            ].map((item, i) => (
-              <div key={i} className="grid grid-cols-[100px_auto_100px] gap-2 text-xs items-center">
-                <span className="text-right text-muted-foreground font-medium">{item.label}</span>
-                <span className="text-muted-foreground/30">:</span>
-                <span className="text-left font-semibold text-foreground">{item.value}</span>
-              </div>
-            ))}
+          {[
+            { label: invoiceData.issueDateLabel || "Invoice Date", value: invoiceData.date || "" },
+            { label: "Terms", value: "Due on Receipt" },
+            { label: invoiceData.dueDateLabel || "Due Date", value: invoiceData.dueDate || "" },
+            { label: invoiceData.currencyLabel || "Currency", value: invoiceData.currency },
+            { label: "P.O.#", value: "SO-17" }
+          ].map((item, i) => (
+            <div key={i} className="grid grid-cols-[100px_auto_100px] gap-2 text-xs items-center">
+              <span className="text-right text-muted-foreground font-medium">{item.label}</span>
+              <span className="text-muted-foreground/30">:</span>
+              <span className="text-left font-semibold text-foreground">{item.value}</span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -426,7 +437,7 @@ export function InvoicePage({ invoiceData, dispatch, currencies, readOnly = fals
           <ShadyFormInput
             type="text"
             value={invoiceData.subject}
-            onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "subject", value: e.target.value })}
+            onChange={(e) => dispatch?.({ type: "UPDATE_FIELD", field: "subject", value: e.target.value })}
             placeholder="e.g. Project Delivery - Q1 2026"
             className="text-[15px] font-bold text-foreground bg-transparent p-0"
             readOnly={readOnly}
@@ -440,7 +451,7 @@ export function InvoicePage({ invoiceData, dispatch, currencies, readOnly = fals
             ) : (
               <FormTextarea
                 value={invoiceData.description}
-                onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "description", value: e.target.value })}
+                onChange={(e) => dispatch?.({ type: "UPDATE_FIELD", field: "description", value: e.target.value })}
                 placeholder="Additional context about this invoice..."
                 className="w-full text-[13px] p-0 border-none bg-transparent"
                 rows={2}
@@ -452,124 +463,124 @@ export function InvoicePage({ invoiceData, dispatch, currencies, readOnly = fals
 
       {/* Items Section - Refactored to use rounded container */}
       <div className="mb-8 border border-border rounded-xl overflow-hidden">
-          {/* Header row for column titles */}
-          <div className="hidden sm:flex bg-primary text-[10px] font-bold text-primary-foreground uppercase tracking-widest px-4 py-3.5">
-            <div className="w-8">#</div>
-            <div className="flex-1 sm:px-4 text-left">
-              <ShadyFormInput
-                type="text"
-                value={invoiceData.itemLabel}
-                onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "itemLabel", value: e.target.value })}
-                className="text-[10px] font-bold text-primary-foreground uppercase tracking-widest"
-                readOnly={readOnly}
-              />
-            </div>
-            <div className="w-16 text-center">
-              <ShadyFormInput
-                type="text"
-                value={invoiceData.quantityLabel}
-                onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "quantityLabel", value: e.target.value })}
-                className="text-[10px] font-bold text-primary-foreground uppercase tracking-widest text-center w-full"
-                readOnly={readOnly}
-              />
-            </div>
-            <div className="w-24 text-right">
-              <ShadyFormInput
-                type="text"
-                value={invoiceData.unitPriceLabel}
-                onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "unitPriceLabel", value: e.target.value })}
-                className="text-[10px] font-bold text-primary-foreground uppercase tracking-widest text-right w-full"
-                readOnly={readOnly}
-              />
-            </div>
-            <div className="w-20 text-right">
-              <ShadyFormInput
-                type="text"
-                value={invoiceData.discountLabel}
-                onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "discountLabel", value: e.target.value })}
-                className="text-[10px] font-bold text-primary-foreground uppercase tracking-widest text-right w-full"
-                readOnly={readOnly}
-              />
-            </div>
-            <div className="w-24 text-right pr-2">
-              <ShadyFormInput
-                type="text"
-                value={invoiceData.subtotalLabel}
-                onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "subtotalLabel", value: e.target.value })}
-                className="text-[10px] font-bold text-primary-foreground uppercase tracking-widest text-right w-full"
-                readOnly={readOnly}
-              />
-            </div>
-            {!readOnly && <div className="w-8"></div>}
+        {/* Header row for column titles */}
+        <div className="hidden sm:flex bg-primary text-[10px] font-bold text-primary-foreground uppercase tracking-widest px-4 py-3.5">
+          <div className="w-8">#</div>
+          <div className="flex-1 sm:px-4 text-left">
+            <ShadyFormInput
+              type="text"
+              value={invoiceData.itemLabel}
+              onChange={(e) => dispatch?.({ type: "UPDATE_FIELD", field: "itemLabel", value: e.target.value })}
+              className="text-[10px] font-bold text-primary-foreground uppercase tracking-widest"
+              readOnly={readOnly}
+            />
           </div>
-
-          {/* Invoice items */}
-          <div className="flex flex-col divide-y divide-border">
-            {invoiceData.items.map((item, index) => (
-              <ItemRow
-                key={index}
-                item={item}
-                index={index}
-                onChange={updateItem}
-                onRemove={removeItem}
-                currency={invoiceData.currency}
-                readOnly={readOnly}
-              />
-            ))}
+          <div className="w-16 text-center">
+            <ShadyFormInput
+              type="text"
+              value={invoiceData.quantityLabel}
+              onChange={(e) => dispatch?.({ type: "UPDATE_FIELD", field: "quantityLabel", value: e.target.value })}
+              className="text-[10px] font-bold text-primary-foreground uppercase tracking-widest text-center w-full"
+              readOnly={readOnly}
+            />
           </div>
+          <div className="w-24 text-right">
+            <ShadyFormInput
+              type="text"
+              value={invoiceData.unitPriceLabel}
+              onChange={(e) => dispatch?.({ type: "UPDATE_FIELD", field: "unitPriceLabel", value: e.target.value })}
+              className="text-[10px] font-bold text-primary-foreground uppercase tracking-widest text-right w-full"
+              readOnly={readOnly}
+            />
+          </div>
+          <div className="w-20 text-right">
+            <ShadyFormInput
+              type="text"
+              value={invoiceData.discountLabel}
+              onChange={(e) => dispatch?.({ type: "UPDATE_FIELD", field: "discountLabel", value: e.target.value })}
+              className="text-[10px] font-bold text-primary-foreground uppercase tracking-widest text-right w-full"
+              readOnly={readOnly}
+            />
+          </div>
+          <div className="w-24 text-right pr-2">
+            <ShadyFormInput
+              type="text"
+              value={invoiceData.subtotalLabel}
+              onChange={(e) => dispatch?.({ type: "UPDATE_FIELD", field: "subtotalLabel", value: e.target.value })}
+              className="text-[10px] font-bold text-primary-foreground uppercase tracking-widest text-right w-full"
+              readOnly={readOnly}
+            />
+          </div>
+          {!readOnly && <div className="w-8"></div>}
+        </div>
 
-          {!readOnly && (
-            <div className="p-2 border-t bg-muted/5">
-              <Button variant="ghost" size="sm" onClick={addItem} className="text-xs font-bold text-primary gap-1.5">
-                <Plus className="w-3.5 h-3.5" /> Add Item
-              </Button>
-            </div>
-          )}
+        {/* Invoice items */}
+        <div className="flex flex-col divide-y divide-border">
+          {invoiceData.items.map((item, index) => (
+            <ItemRow
+              key={index}
+              item={item}
+              index={index}
+              onChange={updateItem}
+              onRemove={removeItem}
+              currency={invoiceData.currency}
+              readOnly={readOnly}
+            />
+          ))}
+        </div>
+
+        {!readOnly && (
+          <div className="p-2 border-t bg-muted/5">
+            <Button variant="ghost" size="sm" onClick={addItem} className="text-xs font-bold text-primary gap-1.5">
+              <Plus className="w-3.5 h-3.5" /> Add Item
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Summary Section - Spine Aligned to match table columns */}
       <div className="flex justify-end mt-8 pr-1">
         <div className="flex flex-col gap-2 items-end">
-           <div className="grid grid-cols-[1fr_96px] gap-8 text-sm items-center w-full">
-             <span className="text-right text-muted-foreground font-medium whitespace-nowrap">Sub Total</span>
-             <span className="text-right font-semibold">{formatCurrency(subtotal * 100, invoiceData.currency)}</span>
-           </div>
+          <div className="grid grid-cols-[1fr_96px] gap-8 text-sm items-center w-full">
+            <span className="text-right text-muted-foreground font-medium whitespace-nowrap">Sub Total</span>
+            <span className="text-right font-semibold">{formatCurrency(subtotal * 100, invoiceData.currency)}</span>
+          </div>
 
-           <div className="grid grid-cols-[1fr_96px] gap-8 text-sm items-center w-full">
-             <span className="text-right text-muted-foreground font-medium whitespace-nowrap">{invoiceData.discountLabel}</span>
-             <span className="text-right font-semibold">{formatCurrency(0, invoiceData.currency)}</span>
-           </div>
+          <div className="grid grid-cols-[1fr_96px] gap-8 text-sm items-center w-full">
+            <span className="text-right text-muted-foreground font-medium whitespace-nowrap">{invoiceData.discountLabel}</span>
+            <span className="text-right font-semibold">{formatCurrency(0, invoiceData.currency)}</span>
+          </div>
 
-           {invoiceData.additionalTaxes.map((tax, index) => (
-             <div key={index} className="grid grid-cols-[1fr_96px] gap-8 text-[13px] items-center w-full">
-               <span className="text-right text-muted-foreground font-medium whitespace-nowrap">{tax.name} ({tax.rate}%)</span>
-               <span className="text-right font-medium">{formatCurrency(tax.amount * 100, invoiceData.currency)}</span>
-             </div>
-           ))}
+          {invoiceData.additionalTaxes.map((tax, index) => (
+            <div key={index} className="grid grid-cols-[1fr_96px] gap-8 text-[13px] items-center w-full">
+              <span className="text-right text-muted-foreground font-medium whitespace-nowrap">{tax.name} ({tax.rate}%)</span>
+              <span className="text-right font-medium">{formatCurrency(tax.amount * 100, invoiceData.currency)}</span>
+            </div>
+          ))}
 
-           <div className="grid grid-cols-[1fr_96px] gap-8 py-2 border-y border-border/20 mt-2 items-center w-full">
-             <span className="text-right text-sm font-bold uppercase tracking-wider whitespace-nowrap">Total</span>
-             <span className="text-right text-sm font-bold text-primary">
-               {formatCurrency(total * 100, invoiceData.currency)}
-             </span>
-           </div>
+          <div className="grid grid-cols-[1fr_96px] gap-8 py-2 border-y border-border/20 mt-2 items-center w-full">
+            <span className="text-right text-sm font-bold uppercase tracking-wider whitespace-nowrap">Total</span>
+            <span className="text-right text-sm font-bold text-primary">
+              {formatCurrency(total * 100, invoiceData.currency)}
+            </span>
+          </div>
 
-           <div className="grid grid-cols-[1fr_96px] gap-8 text-[13px] items-center pt-2 w-full">
-             <span className="text-right underline underline-offset-4 decoration-muted-foreground/30 text-muted-foreground whitespace-nowrap">Payment Retention</span>
-             <span className="text-right text-destructive font-medium">(-) {formatCurrency(0, invoiceData.currency)}</span>
-           </div>
-           
-           <div className="grid grid-cols-[1fr_96px] gap-8 text-[13px] items-center w-full">
-             <span className="text-right text-muted-foreground whitespace-nowrap">Payment Made</span>
-             <span className="text-right text-destructive font-medium">(-) {formatCurrency(0, invoiceData.currency)}</span>
-           </div>
+          <div className="grid grid-cols-[1fr_96px] gap-8 text-[13px] items-center pt-2 w-full">
+            <span className="text-right underline underline-offset-4 decoration-muted-foreground/30 text-muted-foreground whitespace-nowrap">Payment Retention</span>
+            <span className="text-right text-destructive font-medium">(-) {formatCurrency(0, invoiceData.currency)}</span>
+          </div>
 
-           <div className="mt-4 flex gap-8 items-center min-w-[240px] justify-between">
-             <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">Balance Due</span>
-             <span className="text-lg font-black text-foreground">
-               {formatCurrency(total * 100, invoiceData.currency)}
-             </span>
-           </div>
+          <div className="grid grid-cols-[1fr_96px] gap-8 text-[13px] items-center w-full">
+            <span className="text-right text-muted-foreground whitespace-nowrap">Payment Made</span>
+            <span className="text-right text-destructive font-medium">(-) {formatCurrency(0, invoiceData.currency)}</span>
+          </div>
+
+          <div className="mt-4 flex gap-8 items-center min-w-[240px] justify-between">
+            <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">Balance Due</span>
+            <span className="text-lg font-black text-foreground">
+              {formatCurrency(total * 100, invoiceData.currency)}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -579,9 +590,9 @@ export function InvoicePage({ invoiceData, dispatch, currencies, readOnly = fals
           <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Notes</h3>
           <div className="text-xs text-muted-foreground leading-relaxed">
             {readOnly ? invoiceData.notes : (
-              <FormTextarea 
-                value={invoiceData.notes} 
-                onChange={(e) => dispatch({ type: "UPDATE_FIELD", field: "notes", value: e.target.value })}
+              <FormTextarea
+                value={invoiceData.notes}
+                onChange={(e) => dispatch?.({ type: "UPDATE_FIELD", field: "notes", value: e.target.value })}
                 placeholder="Message for the customer..."
                 className="w-full text-xs p-0 border-none bg-transparent"
                 rows={4}
@@ -591,11 +602,11 @@ export function InvoicePage({ invoiceData, dispatch, currencies, readOnly = fals
         </div>
 
         <div className="flex items-center gap-6">
-           <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Payment Options</span>
-           <div className="flex gap-2">
-              <div className="px-2 py-1 bg-muted/30 rounded border border-border/50 text-[10px] font-bold text-primary tracking-widest">PAYPAL</div>
-              <div className="px-2 py-1 bg-muted/30 rounded border border-border/50 text-[10px] font-bold text-primary tracking-widest">CARD</div>
-           </div>
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Payment Options</span>
+          <div className="flex gap-2">
+            <div className="px-2 py-1 bg-muted/30 rounded border border-border/50 text-[10px] font-bold text-primary tracking-widest">PAYPAL</div>
+            <div className="px-2 py-1 bg-muted/30 rounded border border-border/50 text-[10px] font-bold text-primary tracking-widest">CARD</div>
+          </div>
         </div>
 
         <div className="space-y-1">

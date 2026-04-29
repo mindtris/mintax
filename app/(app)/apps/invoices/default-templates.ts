@@ -9,6 +9,10 @@ export interface InvoiceTemplate {
   formData: InvoiceFormData
 }
 
+export interface InvoiceAppData {
+  templates: InvoiceTemplate[]
+}
+
 export default function defaultTemplates(org: Organization, settings: SettingsMap, userEmail?: string): InvoiceTemplate[] {
   const paymentTerms = parseInt(settings.invoice_payment_terms || "30") || 30
 
@@ -75,6 +79,8 @@ export function invoiceToFormData(
     issuedAt?: string | null
     dueAt?: string | null
     notes?: string | null
+    subject?: string | null
+    description?: string | null
     items?: any[]
   },
   org: Organization,
@@ -86,6 +92,7 @@ export function invoiceToFormData(
     showSubtitle: !!item.description,
     quantity: item.quantity || 1,
     unitPrice: (item.price || 0) / 100,
+    discount: 0,
     subtotal: ((item.price || 0) * (item.quantity || 1)) / 100,
   }))
 
@@ -97,6 +104,7 @@ export function invoiceToFormData(
       showSubtitle: false,
       quantity: 1,
       unitPrice: invoice.subtotal / 100,
+      discount: 0,
       subtotal: invoice.subtotal / 100,
     })
   }
@@ -128,6 +136,7 @@ export function invoiceToFormData(
     itemLabel: settings.invoice_item_label || "Item",
     quantityLabel: settings.invoice_quantity_label || "Quantity",
     unitPriceLabel: settings.invoice_price_label || "Unit Price",
+    discountLabel: settings.discount_label || "Discount",
     subtotalLabel: "Subtotal",
     summarySubtotalLabel: "Subtotal:",
     summaryTotalLabel: "Total:",

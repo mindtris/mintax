@@ -15,7 +15,7 @@ import TemplateHub from "@/components/settings/template-hub"
 import { getOrgEmailTemplates } from "@/lib/services/email-templates"
 import { getAppData } from "@/lib/services/apps"
 import { getContentTemplates } from "@/lib/services/content-templates"
-import { InvoiceAppData } from "@/app/(app)/apps/invoices/page"
+import { InvoiceAppData } from "@/app/(app)/apps/invoices/default-templates"
 
 import { getActiveOrg, getCurrentUser } from "@/lib/core/auth"
 import { getSettings } from "@/lib/services/settings"
@@ -142,7 +142,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     const [settings, emailTemplates, invoiceAppData, estimateAppData, currencies, contentTemplates] = await Promise.all([
       getSettings(org.id),
       getOrgEmailTemplates(org.id),
-      getAppData(org.id, "invoices") as Promise<InvoiceAppData>,
+      getAppData(org.id, "invoices") as unknown as Promise<InvoiceAppData>,
       getAppData(org.id, "estimates"),
       getCurrencies(org.id),
       getContentTemplates(org.id),
@@ -166,7 +166,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   if (tab === "invoice") {
     const [settings, invoiceAppData, currencies] = await Promise.all([
       getSettings(org.id),
-      getAppData(org.id, "invoices") as Promise<InvoiceAppData>,
+      getAppData(org.id, "invoices") as unknown as Promise<InvoiceAppData>,
       getCurrencies(org.id),
     ])
     return (
@@ -178,7 +178,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           </p>
         </div>
         <div className="w-full max-w-2xl">
-          <InvoiceSettingsForm settings={settings} orgName={org.name} templates={invoiceAppData?.templates || []} />
+          <InvoiceSettingsForm settings={settings} />
         </div>
       </div>
     )
@@ -198,7 +198,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           </p>
         </div>
         <div className="w-full max-w-2xl">
-          <EstimateSettingsForm settings={settings} orgName={org.name} />
+          <EstimateSettingsForm settings={settings} />
         </div>
       </div>
     )

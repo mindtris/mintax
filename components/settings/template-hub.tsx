@@ -1,8 +1,9 @@
 "use client"
 
 import { EmailTemplate as DbTemplate, User, Organization, Currency, ContentTemplate } from "@/lib/prisma/client"
+import { deleteContentTemplateAction } from "@/app/(app)/settings/actions"
 import { SettingsMap } from "@/lib/services/settings"
-import { InvoiceAppData } from "@/app/(app)/apps/invoices/page"
+import { InvoiceAppData } from "@/app/(app)/apps/invoices/default-templates"
 import { DataGrid, DataGridColumn } from "@/components/ui/data-grid"
 import {
   Sheet,
@@ -13,7 +14,7 @@ import {
   SheetFooter
 } from "@/components/ui/sheet"
 import { useState, useMemo, useCallback, useRef } from "react"
-import { CheckCircle2, FileText, Mail, Quote, Search, Filter, Columns3, X, Megaphone, Plus, Loader2, Send, Pencil, Eye, ShipWheel } from "lucide-react"
+import { CheckCircle2, FileText, Mail, Quote, Search, Filter, Columns3, X, Megaphone, Plus, Loader2, Send, Pencil, Eye, ShipWheel, Trash2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -26,6 +27,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import EmailTemplateSettingsForm, { EmailEditorHandle } from "./email-template-settings-form"
 import ContentTemplateForm from "./content-template-form"
 import InvoiceTemplateForm, { InvoiceFormHandle } from "./invoice-template-form"
@@ -57,7 +59,7 @@ interface Props {
   contentTemplates: ContentTemplate[]
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
+export const CATEGORY_COLORS: Record<string, string> = {
   Accounting: "bg-primary/10 text-primary border-primary/20",
   Pipeline: "bg-accent/10 text-accent-foreground border-accent-200/50",
   Hire: "bg-secondary/10 text-secondary-foreground border-secondary/20",
@@ -86,7 +88,7 @@ export default function TemplateHub({
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set())
 
   // Ref for imperative actions
-  const emailEditorRef = useRef<{ save: () => Promise<void> } | null>(null)
+  const emailEditorRef = useRef<EmailEditorHandle | null>(null)
   const invoiceEditorRef = useRef<InvoiceFormHandle | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
 
@@ -111,7 +113,7 @@ export default function TemplateHub({
     const custom = invoiceAppData?.templates || []
 
     return [
-      ...defaults.map(t => ({
+      ...defaults.map((t: any) => ({
         id: `default_invoice_${t.name}`,
         name: t.name,
         type: "invoice" as const,
@@ -119,7 +121,7 @@ export default function TemplateHub({
         status: "Default" as const,
         raw: t
       })),
-      ...custom.map(t => ({
+      ...custom.map((t: any) => ({
         id: t.id || `invoice_${t.name}`,
         name: t.name,
         type: "invoice" as const,
@@ -136,7 +138,7 @@ export default function TemplateHub({
     const custom = estimateAppData?.templates || []
 
     return [
-      ...defaults.map(t => ({
+      ...defaults.map((t: any) => ({
         id: `default_estimate_${t.name}`,
         name: t.name,
         type: "estimate" as const,
@@ -144,7 +146,7 @@ export default function TemplateHub({
         status: "Default" as const,
         raw: t
       })),
-      ...custom.map(t => ({
+      ...custom.map((t: any) => ({
         id: t.id || `estimate_${t.name}`,
         name: t.name,
         type: "estimate" as const,
@@ -157,7 +159,7 @@ export default function TemplateHub({
 
   // 4. Transform Content Templates
   const contentRows: UnifiedTemplate[] = useMemo(() => {
-    return contentTemplates.map(t => ({
+    return contentTemplates.map((t: any) => ({
       id: t.id,
       name: t.name,
       type: "social" as const,
@@ -308,6 +310,26 @@ export default function TemplateHub({
       } finally {
         setIsProcessing(false)
       }
+    }
+  }
+
+  const handleDeleteContent = async () => {
+    if (!selectedTemplate || selectedTemplate.type !== "social") return
+    if (!confirm("Are you sure you want to delete this social template?")) return
+    
+    setIsProcessing(true)
+    try {
+      const res = await deleteContentTemplateAction(selectedTemplate.id)
+      if (res.success) {
+        toast.success("Template deleted")
+        handleSuccess()
+      } else {
+        toast.error("Failed to delete template")
+      }
+    } catch (error) {
+      toast.error("An error occurred")
+    } finally {
+      setIsProcessing(false)
     }
   }
 

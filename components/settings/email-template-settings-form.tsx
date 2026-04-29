@@ -23,6 +23,7 @@ import { useActionState, useCallback, useEffect, useMemo, useState, useImperativ
 import { toast } from "sonner"
 import { Eye, Send, Loader2, Trash2, CheckCircle2 } from "lucide-react"
 import { EmailTemplate as DbTemplate } from "@/lib/prisma/client"
+import { CATEGORY_COLORS } from "./template-hub"
 
 // ─── Email Template Registry ─────────────────────────────────────────────
 

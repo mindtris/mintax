@@ -43,6 +43,7 @@ model User {
   accounts     Account[]
   sessions     Session[]
   memberships  OrgMember[]
+  engagePosts  engage_posts[]
 
   @@map("users")
 }
@@ -150,6 +151,8 @@ model Organization {
   leads         Lead[]
   llmPrompts    LlmPrompt[]
   emailTemplates EmailTemplate[]
+  engagePosts   engage_posts[]
+  publicApiConfig public_api_configs?
 
   @@map("organizations")
 }
@@ -1395,4 +1398,58 @@ model EmailTemplate {
   @@unique([organizationId, module, event, name])
   @@index([organizationId, module])
   @@map("email_templates")
+}
+
+// ──────────────────────────────────────────────
+// Legacy: engage_posts (kept to preserve existing data)
+// ──────────────────────────────────────────────
+
+model engage_posts {
+  id              String       @id @db.Uuid
+  organization_id String       @db.Uuid
+  user_id         String       @db.Uuid
+  type            String
+  status          String
+  visibility      String       @default("public")
+  title           String?
+  slug            String?
+  content         String
+  excerpt         String?
+  seo_title       String?
+  seo_description String?
+  hero_image_id   String?
+  tags            String[]     @default([])
+  scheduled_at    DateTime?
+  published_at    DateTime?
+  created_at      DateTime     @default(now())
+  updated_at      DateTime
+  media_urls      String[]     @default([])
+  media_ids       String[]     @default([])
+  account_ids     String[]     @default([])
+  organizations   Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  users           User         @relation(fields: [user_id], references: [id])
+
+  @@index([organization_id])
+  @@index([status])
+  @@index([type])
+}
+
+// ──────────────────────────────────────────────
+// Legacy: public_api_configs (kept to preserve existing data)
+// ──────────────────────────────────────────────
+
+model public_api_configs {
+  id                    String       @id @db.Uuid
+  organization_id       String       @unique @db.Uuid
+  enabled               Boolean      @default(false)
+  allowed_origins       String[]     @default([])
+  turnstile_secret      String?
+  rate_per_minute       Int          @default(5)
+  leads_enabled         Boolean      @default(true)
+  calcom_enabled        Boolean      @default(false)
+  created_at            DateTime     @default(now())
+  updated_at            DateTime
+  content_cache_seconds Int          @default(60)
+  content_enabled       Boolean      @default(false)
+  organizations         Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
 }
